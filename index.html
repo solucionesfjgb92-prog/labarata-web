@@ -1,0 +1,1884 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Distribuidora La Barata — Tu vecino online · Valdivia</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{verde:'#16a34a',naranja:'#f97316',amarillo:'#fcd34d'}}}}</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
+
+/* ── SCROLLBARS ── */
+.no-scroll::-webkit-scrollbar{display:none;}
+.no-scroll{-ms-overflow-style:none;scrollbar-width:none;}
+#items-carrito::-webkit-scrollbar{width:3px;}
+#items-carrito::-webkit-scrollbar-thumb{background:#16a34a;border-radius:4px;}
+
+/* ── MEGA MENÚ DESKTOP ── */
+#mega-wrapper{position:relative;}
+#mega-dropdown{
+  display:none;position:absolute;top:100%;left:0;z-index:9999;
+  min-width:860px;background:#fff;
+  box-shadow:0 8px 40px rgba(0,0,0,.18);
+  border-top:3px solid #16a34a;flex-direction:row;
+}
+#mega-dropdown.open{display:flex;}
+#mega-cats-list button{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;padding:10px 16px;font-size:13px;font-weight:500;color:#333;
+  background:transparent;border:none;cursor:pointer;text-align:left;gap:8px;
+  border-left:3px solid transparent;transition:all .15s;
+}
+#mega-cats-list button:hover,
+#mega-cats-list button.active{background:#f0fdf4;color:#16a34a;border-left-color:#16a34a;}
+.sub-panel{display:none;}
+.sub-panel.active{display:grid;}
+
+/* ── DRAWER MÓVIL ── */
+#drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:8000;}
+#drawer-overlay.open{display:block;}
+#drawer{
+  position:fixed;top:0;left:-100%;width:82%;max-width:320px;height:100%;
+  background:#fff;z-index:8001;overflow-y:auto;
+  transition:left .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+}
+#drawer.open{left:0;}
+.drawer-cat-btn{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 16px;font-size:14px;font-weight:600;color:#333;
+  border-bottom:1px solid #f0f0f0;cursor:pointer;transition:background .15s;
+}
+.drawer-cat-btn:hover{background:#f0fdf4;color:#16a34a;}
+.drawer-subcat{
+  display:none;background:#f9fafb;padding:8px 0;
+}
+.drawer-subcat.open{display:block;}
+.drawer-subcat a{
+  display:block;padding:9px 32px;font-size:13px;color:#555;
+  cursor:pointer;transition:color .15s;
+}
+.drawer-subcat a:hover{color:#16a34a;}
+
+/* ── CARDS ── */
+.prod-card{transition:all .2s ease;cursor:pointer;}
+.prod-card:hover{box-shadow:0 6px 24px rgba(0,0,0,.13);transform:translateY(-2px);}
+.oferta-badge{position:absolute;top:7px;left:7px;background:#ef4444;color:#fff;
+  font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.4px;}
+
+/* ── CHECKOUT SLIDE ── */
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.slide-in{animation:slideIn .28s cubic-bezier(.4,0,.2,1) forwards;}
+
+/* ── BANNER ── */
+#banner-track{display:flex;transition:transform .5s ease;}
+
+/* ── SKELETON LOADING ── */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.animate-pulse{animation:pulse 1.5s ease-in-out infinite;}
+
+/* ── STOCK BADGE ── */
+.grayscale{filter:grayscale(100%);}
+
+/* ── SECTION TITLE ── */
+.sec-title{
+  font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;color:#166534;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.sec-title::before{content:'';display:block;width:5px;height:22px;background:#fcd34d;border-radius:3px;}
+
+/* ── DELIVERY BAR ── */
+.del-bar-item{display:flex;align-items:center;gap:10px;padding:4px 0;}
+.del-icon{width:38px;height:38px;border-radius:50%;background:#dcfce7;
+  display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+
+/* ── TOP BAR LINKS ── */
+#top-bar a{color:#bbf7d0;transition:color .15s;}
+#top-bar a:hover{color:#fff;}
+
+/* ── WHATSAPP FLOAT ── */
+.wa-float{
+  position:fixed;bottom:80px;right:16px;width:52px;height:52px;
+  background:#25d366;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;box-shadow:0 4px 16px rgba(37,211,102,.5);
+  z-index:480;cursor:pointer;transition:transform .2s;text-decoration:none;
+}
+.wa-float:hover{transform:scale(1.1);}
+@media(min-width:768px){
+  .wa-float{bottom:24px;right:24px;}
+}
+
+/* ── BOTTOM NAV MÓVIL ── */
+#bottom-nav{
+  display:flex;position:fixed;bottom:0;left:0;right:0;
+  background:#fff;border-top:1px solid #e5e7eb;
+  z-index:470;height:60px;
+}
+#bottom-nav button, #bottom-nav a{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;font-size:10px;font-weight:600;color:#555;cursor:pointer;
+  background:transparent;border:none;text-decoration:none;
+  transition:color .15s;padding:6px 0;
+}
+#bottom-nav button:active, #bottom-nav a:active{color:#16a34a;}
+#bottom-nav .bn-icon{font-size:20px;line-height:1;}
+@media(min-width:768px){#bottom-nav{display:none;}}
+
+/* ── BODY PADDING BOTTOM MÓVIL ── */
+@media(max-width:767px){body{padding-bottom:60px;}}
+
+/* ── RESPONSIVE AJUSTES ── */
+@media(max-width:767px){
+  /* Top bar solo esencial */
+  #topbar-extra{display:none;}
+
+  /* Header más compacto */
+  .header-logo-text{display:none;}
+
+  /* Ocultar nav links en móvil */
+  #nav-links-desktop{display:none;}
+
+  /* Banner más pequeño */
+  #banner-container{height:200px!important;}
+  #banner-container .slide-inner{height:200px!important;padding:20px 20px!important;}
+  #banner-container h2{font-size:28px!important;margin-bottom:12px!important;}
+  #banner-container p{font-size:11px!important;margin-bottom:12px!important;}
+  #banner-container button{padding:8px 16px!important;font-size:12px!important;}
+  #banner-container .deco-emoji{display:none!important;}
+
+  /* Títulos sección */
+  .sec-title{font-size:16px;}
+
+  /* Circles más pequeños */
+  .cat-circle-img{width:60px!important;height:60px!important;}
+
+  /* Beneficios en 2 columnas */
+  #benefits-grid{grid-template-columns:1fr 1fr!important;}
+}
+
+@media(max-width:400px){
+  #banner-container h2{font-size:22px!important;}
+}
+
+/* Swipe touch en banner */
+#banner-container{touch-action:pan-y;}
+</style>
+</head>
+<body>
+
+<!-- ── ALERTA PÁGINA EN CONSTRUCCIÓN ── -->
+<div id="alerta-construccion" style="
+  background:#f59e0b;color:#1c1917;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;font-size:13px;font-weight:700;
+  position:relative;z-index:9999;gap:8px;flex-wrap:wrap;
+">
+  <span style="display:flex;align-items:center;gap:8px;">
+    🚧 <span>Esta página está en construcción — algunos productos y funciones pueden no estar disponibles aún.</span>
+  </span>
+  <button onclick="document.getElementById('alerta-construccion').remove()" style="
+    background:rgba(0,0,0,.15);border:none;cursor:pointer;
+    border-radius:6px;padding:3px 10px;font-size:16px;font-weight:700;color:#1c1917;
+    flex-shrink:0;
+  ">✕</button>
+</div>
+
+<!-- ════════ TOP BAR ════════ -->
+<div id="top-bar" class="bg-green-900 text-white text-xs py-1.5 hidden sm:block">
+  <div class="max-w-7xl mx-auto px-4 flex justify-between items-center flex-wrap gap-2">
+    <div class="flex items-center gap-3 flex-wrap">
+      <span>📍 Av. Ramón Picarte 779, Valdivia</span>
+      <span class="text-white/30">|</span>
+      <a href="tel:+56944350559">📞 +56 9 4435 0559</a>
+      <span id="topbar-extra" class="flex items-center gap-3">
+        <span class="text-white/30">|</span>
+        <a href="mailto:compraslabarata@gmail.com">✉ compraslabarata@gmail.com</a>
+      </span>
+    </div>
+    <div class="flex items-center gap-3 flex-wrap">
+      <a href="https://www.facebook.com/p/Distribuidora-La-Barata-Valdivia-61574921535493/" target="_blank">Facebook</a>
+      <span class="text-white/30">|</span>
+      <a href="https://www.instagram.com/distribuidora_labarata/" target="_blank">Instagram</a>
+      <span class="text-white/30">|</span>
+      <span class="text-yellow-300 font-semibold">🎁 ¡1er despacho gratis!</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ HEADER ════════ -->
+<header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-[200]">
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 h-[60px] sm:h-[68px] flex items-center gap-2 sm:gap-4">
+
+    <!-- HAMBURGER (solo móvil) -->
+    <button onclick="abrirDrawer()" class="md:hidden flex-shrink-0 w-10 h-10 flex items-center justify-center text-verde rounded-lg hover:bg-gray-100 active:bg-gray-200">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+
+    <!-- LOGO -->
+    <div class="flex items-center gap-2 cursor-pointer flex-shrink-0" onclick="irInicio()">
+      <img src="./LOGO_LA_BARATA.jpg" alt="La Barata" class="h-12 sm:h-14 w-auto rounded-xl shadow object-contain" style="max-width:160px;">
+      <div class="header-logo-text hidden lg:block leading-tight">
+        <div class="text-[10px] text-gray-400 uppercase tracking-wider">Distribuidora</div>
+        <div class="text-[11px] font-bold text-verde">Tu vecino online · Valdivia</div>
+      </div>
+    </div>
+
+    <!-- BUSCADOR -->
+    <div class="flex-1 min-w-0">
+      <div class="relative">
+        <input id="buscador" type="text" oninput="buscarProducto(this.value)"
+          placeholder="Buscar productos..."
+          class="w-full border-2 border-verde rounded-full py-2 sm:py-2.5 pl-4 pr-10 text-sm
+                 focus:outline-none focus:ring-2 focus:ring-verde/30 bg-white">
+        <button class="absolute right-3 top-1/2 -translate-y-1/2 text-verde">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ACCIONES -->
+    <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+      <a href="https://wa.me/56944350559" target="_blank"
+        class="hidden md:flex items-center gap-1.5 border border-gray-200 hover:border-verde
+               text-gray-600 hover:text-verde text-sm font-semibold px-3 py-2 rounded-lg transition-colors">
+        <svg class="w-4 h-4 fill-current text-green-500" viewBox="0 0 24 24">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.122 1.532 5.856L0 24l6.335-1.663A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.007-1.37l-.36-.213-3.757.985.999-3.657-.234-.376A9.818 9.818 0 1 1 12 21.818z"/>
+        </svg>
+        <span class="hidden lg:inline">944 350 559</span>
+      </a>
+      <button onclick="toggleCarrito()"
+        class="flex items-center gap-1.5 bg-naranja hover:bg-orange-600 text-white
+               font-bold px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg transition-colors shadow-sm relative">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+        </svg>
+        <span class="hidden sm:inline text-sm">Mi Pedido</span>
+        <span id="badge-nav" class="bg-white text-naranja text-xs font-black rounded-full
+               w-5 h-5 flex items-center justify-center leading-none">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+
+<!-- ════════ NAV VERDE DESKTOP ════════ -->
+<div class="bg-verde sticky top-[60px] sm:top-[68px] z-[150] shadow-md hidden md:block">
+  <div class="max-w-7xl mx-auto flex items-center h-11">
+
+    <div id="mega-wrapper" class="h-full flex-shrink-0">
+      <button id="btn-categorias"
+        class="h-full px-5 flex items-center gap-2 font-bold text-white text-sm
+               hover:bg-green-700 transition-colors border-r border-green-600 whitespace-nowrap"
+        onclick="toggleMega()" onmouseenter="abrirMega()">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        Categorías
+      </button>
+
+      <div id="mega-dropdown" onmouseleave="cerrarMega()">
+        <div id="mega-cats-list" class="w-52 bg-gray-50 border-r border-gray-200 flex-shrink-0 py-1 overflow-y-auto" style="max-height:480px">
+          <button onmouseenter="activarSub('sub-despensa',this)"   onclick="verCat('despensa','Despensa')"               class="active"><span class="flex items-center gap-2">🥫 Despensa</span><span class="text-gray-400">›</span></button>
+          <button onmouseenter="activarSub('sub-aseo',this)"       onclick="verCat('aseo','Limpieza y Aseo')"            ><span class="flex items-center gap-2">🧼 Limpieza y Aseo</span><span class="text-gray-400">›</span></button>
+          <button onmouseenter="activarSub('sub-desayuno',this)"   onclick="verCat('desayuno','Desayuno y Dulces')"      ><span class="flex items-center gap-2">☕ Desayuno y Dulces</span><span class="text-gray-400">›</span></button>
+          <button onmouseenter="activarSub('sub-lacteos',this)"    onclick="verCat('lacteos','Lácteos')"                 ><span class="flex items-center gap-2">🥛 Lácteos</span><span class="text-gray-400">›</span></button>
+          <button onmouseenter="activarSub('sub-panaderia',this)"  onclick="verCat('panaderia','Panadería')"             ><span class="flex items-center gap-2">🍞 Panadería</span><span class="text-gray-400">›</span></button>
+          <button onmouseenter="activarSub('sub-bebidas',this)"    onclick="verCat('bebidas','Bebidas y Jugos')"         ><span class="flex items-center gap-2">🧃 Bebidas y Jugos</span><span class="text-gray-400">›</span></button>
+          <button onmouseenter="activarSub('sub-congelados',this)" onclick="verCat('congelados','Congelados')"           ><span class="flex items-center gap-2">🧊 Congelados</span><span class="text-gray-400">›</span></button>
+          <button onmouseenter="activarSub('sub-mascotas',this)"   onclick="verCat('mascotas','Mascotas')"               ><span class="flex items-center gap-2">🐕 Mascotas</span><span class="text-gray-400">›</span></button>
+          <button onmouseenter="activarSub('sub-bebe',this)"       onclick="verCat('bebe','Mi Bebé')"                   ><span class="flex items-center gap-2">🍼 Mi Bebé</span><span class="text-gray-400">›</span></button>
+          <button onmouseenter="activarSub('sub-farmacia',this)"   onclick="verCat('farmacia','Farmacia y Cuidado')"     ><span class="flex items-center gap-2">💊 Farmacia y Cuidado</span><span class="text-gray-400">›</span></button>
+          <button onmouseenter="activarSub('sub-carnes',this)"     onclick="verCat('carnes','Carnes y Embutidos')"       ><span class="flex items-center gap-2">🥩 Carnes y Embutidos</span><span class="text-gray-400">›</span></button>
+        </div>
+        <div class="flex-1 p-5 overflow-y-auto" style="max-height:480px">
+
+          <!-- DESPENSA -->
+          <div id="sub-despensa" class="sub-panel active grid-cols-3 gap-x-8 gap-y-4">
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Básicos</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Arroz y Legumbres','Arroz y Legumbres')">Arroz y Legumbres</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Fideos y Pastas','Fideos y Pastas')">Fideos y Pastas</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Harinas y Cereales','Harinas y Cereales')">Harinas y Cereales</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Azúcar y Endulzantes','Azúcar y Endulzantes')">Azúcar y Endulzantes</li>
+              </ul>
+            </div>
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Aderezos y Salsas</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Aceites y Aderezos','Aceites y Aderezos')">Aceites y Aderezos</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Salsas y Condimentos','Salsas y Condimentos')">Salsas y Condimentos</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Conservas','Conservas')">Conservas</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Conservas Mar','Conservas del Mar')">Conservas del Mar</li>
+              </ul>
+            </div>
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Bebidas y Más</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Café','Café')">Café</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Té e Infusiones','Té e Infusiones')">Té e Infusiones</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Yerba Mate','Yerba Mate')">Yerba Mate</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Embutidos y Fiambres','Embutidos y Fiambres')">Embutidos y Fiambres</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Pan Industrial','Pan Industrial')">Pan Industrial</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','A Granel','A Granel')">A Granel</li>
+                <li class="font-bold text-verde cursor-pointer" onclick="verCat('despensa','Despensa')">Ver todo →</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- ASEO -->
+          <div id="sub-aseo" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Lavado</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Detergentes','Detergentes')">Detergentes</li>
+                <li class="font-bold text-verde cursor-pointer" onclick="verCat('aseo','Limpieza y Aseo')">Ver todo →</li>
+              </ul>
+            </div>
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Limpieza Hogar</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Limpieza Hogar','Limpieza Hogar')">Limpieza Hogar</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Limpiadores','Limpiadores y Gel')">Limpiadores y Gel</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Insecticidas','Insecticidas')">Insecticidas</li>
+                <li class="font-bold text-verde cursor-pointer" onclick="verCat('aseo','Limpieza y Aseo')">Ver todo →</li>
+              </ul>
+            </div>
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Higiene Personal</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Aseo Personal','Aseo Personal')">Aseo Personal</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Jabones','Jabones')">Jabones</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Shampoo','Shampoo')">Shampoo</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Toallas de Papel','Toallas de Papel')">Toallas de Papel</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Papeles y Resmas','Papeles y Resmas')">Papeles y Resmas</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Papel Industrial','Papel Industrial')">Papel Industrial</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Papelería y Útiles','Papelería y Útiles')">Papelería y Útiles</li>
+                <li class="font-bold text-verde cursor-pointer" onclick="verCat('aseo','Limpieza y Aseo')">Ver todo →</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- DESAYUNO -->
+          <div id="sub-desayuno" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Café y Dulces</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('desayuno','Café','Café')">Café</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('desayuno','Chocolates','Chocolates')">Chocolates</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('desayuno','Caramelos y Golosinas','Caramelos y Golosinas')">Caramelos y Golosinas</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('desayuno','Galletas','Galletas')">Galletas</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('desayuno','Confites y Dulces','Confites y Dulces')">Confites y Dulces</li>
+                <li class="font-bold text-verde cursor-pointer" onclick="verCat('desayuno','Desayuno y Dulces')">Ver todo →</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- LÁCTEOS -->
+          <div id="sub-lacteos" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Leche y Yoghurt</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('lacteos','Leche Líquida','Leche Líquida')">Leche Líquida</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('lacteos','Leche en Polvo','Leche en Polvo')">Leche en Polvo</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('lacteos','Yoghurt','Yoghurt')">Yoghurt</li>
+              </ul>
+            </div>
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Quesos y Untables</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('lacteos','Quesos','Quesos')">Quesos</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('lacteos','Mantequilla y Margarina','Mantequilla y Margarina')">Mantequilla y Margarina</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('lacteos','Manjar y Postres','Manjar y Postres')">Manjar y Postres</li>
+              </ul>
+            </div>
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Cremas</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('lacteos','Cremas','Cremas')">Cremas</li>
+                <li class="font-bold text-verde cursor-pointer" onclick="verCat('lacteos','Lácteos')">Ver todo →</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- PANADERÍA -->
+          <div id="sub-panaderia" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Panadería</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('panaderia','Panadería','Panadería')">Pan y Levaduras</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('panaderia','Levaduras e Insumos','Levaduras e Insumos')">Levaduras e Insumos</li>
+                <li class="font-bold text-verde cursor-pointer" onclick="verCat('panaderia','Panadería')">Ver todo →</li>
+              </ul>
+            </div>
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Pastelería</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('panaderia','Pastelería','Pastelería')">Pastelería</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('panaderia','Insumos Pastelería','Insumos Pastelería')">Insumos Pastelería</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('panaderia','Mermeladas','Mermeladas')">Mermeladas</li>
+                <li class="font-bold text-verde cursor-pointer" onclick="verCat('panaderia','Panadería')">Ver todo →</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- BEBIDAS -->
+          <div id="sub-bebidas" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Bebidas</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('bebidas','Gaseosas y Refrescos','Gaseosas y Refrescos')">Gaseosas y Refrescos</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('bebidas','Jugos y Néctares','Jugos y Néctares')">Jugos y Néctares</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('bebidas','Energizantes','Energizantes')">Energizantes</li>
+                <li class="font-bold text-verde cursor-pointer" onclick="verCat('bebidas','Bebidas y Jugos')">Ver todo →</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- CONGELADOS -->
+          <div id="sub-congelados" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Congelados</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('congelados','Carnes Congeladas','Carnes Congeladas')">Carnes Congeladas</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('congelados','Papas Prefritas','Papas Prefritas')">Papas Prefritas</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('congelados','Congelados','Congelados')">Otros Congelados</li>
+                <li class="font-bold text-verde cursor-pointer" onclick="verCat('congelados','Congelados')">Ver todo →</li>
+              </ul>
+            </div>
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Helados</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('congelados','Helados','Helados')">Helados</li>
+                <li class="font-bold text-verde cursor-pointer" onclick="verCat('congelados','Congelados')">Ver todo →</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- MASCOTAS -->
+          <div id="sub-mascotas" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Mascotas</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('mascotas','Alimento Perro','Alimento Perro')">Alimento Perro</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('mascotas','Alimento Gato','Alimento Gato')">Alimento Gato</li>
+                <li class="font-bold text-verde cursor-pointer" onclick="verCat('mascotas','Mascotas')">Ver todo →</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- BEBÉ -->
+          <div id="sub-bebe" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Mi Bebé</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('bebe','Pañales','Pañales')">Pañales</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('bebe','Accesorios Bebé','Accesorios Bebé')">Accesorios Bebé</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('bebe','Cuidado Bebé','Cuidado Bebé')">Cuidado Bebé</li>
+                <li class="font-bold text-verde cursor-pointer" onclick="verCat('bebe','Mi Bebé')">Ver todo →</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- FARMACIA -->
+          <div id="sub-farmacia" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Farmacia y Cuidado</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('farmacia','Pañales Adulto','Pañales Adulto')">Pañales Adulto</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('farmacia','Apósitos','Apósitos')">Apósitos</li>
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('farmacia','Cuidado Adulto Mayor','Cuidado Adulto Mayor')">Cuidado General</li>
+                <li class="font-bold text-verde cursor-pointer" onclick="verCat('farmacia','Farmacia y Cuidado')">Ver todo →</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- CARNES -->
+          <div id="sub-carnes" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
+            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Carnes y Embutidos</h4>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('carnes','Embutidos','Embutidos y Salchichas')">Embutidos y Salchichas</li>
+                <li class="font-bold text-verde cursor-pointer" onclick="verCat('carnes','Carnes y Embutidos')">Ver todo →</li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <nav id="nav-links-desktop" class="flex items-center h-full overflow-x-auto no-scroll">
+      <button onclick="irInicio()"                              class="px-3 h-full text-white/90 hover:text-white hover:bg-green-700 text-sm font-medium transition-colors whitespace-nowrap">Inicio</button>
+      <button onclick="verCat('ofertas','Ofertas')"             class="px-3 h-full text-amarillo font-bold hover:bg-green-700 text-sm transition-colors whitespace-nowrap">🔥 Ofertas</button>
+      <button onclick="verCat('despensa','Despensa')"           class="px-3 h-full text-white/90 hover:text-white hover:bg-green-700 text-sm transition-colors whitespace-nowrap">Despensa</button>
+      <button onclick="verCat('aseo','Limpieza y Aseo')"        class="px-3 h-full text-white/90 hover:text-white hover:bg-green-700 text-sm transition-colors whitespace-nowrap">Limpieza</button>
+      <button onclick="verCat('panaderia','Panadería')"         class="px-3 h-full text-white/90 hover:text-white hover:bg-green-700 text-sm transition-colors whitespace-nowrap">Panadería</button>
+      <button onclick="verCat('bebidas','Bebidas y Jugos')"     class="px-3 h-full text-white/90 hover:text-white hover:bg-green-700 text-sm transition-colors whitespace-nowrap">Bebidas</button>
+      <button onclick="verCat('mascotas','Mascotas')"           class="px-3 h-full text-white/90 hover:text-white hover:bg-green-700 text-sm transition-colors whitespace-nowrap">Mascotas</button>
+    </nav>
+  </div>
+</div>
+<div id="mega-overlay" onclick="cerrarMega()" style="display:none;position:fixed;inset:0;z-index:148;"></div>
+
+
+<!-- ════════ DRAWER MENÚ MÓVIL ════════ -->
+<div id="drawer-overlay" onclick="cerrarDrawer()"></div>
+<div id="drawer">
+  <!-- Header del drawer -->
+  <div class="bg-verde text-white px-4 py-4 flex items-center justify-between flex-shrink-0">
+    <img src="./LOGO_LA_BARATA.jpg" alt="La Barata" class="h-10 w-auto rounded-lg object-contain" style="max-width:130px;">
+    <button onclick="cerrarDrawer()" class="text-white/70 hover:text-white text-3xl leading-none font-light">×</button>
+  </div>
+  <!-- Info rápida -->
+  <div class="bg-green-50 px-4 py-2.5 border-b border-gray-200 flex-shrink-0">
+    <p class="text-xs text-verde font-bold">📍 Av. Ramón Picarte 779, Valdivia</p>
+    <p class="text-xs text-gray-600 mt-0.5">⏰ Lun–Vie: 09:00–18:30 hrs · <a href="tel:+56944350559" class="text-verde font-bold">+56 9 4435 0559</a></p>
+  </div>
+  <!-- Links rápidos -->
+  <div class="px-4 py-3 border-b border-gray-200 flex-shrink-0 flex gap-2 flex-wrap">
+    <button onclick="cerrarDrawer();irInicio()" class="bg-verde text-white text-xs font-bold px-3 py-1.5 rounded-lg">🏠 Inicio</button>
+    <button onclick="cerrarDrawer();verCat('ofertas','Ofertas')" class="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg">🔥 Ofertas</button>
+    <button onclick="cerrarDrawer();verCat('panaderia','Panadería')" class="bg-amber-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg">🍞 Panadería</button>
+  </div>
+  <!-- Categorías accordion -->
+  <div class="flex-1 overflow-y-auto">
+    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4 py-2 bg-gray-50">Todas las categorías</p>
+
+    <div class="drawer-cat-btn" onclick="toggleDrawerSub('dsub-despensa')">
+      <span>🥫 Despensa</span><span class="text-gray-400 text-lg" id="arr-despensa">›</span>
+    </div>
+    <div id="dsub-despensa" class="drawer-subcat">
+      <a onclick="cerrarDrawer();verSubCat('despensa','Arroz y Legumbres','Arroz y Legumbres')">Arroz y Legumbres</a>
+      <a onclick="cerrarDrawer();verSubCat('despensa','Fideos y Pastas','Fideos y Pastas')">Fideos y Pastas</a>
+      <a onclick="cerrarDrawer();verSubCat('despensa','Aceites y Aderezos','Aceites y Aderezos')">Aceites y Aderezos</a>
+      <a onclick="cerrarDrawer();verSubCat('despensa','Harinas y Cereales','Harinas y Cereales')">Harinas y Cereales</a>
+      <a onclick="cerrarDrawer();verSubCat('despensa','Conservas','Conservas')">Conservas</a>
+      <a onclick="cerrarDrawer();verSubCat('despensa','Café','Café')">Café</a>
+      <a onclick="cerrarDrawer();verSubCat('despensa','Té e Infusiones','Té e Infusiones')">Té e Infusiones</a>
+      <a onclick="cerrarDrawer();verCat('despensa','Despensa')">Ver todo Despensa →</a>
+    </div>
+
+    <div class="drawer-cat-btn" onclick="toggleDrawerSub('dsub-aseo')">
+      <span>🧼 Limpieza y Aseo</span><span class="text-gray-400 text-lg" id="arr-aseo">›</span>
+    </div>
+    <div id="dsub-aseo" class="drawer-subcat">
+      <a onclick="cerrarDrawer();verSubCat('aseo','Detergentes','Detergentes')">Detergentes</a>
+      <a onclick="cerrarDrawer();verSubCat('aseo','Limpieza Hogar','Limpieza Hogar')">Limpieza Hogar</a>
+      <a onclick="cerrarDrawer();verSubCat('aseo','Aseo Personal','Aseo Personal')">Aseo Personal</a>
+      <a onclick="cerrarDrawer();verSubCat('aseo','Jabones','Jabones')">Jabones</a>
+      <a onclick="cerrarDrawer();verSubCat('aseo','Toallas de Papel','Toallas de Papel')">Toallas y Papeles</a>
+      <a onclick="cerrarDrawer();verCat('aseo','Limpieza y Aseo')">Ver todo →</a>
+    </div>
+
+    <div class="drawer-cat-btn" onclick="toggleDrawerSub('dsub-desayuno')">
+      <span>☕ Desayuno y Dulces</span><span class="text-gray-400 text-lg" id="arr-desayuno">›</span>
+    </div>
+    <div id="dsub-desayuno" class="drawer-subcat">
+      <a onclick="cerrarDrawer();verSubCat('desayuno','Café','Café')">Café</a>
+      <a onclick="cerrarDrawer();verSubCat('desayuno','Chocolates','Chocolates')">Chocolates</a>
+      <a onclick="cerrarDrawer();verSubCat('desayuno','Caramelos y Golosinas','Caramelos y Golosinas')">Caramelos y Golosinas</a>
+      <a onclick="cerrarDrawer();verSubCat('desayuno','Galletas','Galletas')">Galletas</a>
+      <a onclick="cerrarDrawer();verCat('desayuno','Desayuno y Dulces')">Ver todo →</a>
+    </div>
+
+    <div class="drawer-cat-btn" onclick="cerrarDrawer();verCat('lacteos','Lácteos')">
+      <span>🥛 Lácteos</span><span class="text-gray-400">›</span>
+    </div>
+
+    <div class="drawer-cat-btn" onclick="toggleDrawerSub('dsub-panaderia')">
+      <span>🍞 Panadería</span><span class="text-gray-400 text-lg" id="arr-panaderia">›</span>
+    </div>
+    <div id="dsub-panaderia" class="drawer-subcat">
+      <a onclick="cerrarDrawer();verSubCat('panaderia','Panadería','Panadería')">Pan y Levaduras</a>
+      <a onclick="cerrarDrawer();verSubCat('panaderia','Pastelería','Pastelería')">Pastelería</a>
+      <a onclick="cerrarDrawer();verSubCat('panaderia','Mermeladas','Mermeladas')">Mermeladas</a>
+      <a onclick="cerrarDrawer();verSubCat('panaderia','Insumos Pastelería','Insumos Pastelería')">Insumos Pastelería</a>
+      <a onclick="cerrarDrawer();verCat('panaderia','Panadería')">Ver todo →</a>
+    </div>
+
+    <div class="drawer-cat-btn" onclick="toggleDrawerSub('dsub-bebidas')">
+      <span>🧃 Bebidas y Jugos</span><span class="text-gray-400 text-lg" id="arr-bebidas">›</span>
+    </div>
+    <div id="dsub-bebidas" class="drawer-subcat">
+      <a onclick="cerrarDrawer();verSubCat('bebidas','Gaseosas y Refrescos','Gaseosas y Refrescos')">Gaseosas y Refrescos</a>
+      <a onclick="cerrarDrawer();verSubCat('bebidas','Jugos y Néctares','Jugos y Néctares')">Jugos y Néctares</a>
+      <a onclick="cerrarDrawer();verSubCat('bebidas','Energizantes','Energizantes')">Energizantes</a>
+      <a onclick="cerrarDrawer();verCat('bebidas','Bebidas y Jugos')">Ver todo →</a>
+    </div>
+
+    <div class="drawer-cat-btn" onclick="cerrarDrawer();verCat('mascotas','Mascotas')">
+      <span>🐕 Mascotas</span><span class="text-gray-400">›</span>
+    </div>
+    <div class="drawer-cat-btn" onclick="cerrarDrawer();verCat('bebe','Mi Bebé')">
+      <span>🍼 Mi Bebé</span><span class="text-gray-400">›</span>
+    </div>
+    <div class="drawer-cat-btn" onclick="cerrarDrawer();verCat('farmacia','Farmacia y Cuidado')">
+      <span>💊 Farmacia y Cuidado</span><span class="text-gray-400">›</span>
+    </div>
+    <div class="drawer-cat-btn" onclick="cerrarDrawer();verCat('congelados','Congelados')">
+      <span>🧊 Congelados</span><span class="text-gray-400">›</span>
+    </div>
+    <div class="drawer-cat-btn" onclick="cerrarDrawer();verCat('carnes','Carnes y Embutidos')">
+      <span>🥩 Carnes y Embutidos</span><span class="text-gray-400">›</span>
+    </div>
+  </div>
+  <!-- Footer drawer -->
+  <div class="p-4 border-t border-gray-200 flex-shrink-0 bg-gray-50">
+    <a href="https://wa.me/56944350559" target="_blank"
+      class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm transition-colors">
+      💬 Consultar por WhatsApp
+    </a>
+  </div>
+</div>
+
+
+<!-- ════════ BARRA BENEFICIOS ════════ -->
+<div class="bg-white border-b border-gray-200 shadow-sm">
+  <div id="benefits-grid" class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+    <div class="del-bar-item">
+      <div class="del-icon">🚚</div>
+      <div><p class="font-bold text-verde text-xs sm:text-sm leading-tight">Despacho a domicilio</p><p class="text-[10px] sm:text-xs text-gray-500">Toda Valdivia</p></div>
+    </div>
+    <div class="del-bar-item">
+      <div class="del-icon" style="background:#fff7ed;">⏰</div>
+      <div><p class="font-bold text-naranja text-xs sm:text-sm leading-tight">Mismo día</p><p class="text-[10px] sm:text-xs text-gray-500">Lun–Vie 09:00–18:30</p></div>
+    </div>
+    <div class="del-bar-item">
+      <div class="del-icon">🎁</div>
+      <div><p class="font-bold text-verde text-xs sm:text-sm leading-tight">1er despacho gratis</p><p class="text-[10px] sm:text-xs text-gray-500">Clientes nuevos</p></div>
+    </div>
+    <div class="del-bar-item">
+      <div class="del-icon" style="background:#fffbeb;">💬</div>
+      <div><p class="font-bold text-gray-800 text-xs sm:text-sm leading-tight">Pedidos WhatsApp</p><p class="text-[10px] sm:text-xs text-gray-500">+56 9 4435 0559</p></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════ VISTA INICIO ════════ -->
+<div id="vista-inicio">
+
+  <!-- BANNER CAROUSEL -->
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 pt-3 sm:pt-5">
+    <div id="banner-container" class="relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg group" style="height:200px">
+      <div id="banner-track" style="width:500%">
+        <div class="slide-inner" style="width:20%;float:left;height:200px;background:linear-gradient(135deg,#16a34a,#22c55e,#4ade80);display:flex;align-items:center;padding:20px 24px">
+          <div class="text-white flex-1"><p class="text-[10px] sm:text-sm font-semibold uppercase tracking-widest opacity-80 mb-1">Semana del ahorro</p>
+          <h2 class="text-3xl sm:text-5xl font-black leading-none mb-2 sm:mb-4">¡OFERTAS<br>SALVADORAS!</h2>
+          <button onclick="verCat('ofertas','Ofertas')" class="bg-amarillo text-gray-900 font-bold px-4 py-2 sm:px-6 sm:py-2.5 rounded-full text-xs sm:text-sm hover:bg-yellow-300 transition-colors">Ver Ofertas →</button></div>
+          <div class="deco-emoji text-7xl sm:text-[100px] ml-auto opacity-20">🛒</div>
+        </div>
+        <div class="slide-inner" style="width:20%;float:left;height:200px;background:linear-gradient(135deg,#1d4ed8,#06b6d4);display:flex;align-items:center;padding:20px 24px">
+          <div class="text-white flex-1"><p class="text-[10px] sm:text-sm font-semibold uppercase tracking-widest opacity-80 mb-1">Esta semana</p>
+          <h2 class="text-3xl sm:text-5xl font-black leading-none mb-2 sm:mb-4">LIMPIEZA<br>AL COSTO 🧼</h2>
+          <button onclick="verCat('aseo','Limpieza')" class="bg-white text-blue-700 font-bold px-4 py-2 sm:px-6 sm:py-2.5 rounded-full text-xs sm:text-sm">Ver productos →</button></div>
+          <div class="deco-emoji text-7xl sm:text-[100px] ml-auto opacity-20">✨</div>
+        </div>
+        <div class="slide-inner" style="width:20%;float:left;height:200px;background:linear-gradient(135deg,#f97316,#facc15);display:flex;align-items:center;padding:20px 24px">
+          <div class="text-white flex-1"><p class="text-[10px] sm:text-sm font-semibold uppercase tracking-widest opacity-80 mb-1">Para ellos</p>
+          <h2 class="text-3xl sm:text-5xl font-black leading-none mb-2 sm:mb-4">MASCOTAS<br>FELICES 🐕</h2>
+          <button onclick="verCat('mascotas','Mascotas')" class="bg-white text-orange-600 font-bold px-4 py-2 sm:px-6 sm:py-2.5 rounded-full text-xs sm:text-sm">Ver productos →</button></div>
+          <div class="deco-emoji text-7xl sm:text-[100px] ml-auto opacity-20">🐾</div>
+        </div>
+        <div class="slide-inner" style="width:20%;float:left;height:200px;background:linear-gradient(135deg,#7c3aed,#ec4899);display:flex;align-items:center;padding:20px 24px">
+          <div class="text-white flex-1"><p class="text-[10px] sm:text-sm font-semibold uppercase tracking-widest opacity-80 mb-1">Refresca tu día</p>
+          <h2 class="text-3xl sm:text-5xl font-black leading-none mb-2 sm:mb-4">BEBIDAS<br>Y JUGOS 🥤</h2>
+          <button onclick="verCat('bebidas','Bebidas')" class="bg-white text-purple-700 font-bold px-4 py-2 sm:px-6 sm:py-2.5 rounded-full text-xs sm:text-sm">Ver productos →</button></div>
+          <div class="deco-emoji text-7xl sm:text-[100px] ml-auto opacity-20">🍹</div>
+        </div>
+        <div class="slide-inner" style="width:20%;float:left;height:200px;background:linear-gradient(135deg,#374151,#6b7280);display:flex;align-items:center;padding:20px 24px">
+          <div class="text-white flex-1"><p class="text-[10px] sm:text-sm font-semibold uppercase tracking-widest opacity-80 mb-1">Cobertura Valdivia</p>
+          <h2 class="text-3xl sm:text-5xl font-black leading-none mb-2 sm:mb-4">🚚 DESPACHO<br>DIRECTO</h2>
+          <button class="bg-amarillo text-gray-900 font-bold px-4 py-2 sm:px-6 sm:py-2.5 rounded-full text-xs sm:text-sm">Saber más →</button></div>
+          <div class="deco-emoji text-7xl sm:text-[100px] ml-auto opacity-20">📦</div>
+        </div>
+      </div>
+      <div style="clear:both"></div>
+      <button onclick="moveBanner(-1)" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-8 h-8 sm:w-10 sm:h-10 rounded-full text-lg sm:text-xl opacity-0 group-hover:opacity-100 transition-opacity">‹</button>
+      <button onclick="moveBanner(1)"  class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-8 h-8 sm:w-10 sm:h-10 rounded-full text-lg sm:text-xl opacity-0 group-hover:opacity-100 transition-opacity">›</button>
+      <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+        <button id="bd0" onclick="goBanner(0)" class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white shadow transition-all" style="transform:scale(1.3)"></button>
+        <button id="bd1" onclick="goBanner(1)" class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white/50 shadow transition-all"></button>
+        <button id="bd2" onclick="goBanner(2)" class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white/50 shadow transition-all"></button>
+        <button id="bd3" onclick="goBanner(3)" class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white/50 shadow transition-all"></button>
+        <button id="bd4" onclick="goBanner(4)" class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white/50 shadow transition-all"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CÍRCULOS CATEGORÍAS -->
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+    <div class="flex gap-3 sm:gap-4 overflow-x-auto no-scroll pb-2">
+      <div onclick="verCat('despensa','Despensa')"     class="flex-shrink-0 flex flex-col items-center gap-1.5 cursor-pointer group">
+        <div class="cat-circle-img w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
+          <img src="https://images.unsplash.com/photo-1586201375761-83865001e31c?w=150&h=150&fit=crop" class="w-full h-full object-cover" loading="lazy"></div>
+        <span class="text-[10px] sm:text-xs font-bold text-gray-600 group-hover:text-verde text-center">Despensa</span>
+      </div>
+      <div onclick="verCat('aseo','Limpieza y Aseo')" class="flex-shrink-0 flex flex-col items-center gap-1.5 cursor-pointer group">
+        <div class="cat-circle-img w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
+          <img src="https://images.unsplash.com/photo-1585421514738-01798e348b17?w=150&h=150&fit=crop" class="w-full h-full object-cover" loading="lazy"></div>
+        <span class="text-[10px] sm:text-xs font-bold text-gray-600 group-hover:text-verde text-center">Limpieza</span>
+      </div>
+      <div onclick="verCat('desayuno','Desayuno y Dulces')" class="flex-shrink-0 flex flex-col items-center gap-1.5 cursor-pointer group">
+        <div class="cat-circle-img w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
+          <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=150&h=150&fit=crop" class="w-full h-full object-cover" loading="lazy"></div>
+        <span class="text-[10px] sm:text-xs font-bold text-gray-600 group-hover:text-verde text-center">Desayuno</span>
+      </div>
+      <div onclick="verCat('lacteos','Lácteos')" class="flex-shrink-0 flex flex-col items-center gap-1.5 cursor-pointer group">
+        <div class="cat-circle-img w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
+          <img src="https://images.unsplash.com/photo-1563636619-e9143da7973b?w=150&h=150&fit=crop" class="w-full h-full object-cover" loading="lazy"></div>
+        <span class="text-[10px] sm:text-xs font-bold text-gray-600 group-hover:text-verde text-center">Lácteos</span>
+      </div>
+      <div onclick="verCat('panaderia','Panadería')" class="flex-shrink-0 flex flex-col items-center gap-1.5 cursor-pointer group">
+        <div class="cat-circle-img w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
+          <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=150&h=150&fit=crop" class="w-full h-full object-cover" loading="lazy"></div>
+        <span class="text-[10px] sm:text-xs font-bold text-gray-600 group-hover:text-verde text-center">Panadería</span>
+      </div>
+      <div onclick="verCat('bebidas','Bebidas y Jugos')" class="flex-shrink-0 flex flex-col items-center gap-1.5 cursor-pointer group">
+        <div class="cat-circle-img w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
+          <img src="https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=150&h=150&fit=crop" class="w-full h-full object-cover" loading="lazy"></div>
+        <span class="text-[10px] sm:text-xs font-bold text-gray-600 group-hover:text-verde text-center">Bebidas</span>
+      </div>
+      <div onclick="verCat('mascotas','Mascotas')" class="flex-shrink-0 flex flex-col items-center gap-1.5 cursor-pointer group">
+        <div class="cat-circle-img w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
+          <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=150&h=150&fit=crop" class="w-full h-full object-cover" loading="lazy"></div>
+        <span class="text-[10px] sm:text-xs font-bold text-gray-600 group-hover:text-verde text-center">Mascotas</span>
+      </div>
+      <div onclick="verCat('congelados','Congelados')" class="flex-shrink-0 flex flex-col items-center gap-1.5 cursor-pointer group">
+        <div class="cat-circle-img w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
+          <img src="https://images.unsplash.com/photo-1584473457406-6240486418e9?w=150&h=150&fit=crop" class="w-full h-full object-cover" loading="lazy"></div>
+        <span class="text-[10px] sm:text-xs font-bold text-gray-600 group-hover:text-verde text-center">Congelados</span>
+      </div>
+      <div onclick="verCat('carnes','Carnes')" class="flex-shrink-0 flex flex-col items-center gap-1.5 cursor-pointer group">
+        <div class="cat-circle-img w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
+          <img src="https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=150&h=150&fit=crop" class="w-full h-full object-cover" loading="lazy"></div>
+        <span class="text-[10px] sm:text-xs font-bold text-gray-600 group-hover:text-verde text-center">Carnes</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OFERTAS DESTACADAS -->
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 pb-5">
+    <div class="flex items-center justify-between mb-3 sm:mb-4">
+      <h2 class="sec-title">🔥 Ofertas destacadas <span class="bg-red-100 text-red-600 text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 rounded-full">Esta semana</span></h2>
+      <button onclick="verCat('ofertas','Ofertas')" class="text-xs sm:text-sm text-verde font-bold border border-verde px-3 py-1.5 rounded-lg hover:bg-verde hover:text-white transition-colors whitespace-nowrap">Ver todas →</button>
+    </div>
+    <div id="home-ofertas" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3"></div>
+  </div>
+
+  <!-- BANNER DESPACHO GRATIS -->
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 pb-5">
+    <div class="bg-gradient-to-r from-amarillo via-yellow-300 to-amarillo rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 shadow-sm">
+      <div>
+        <h3 class="font-black text-lg sm:text-2xl text-gray-900">🎁 ¡Despacho GRATIS en tu primer pedido!</h3>
+        <p class="text-gray-700 text-xs sm:text-sm mt-1">Válido en el radio urbano de Valdivia.</p>
+      </div>
+      <a href="https://wa.me/56944350559" target="_blank"
+        class="w-full sm:w-auto bg-verde hover:bg-green-700 text-white font-black px-6 py-3 rounded-xl shadow transition-colors whitespace-nowrap text-center text-sm sm:text-base">
+        Pedir ahora 💬
+      </a>
+    </div>
+  </div>
+
+  <!-- LO MÁS VENDIDO -->
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 pb-5">
+    <div class="flex items-center justify-between mb-3 sm:mb-4">
+      <h2 class="sec-title">⭐ Lo más vendido</h2>
+      <button onclick="verCat('despensa','Despensa')" class="text-xs sm:text-sm text-verde font-bold border border-verde px-3 py-1.5 rounded-lg hover:bg-verde hover:text-white transition-colors whitespace-nowrap">Ver todo →</button>
+    </div>
+    <div id="home-top" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3"></div>
+  </div>
+
+  <!-- INFO -->
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 pb-6">
+    <div class="bg-white border border-gray-100 rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">📍</div>
+        <div><p class="font-bold text-gray-800 text-xs sm:text-sm leading-tight">Av. Ramón Picarte 779</p><p class="text-[10px] sm:text-xs text-gray-500">Valdivia, Los Ríos</p></div>
+      </div>
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">⏰</div>
+        <div><p class="font-bold text-naranja text-xs sm:text-sm leading-tight">Horario</p><p class="text-[10px] sm:text-xs text-gray-600">Lun–Vie 09:00–18:30</p></div>
+      </div>
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">🚚</div>
+        <div><p class="font-bold text-verde text-xs sm:text-sm leading-tight">Despacho directo</p><p class="text-[10px] sm:text-xs text-gray-500">Toda Valdivia</p></div>
+      </div>
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">💬</div>
+        <div><p class="font-bold text-gray-800 text-xs sm:text-sm leading-tight">WhatsApp</p><p class="text-[10px] sm:text-xs text-gray-500">+56 9 4435 0559</p></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /vista-inicio -->
+
+
+<!-- ════════ VISTA CATÁLOGO ════════ -->
+<div id="vista-catalogo" class="hidden">
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 flex gap-4 sm:gap-6">
+
+    <aside class="hidden lg:block w-52 flex-shrink-0">
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden sticky top-28">
+        <div class="bg-verde text-white text-xs font-bold uppercase tracking-wide px-4 py-3">Filtrar por</div>
+        <div class="divide-y divide-gray-100 text-sm text-gray-600">
+          <div class="flex justify-between items-center px-4 py-3 cursor-pointer hover:text-verde hover:bg-gray-50"><span>Marcas</span><span class="text-lg font-light">+</span></div>
+          <div class="flex justify-between items-center px-4 py-3 cursor-pointer hover:text-verde hover:bg-gray-50"><span>Rango de precio</span><span class="text-lg font-light">+</span></div>
+          <div class="flex justify-between items-center px-4 py-3 cursor-pointer hover:text-verde hover:bg-gray-50"><span>Solo ofertas</span><span class="text-lg font-light">+</span></div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="flex-1 min-w-0">
+      <p class="text-xs text-gray-400 mb-2 sm:mb-3">
+        <span class="cursor-pointer hover:text-verde" onclick="irInicio()">Inicio</span>
+        <span class="mx-1">›</span>
+        <span id="bread" class="font-semibold text-gray-600">Categoría</span>
+      </p>
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2 sm:gap-3 mb-4 sm:mb-5 border-b-2 border-verde pb-3">
+        <div>
+          <h1 id="cat-titulo" class="text-xl sm:text-2xl font-black text-gray-800">Categoría</h1>
+          <p id="cat-count" class="text-xs sm:text-sm text-gray-400 mt-0.5">0 productos</p>
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+          <span class="text-gray-500 text-xs sm:text-sm">Ordenar:</span>
+          <select id="orden" onchange="reordenar()" class="border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700 text-xs sm:text-sm focus:outline-none focus:border-verde">
+            <option value="rel">Relevancia</option>
+            <option value="asc">Menor precio</option>
+            <option value="desc">Mayor precio</option>
+            <option value="az">Nombre A–Z</option>
+          </select>
+        </div>
+      </div>
+      <div id="cat-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4"></div>
+    </main>
+  </div>
+</div>
+
+
+<!-- ════════ NEWSLETTER ════════ -->
+<div class="bg-gray-100 border-t border-gray-200 py-8 sm:py-10">
+  <div class="max-w-3xl mx-auto px-3 sm:px-4 text-center">
+    <h3 class="text-lg sm:text-xl font-black text-gray-800 mb-1">📬 Suscríbete a nuestro newsletter</h3>
+    <p class="text-xs sm:text-sm text-gray-500 mb-4">Entérate primero de las ofertas y novedades de La Barata.</p>
+    <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-xl mx-auto">
+      <input type="text"  placeholder="Tu nombre"  class="flex-1 border-2 border-gray-200 rounded-xl py-2.5 sm:py-3 px-4 text-sm focus:outline-none focus:border-verde">
+      <input type="email" placeholder="Tu email"   class="flex-1 border-2 border-gray-200 rounded-xl py-2.5 sm:py-3 px-4 text-sm focus:outline-none focus:border-verde">
+      <button class="bg-verde hover:bg-green-700 text-white font-bold px-6 py-2.5 sm:py-3 rounded-xl text-sm transition-colors shadow-sm">Suscribir</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════ FOOTER ════════ -->
+<footer class="bg-verde text-white">
+  <!-- Flecha volver arriba -->
+  <div class="text-center pt-6 pb-2">
+    <button onclick="window.scrollTo({top:0,behavior:'smooth'})"
+      class="w-10 h-10 bg-white/10 hover:bg-white/25 rounded-full inline-flex items-center justify-center transition-colors text-xl">
+      ▲
+    </button>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 pb-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 border-t border-white/20 pt-8">
+
+    <!-- COL 1: Servicio al cliente -->
+    <div>
+      <h4 class="font-black text-base sm:text-lg mb-4 border-b border-white/20 pb-2">Servicio al cliente</h4>
+      <ul class="space-y-2 text-xs sm:text-sm text-white/85">
+        <li><button onclick="abrirPagina('como-comprar')" class="hover:text-amarillo transition-colors text-left w-full">Cómo comprar</button></li>
+        <li><button onclick="abrirPagina('cobertura')"    class="hover:text-amarillo transition-colors text-left w-full">Cobertura y despachos</button></li>
+        <li><button onclick="abrirPagina('cambios')"      class="hover:text-amarillo transition-colors text-left w-full">Cambios y devoluciones</button></li>
+        <li><button onclick="abrirPagina('terminos')"     class="hover:text-amarillo transition-colors text-left w-full">Términos y condiciones</button></li>
+        <li><button onclick="abrirPagina('faq')"          class="hover:text-amarillo transition-colors text-left w-full">Preguntas frecuentes</button></li>
+      </ul>
+    </div>
+
+    <!-- COL 2: Contacto -->
+    <div>
+      <h4 class="font-black text-base sm:text-lg mb-4 border-b border-white/20 pb-2">Contacto Ventas</h4>
+      <ul class="space-y-2.5 text-xs sm:text-sm text-white/85">
+        <li class="flex items-start gap-2">
+          <span class="flex-shrink-0">📍</span>
+          <span>Av. Ramón Picarte 779, Valdivia, Región de Los Ríos</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="flex-shrink-0">📞</span>
+          <span>Teléfono ventas online:<br><a href="tel:+56944350559" class="font-black text-white hover:text-amarillo">+56 9 4435 0559</a></span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="flex-shrink-0">📧</span>
+          <span>Email consultas:<br><a href="mailto:compraslabarata@gmail.com" class="text-amarillo hover:underline break-all">compraslabarata@gmail.com</a></span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="flex-shrink-0">⏰</span>
+          <span>Horario despachos:<br>Lun–Vie, 09:00 a 18:30 hrs<br>Sáb, 09:00 a 14:00 hrs</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- COL 3: La Barata -->
+    <div>
+      <h4 class="font-black text-base sm:text-lg mb-4 border-b border-white/20 pb-2">La Barata</h4>
+      <ul class="space-y-2 text-xs sm:text-sm text-white/85">
+        <li><button onclick="abrirPagina('quienes')"  class="hover:text-amarillo transition-colors text-left w-full">Quiénes somos</button></li>
+        <li><button onclick="abrirPagina('cambios')"  class="hover:text-amarillo transition-colors text-left w-full">Política de cambios y devoluciones</button></li>
+        <li><button onclick="abrirPagina('faq')"      class="hover:text-amarillo transition-colors text-left w-full">Preguntas frecuentes</button></li>
+        <li><button onclick="abrirPagina('cobertura')" class="hover:text-amarillo transition-colors text-left w-full">Ofertas y precios exclusivos web</button></li>
+        <li><button onclick="abrirPagina('trabaja')"  class="hover:text-amarillo transition-colors text-left w-full">Trabaja con nosotros</button></li>
+      </ul>
+    </div>
+
+    <!-- COL 4: Síguenos + Empresa -->
+    <div>
+      <h4 class="font-black text-base sm:text-lg mb-4 border-b border-white/20 pb-2">Síguenos</h4>
+      <div class="flex gap-3 mb-5">
+        <a href="https://www.facebook.com/p/Distribuidora-La-Barata-Valdivia-61574921535493/" target="_blank"
+           class="w-11 h-11 bg-white/10 hover:bg-white/25 rounded-full flex items-center justify-center transition-colors">
+          <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/distribuidora_labarata/" target="_blank"
+           class="w-11 h-11 bg-white/10 hover:bg-white/25 rounded-full flex items-center justify-center transition-colors">
+          <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+        </a>
+        <a href="https://wa.me/56944350559" target="_blank"
+           class="w-11 h-11 bg-white/10 hover:bg-white/25 rounded-full flex items-center justify-center transition-colors">
+          <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.122 1.532 5.856L0 24l6.335-1.663A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.007-1.37l-.36-.213-3.757.985.999-3.657-.234-.376A9.818 9.818 0 1 1 12 21.818z"/></svg>
+        </a>
+      </div>
+
+      <h4 class="font-black text-sm mb-3">Medios de pago</h4>
+      <div class="flex gap-2 flex-wrap mb-5">
+        <div class="bg-white text-gray-800 font-black text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+          <span>🏦</span> Transferencia bancaria
+        </div>
+      </div>
+
+      <img src="./LOGO_LA_BARATA.jpg" alt="La Barata" class="h-14 w-auto rounded-xl object-contain mb-2" style="max-width:160px;">
+      <p class="text-white/60 text-xs">Operado por: SOCIEDAD COMERCIAL FAF SPA</p>
+      <p class="text-white/60 text-xs">RUT: 77.557.632-4</p>
+    </div>
+  </div>
+
+  <!-- Sub-pie estilo Trébol -->
+  <div class="border-t-4 py-4 text-center text-xs px-4" style="border-color:#F5B800; background:#0d5c2a; color:#ffffff; font-weight:600; letter-spacing:0.02em;">
+    © La Barata · Razón Social: SOCIEDAD COMERCIAL FAF SPA · RUT: 77.557.632-4 · Valdivia, Los Ríos, Chile · Todos los derechos reservados 2025
+  </div>
+</footer>
+
+
+<!-- ════════ MODALES DE PÁGINAS ════════ -->
+<div id="modal-pagina" class="hidden fixed inset-0 z-[700]" style="background:rgba(0,0,0,.6)">
+  <div id="modal-pagina-inner" class="absolute right-0 top-0 h-full w-full sm:max-w-[600px] bg-white flex flex-col"
+       style="animation:slideIn .28s cubic-bezier(.4,0,.2,1) forwards;">
+    <!-- Header modal -->
+    <div class="bg-verde text-white px-5 py-4 flex justify-between items-center sticky top-0 z-10 flex-shrink-0">
+      <h2 id="modal-titulo" class="text-base sm:text-lg font-black"></h2>
+      <button onclick="cerrarPagina()" class="text-white/70 hover:text-white text-3xl font-light leading-none w-9 h-9 flex items-center justify-center">×</button>
+    </div>
+    <!-- Contenido -->
+    <div id="modal-contenido" class="flex-1 overflow-y-auto px-5 sm:px-8 py-6 text-gray-700 text-sm leading-relaxed"></div>
+  </div>
+</div>
+
+
+<!-- ════════ CARRITO FLOTANTE ════════ -->
+<div id="panel-carrito" class="hidden fixed bottom-0 right-0 md:bottom-5 md:right-5 z-[500] w-full md:max-w-[360px]">
+  <div class="bg-white md:rounded-2xl shadow-2xl border-t-4 border-naranja overflow-hidden">
+    <div class="flex justify-between items-center px-4 py-3 border-b bg-gray-50">
+      <h3 class="font-bold text-gray-800 flex items-center gap-2 text-sm">🛒 Mi Pedido</h3>
+      <div class="flex items-center gap-3">
+        <span id="total-carrito" class="font-black text-verde text-lg">$0</span>
+        <button onclick="toggleCarrito()" class="text-gray-300 hover:text-red-400 text-2xl font-light leading-none w-8 h-8 flex items-center justify-center">×</button>
+      </div>
+    </div>
+    <div id="items-carrito" class="max-h-52 overflow-y-auto px-4 py-2 min-h-[64px] flex flex-col justify-center">
+      <p class="text-gray-400 text-xs text-center italic">El carrito está vacío</p>
+    </div>
+    <div class="px-4 py-3 border-t bg-gray-50">
+      <button onclick="abrirCheckout()" class="w-full bg-verde hover:bg-green-700 text-white font-bold py-3 rounded-xl text-sm transition-colors shadow-sm">
+        ✅ FINALIZAR PEDIDO
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- WhatsApp flotante -->
+<a href="https://wa.me/56944350559" target="_blank" class="wa-float" title="WhatsApp">
+  <svg class="w-7 h-7 fill-white" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.122 1.532 5.856L0 24l6.335-1.663A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.007-1.37l-.36-.213-3.757.985.999-3.657-.234-.376A9.818 9.818 0 1 1 12 21.818z"/></svg>
+</a>
+
+<!-- ════════ BOTTOM NAV MÓVIL ════════ -->
+<div id="bottom-nav">
+  <button onclick="irInicio()">
+    <span class="bn-icon">🏠</span>Inicio
+  </button>
+  <button onclick="abrirDrawer()">
+    <span class="bn-icon">☰</span>Categorías
+  </button>
+  <button onclick="verCat('ofertas','Ofertas')">
+    <span class="bn-icon">🔥</span>Ofertas
+  </button>
+  <button onclick="toggleCarrito()">
+    <span class="bn-icon relative inline-block">🛒<span id="badge-mob2" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center leading-none">0</span></span>
+    Mi pedido
+  </button>
+  <a href="https://wa.me/56944350559" target="_blank">
+    <span class="bn-icon">💬</span>WhatsApp
+  </a>
+</div>
+
+
+<!-- ════════ CHECKOUT MODAL ════════ -->
+<div id="checkout-overlay" class="hidden fixed inset-0 z-[600]" style="background:rgba(0,0,0,.65)">
+  <div class="absolute right-0 top-0 h-full w-full md:max-w-[520px] bg-white flex flex-col slide-in overflow-y-auto">
+    <div class="bg-verde text-white px-4 sm:px-5 py-4 flex justify-between items-center sticky top-0 z-10">
+      <h2 class="text-sm sm:text-base font-bold">✅ Finalizar Compra</h2>
+      <button onclick="cerrarCheckout()" class="text-white/70 hover:text-white text-3xl font-light leading-none w-8 h-8 flex items-center justify-center">×</button>
+    </div>
+    <div class="p-4 sm:p-5 flex flex-col gap-4 sm:gap-5 flex-1">
+      <div class="bg-gray-50 rounded-xl border border-gray-200 p-3 sm:p-4">
+        <p class="font-bold text-gray-700 text-xs uppercase tracking-wide mb-2 sm:mb-3">📋 Resumen del pedido</p>
+        <div id="chk-items" class="space-y-1.5 max-h-36 overflow-y-auto text-xs text-gray-600 border-b pb-3 mb-3"></div>
+        <div class="flex justify-between items-center">
+          <span class="font-bold text-gray-700 text-sm">Total a pagar</span>
+          <span id="chk-total" class="font-black text-verde text-xl">$0</span>
+        </div>
+      </div>
+      <div class="space-y-2 sm:space-y-3">
+        <p class="font-bold text-gray-800 border-b pb-1.5 flex items-center gap-2 text-sm">
+          <span class="w-5 h-5 bg-verde text-white rounded-full flex items-center justify-center text-xs font-black flex-shrink-0">1</span>
+          Datos de Despacho
+        </p>
+        <input id="chk-nombre" type="text" placeholder="Nombre y Apellido *" class="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-verde transition-colors">
+        <input id="chk-dir"    type="text" placeholder="Dirección exacta *" class="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-verde transition-colors">
+        <input id="chk-ref"    type="text" placeholder="Referencia (casa amarilla con reja) *" class="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-verde transition-colors">
+        <input id="chk-tel"    type="tel"  placeholder="WhatsApp de contacto *" class="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-verde transition-colors">
+      </div>
+      <div class="space-y-2 sm:space-y-3">
+        <p class="font-bold text-gray-800 border-b pb-1.5 flex items-center gap-2 text-sm">
+          <span class="w-5 h-5 bg-verde text-white rounded-full flex items-center justify-center text-xs font-black flex-shrink-0">2</span>
+          Método de Pago
+        </p>
+        <div class="bg-blue-50 border-2 border-blue-400 rounded-xl p-4 flex items-center gap-3">
+          <span class="text-2xl">🏦</span>
+          <div>
+            <p class="font-black text-gray-800 text-sm">Transferencia bancaria</p>
+            <p class="text-xs text-gray-500">Único medio de pago disponible</p>
+          </div>
+          <input type="radio" name="pago" value="Transferencia" checked class="ml-auto w-4 h-4 accent-verde">
+        </div>
+        <div id="caja-banco" class="bg-blue-50 border-2 border-blue-200 rounded-xl p-3 sm:p-4 text-xs">
+          <p class="font-black text-blue-900 mb-2 text-xs uppercase">Datos Banco Santander</p>
+          <div class="bg-white rounded-lg p-2 sm:p-3 space-y-1 text-gray-700 shadow-sm text-xs">
+            <p><strong class="text-blue-600">Nombre:</strong> SOCIEDAD COMERCIAL FAF SPA</p>
+            <p><strong class="text-blue-600">RUT:</strong> 77.557.632-4</p>
+            <p><strong class="text-blue-600">Banco:</strong> Santander · Cta. Corriente</p>
+            <p><strong class="text-blue-600">N° Cuenta:</strong> 37522716</p>
+            <p><strong class="text-blue-600">Email:</strong> compraslabarata@gmail.com</p>
+          </div>
+          <p class="text-blue-700 font-semibold mt-2">⚠️ Envía el comprobante por WhatsApp junto a tu pedido.</p>
+        </div>
+      </div>
+      <button onclick="enviarPedido()" class="w-full bg-verde hover:bg-green-700 text-white font-black py-3 sm:py-4 rounded-xl shadow-lg text-sm sm:text-base transition-all">
+        ✅ CONFIRMAR Y ENVIAR POR WHATSAPP
+      </button>
+      <p class="text-center text-xs text-gray-400">Serás redirigido a WhatsApp para confirmar</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════ JAVASCRIPT ════════ -->
+<script>
+// ══════════════════════════════════════════════════════
+//  ⚙️  CONFIGURACIÓN — edita estas 2 líneas
+// ══════════════════════════════════════════════════════
+
+// URL de tu servidor en Render (cambia cuando tengas la URL real)
+// Mientras tanto usa 'LOCAL' para seguir con datos de prueba
+const BACKEND_URL = 'https://labarata-backend.onrender.com';
+
+const WHATSAPP = "56944350559";
+
+// ── Mapa de categorías Bsale → slug local ────────────
+// Cuando tengas Bsale activo, reemplaza los números por
+// los IDs reales de tus tipos de producto en Bsale
+// (los encuentras en GET /api/categorias o en Bsale > Inventario > Tipos de producto)
+const CAT_MAP = {
+  1:  'despensa',   // ← reemplaza 1 por el ID real de "Despensa" en tu Bsale
+  2:  'desayuno',
+  3:  'lacteos',
+  4:  'quesos',
+  5:  'aseo',
+  6:  'vinos',
+  7:  'carnes',
+  8:  'frutas',
+  9:  'bebidas',
+  10: 'cervezas',
+  11: 'mascotas',
+  12: 'bebe',
+  13: 'farmacia',
+  14: 'congelados',
+};
+
+// ── Datos de respaldo (se usan si el backend no responde) ──
+const DB_RESPALDO = [
+  {id:1,  n:"Harina Selecta 1kg",            p:1250, img:"https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=300&h=300&fit=crop", c:"despensa", oferta:true,  stock:15},
+  {id:2,  n:"Arroz Tucapel Grado 2 1kg",     p:1450, img:"https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300&h=300&fit=crop", c:"despensa", oferta:true,  stock:30},
+  {id:3,  n:"Aceite Maravilla 1L",            p:2890, img:"https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=300&h=300&fit=crop", c:"despensa", oferta:false, stock:12},
+  {id:4,  n:"Fideos Tallarin 400g",           p:890,  img:"https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=300&h=300&fit=crop", c:"despensa", oferta:false, stock:40},
+  {id:5,  n:"Lentejas 500g",                  p:990,  img:"https://images.unsplash.com/photo-1585704032915-c3400305e979?w=300&h=300&fit=crop", c:"despensa", oferta:false, stock:20},
+  {id:6,  n:"Café Nescafé 100g",              p:2990, img:"https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=300&h=300&fit=crop", c:"desayuno", oferta:true,  stock:8},
+  {id:7,  n:"Azúcar Granulada 1kg",           p:1100, img:"https://images.unsplash.com/photo-1611080626919-7cf5a9dbab12?w=300&h=300&fit=crop", c:"desayuno", oferta:false, stock:25},
+  {id:8,  n:"Mermelada Frutilla 250g",        p:1390, img:"https://images.unsplash.com/photo-1590080875897-7f8ca2058e78?w=300&h=300&fit=crop", c:"desayuno", oferta:false, stock:18},
+  {id:9,  n:"Galletas Oreo 176g",             p:1290, img:"https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=300&h=300&fit=crop", c:"desayuno", oferta:true,  stock:22},
+  {id:10, n:"Avena Quaker 400g",              p:1490, img:"https://images.unsplash.com/photo-1571748982800-fa51082c2224?w=300&h=300&fit=crop", c:"desayuno", oferta:false, stock:14},
+  {id:11, n:"Leche Soprole Entera 1L",        p:1100, img:"https://images.unsplash.com/photo-1563636619-e9143da7973b?w=300&h=300&fit=crop", c:"lacteos",  oferta:false, stock:60},
+  {id:12, n:"Yogurt Natural Soprole 1kg",     p:2490, img:"https://images.unsplash.com/photo-1488477181946-6428a0291777?w=300&h=300&fit=crop", c:"lacteos",  oferta:false, stock:10},
+  {id:13, n:"Mantequilla Colún 200g",         p:2190, img:"https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=300&h=300&fit=crop", c:"lacteos",  oferta:true,  stock:7},
+  {id:14, n:"Huevos Jumbo x12",               p:3990, img:"https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=300&h=300&fit=crop", c:"lacteos",  oferta:false, stock:35},
+  {id:15, n:"Crema Nestlé 200ml",             p:890,  img:"https://images.unsplash.com/photo-1559181567-c3190ca9be46?w=300&h=300&fit=crop", c:"lacteos",  oferta:false, stock:28},
+  {id:16, n:"Queso Chanco Colún 200g",        p:2490, img:"https://images.unsplash.com/photo-1486297678162-eb2a19b0a318?w=300&h=300&fit=crop", c:"quesos",   oferta:false, stock:9},
+  {id:17, n:"Queso Camembert 125g",           p:3500, img:"https://images.unsplash.com/photo-1452195100486-9cc805987862?w=300&h=300&fit=crop", c:"quesos",   oferta:false, stock:5},
+  {id:18, n:"Jamón de Cerdo 150g",            p:2190, img:"https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=300&fit=crop", c:"quesos",   oferta:true,  stock:3},
+  {id:19, n:"Detergente OMO Matic 3L",        p:6500, img:"https://images.unsplash.com/photo-1563453392212-326f5e854473?w=300&h=300&fit=crop", c:"aseo",     oferta:true,  stock:11},
+  {id:20, n:"Lavaloza Quix Limón 750ml",      p:1490, img:"https://images.unsplash.com/photo-1585421514738-01798e348b17?w=300&h=300&fit=crop", c:"aseo",     oferta:false, stock:17},
+  {id:21, n:"Shampoo Head & Shoulders 375ml", p:3990, img:"https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&h=300&fit=crop", c:"aseo",     oferta:false, stock:6},
+  {id:22, n:"Papel Higiénico Elite x4",       p:1990, img:"https://images.unsplash.com/photo-1584556812952-905ffd0c611a?w=300&h=300&fit=crop", c:"aseo",     oferta:true,  stock:45},
+  {id:23, n:"Vino Casillero del Diablo 750ml",p:5990, img:"https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=300&h=300&fit=crop", c:"vinos",    oferta:false, stock:8},
+  {id:24, n:"Pisco Control 750ml",            p:7990, img:"https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=300&h=300&fit=crop", c:"vinos",    oferta:true,  stock:4},
+  {id:25, n:"Alimento Perro Dog Chow 3kg",    p:12990,img:"https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=300&h=300&fit=crop", c:"mascotas", oferta:false, stock:6},
+  {id:26, n:"Arena Gatos Premium 4kg",        p:4990, img:"https://images.unsplash.com/photo-1601758124510-52d02ddb7cbd?w=300&h=300&fit=crop", c:"mascotas", oferta:false, stock:9},
+  {id:27, n:"Coca-Cola 2L",                   p:1990, img:"https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300&h=300&fit=crop", c:"bebidas",  oferta:true,  stock:50},
+  {id:28, n:"Jugo Watts Naranja 1L",          p:990,  img:"https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=300&h=300&fit=crop", c:"bebidas",  oferta:false, stock:22},
+  {id:29, n:"Pollo Entero kg",                p:3290, img:"https://images.unsplash.com/photo-1578020190125-f4f7c18bc9cb?w=300&h=300&fit=crop", c:"carnes",   oferta:true,  stock:18},
+  {id:30, n:"Lomo Vetado kg",                 p:8990, img:"https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=300&h=300&fit=crop", c:"carnes",   oferta:false, stock:10},
+  {id:31, n:"Manzana Fuji kg",                p:990,  img:"https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?w=300&h=300&fit=crop", c:"frutas",   oferta:false, stock:30},
+  {id:32, n:"Palta Hass kg",                  p:2490, img:"https://images.unsplash.com/photo-1519162808019-7de1683fa2ad?w=300&h=300&fit=crop", c:"frutas",   oferta:true,  stock:12},
+  {id:33, n:"Tomate kg",                      p:890,  img:"https://images.unsplash.com/photo-1546094096-0df4bcaaa337?w=300&h=300&fit=crop", c:"frutas",   oferta:false, stock:25},
+  {id:34, n:"Vienesas Súper Pollo 500g",      p:2890, img:"https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=300&fit=crop", c:"carnes",   oferta:true,  stock:16},
+  {id:35, n:"Cerveza Cristal 350ml x6",       p:4990, img:"https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=300&h=300&fit=crop", c:"cervezas", oferta:false, stock:24},
+  {id:36, n:"Cerveza Austral 500ml",          p:2190, img:"https://images.unsplash.com/photo-1608270586620-248524c67de9?w=300&h=300&fit=crop", c:"cervezas", oferta:false, stock:19},
+];
+
+// Estado global
+let DB        = [];          // se llena desde Bsale o respaldo
+let carrito   = [];
+let listaCat  = [];
+let cargando  = false;
+let totalBsale = 0;          // total de productos en Bsale (para paginación)
+
+// ══════════════════════════════════════════════════════
+//  🔄  CARGA DE PRODUCTOS DESDE BSALE
+// ══════════════════════════════════════════════════════
+
+async function cargarProductos(forzar = false) {
+  // Si ya cargamos y no forzamos recarga, salir
+  if (DB.length && !forzar) return;
+
+  // Modo LOCAL: usar datos de respaldo sin llamar al backend
+  if (BACKEND_URL === 'LOCAL') {
+    DB = DB_RESPALDO;
+    mostrarBannerModo('🔧 Modo demo — conecta tu backend Bsale para ver tus productos reales');
+    pintarHomeOfertas();
+    pintarHomeTop();
+    return;
+  }
+
+  cargando = true;
+  mostrarSkeletons('home-ofertas', 10);
+  mostrarSkeletons('home-top', 5);
+
+  try {
+    // Verificar que el servidor esté activo
+    const ping = await fetch(`${BACKEND_URL}/api/ping`, { signal: AbortSignal.timeout(8000) });
+    if (!ping.ok) throw new Error('Servidor no disponible');
+
+    // Cargar primera página de productos
+    const res  = await fetch(`${BACKEND_URL}/api/productos?limit=50&offset=0`);
+    const data = await res.json();
+
+    if (!data.ok) throw new Error(data.error || 'Error en respuesta');
+
+    // Convertir formato Bsale → formato local
+    DB = data.productos.map(p => ({
+      id:        p.id,
+      variantId: p.variantId,
+      n:         p.n,
+      p:         p.p,
+      stock:     p.stock,
+      img:       p.img || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=300&fit=crop',
+      c:         p.c || p.categoria || 'despensa',
+      tipo:      p.tipo || '',
+      sub:       p.sub  || '',
+      oferta:    p.oferta || false,
+      code:      p.code || '',
+    }));
+
+    totalBsale = data.total || DB.length;
+    console.log(`✅ ${DB.length} productos cargados desde Bsale`);
+
+    // Si hay más productos, cargar el resto en segundo plano
+    if (totalBsale > 50) cargarMasProductos(50);
+
+  } catch (err) {
+    console.warn('⚠️ Backend no disponible, usando datos de respaldo:', err.message);
+    DB = DB_RESPALDO;
+    mostrarBannerModo('⚠️ Sin conexión al servidor — mostrando catálogo de demostración');
+  } finally {
+    cargando = false;
+    pintarHomeOfertas();
+    pintarHomeTop();
+  }
+}
+
+async function cargarMasProductos(offset) {
+  try {
+    const res  = await fetch(`${BACKEND_URL}/api/productos?limit=50&offset=${offset}`);
+    const data = await res.json();
+    if (!data.ok || !data.productos.length) return;
+
+    const nuevos = data.productos.map(p => ({
+      id:        p.id,
+      variantId: p.variantId,
+      n:         p.n,
+      p:         p.p,
+      stock:     p.stock,
+      img:       p.img || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=300&fit=crop',
+      c:         p.c || p.categoria || 'despensa',
+      tipo:      p.tipo || '',
+      sub:       p.sub  || '',
+      oferta:    p.oferta || false,
+      code:      p.code || '',
+    }));
+
+    DB = [...DB, ...nuevos];
+    console.log(`📦 Total productos: ${DB.length} / ${totalBsale}`);
+    if (offset + 50 < totalBsale) cargarMasProductos(offset + 50);
+  } catch (e) { /* silencioso */ }
+}
+
+// ── Skeletons de carga ────────────────────────────────
+function mostrarSkeletons(gridId, cantidad) {
+  const g = document.getElementById(gridId);
+  if (!g) return;
+  g.innerHTML = '';
+  for (let i = 0; i < cantidad; i++) {
+    g.innerHTML += `
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden animate-pulse">
+        <div class="h-24 sm:h-28 bg-gray-200"></div>
+        <div class="p-2 sm:p-3 space-y-2">
+          <div class="h-3 bg-gray-200 rounded w-3/4"></div>
+          <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+          <div class="h-5 bg-gray-200 rounded w-1/3 mt-2"></div>
+          <div class="h-7 bg-gray-200 rounded w-full mt-2"></div>
+        </div>
+      </div>`;
+  }
+}
+
+// ── Banner aviso modo demo ─────────────────────────────
+function mostrarBannerModo(texto) {
+  let el = document.getElementById('banner-modo');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'banner-modo';
+    el.className = 'max-w-7xl mx-auto px-3 sm:px-4 mt-3';
+    document.getElementById('vista-inicio').prepend(el);
+  }
+  el.innerHTML = `
+    <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 text-xs sm:text-sm">
+      <span class="text-amber-800 font-semibold">${texto}</span>
+      <button onclick="this.parentElement.parentElement.remove()" class="text-amber-500 hover:text-amber-800 font-bold text-lg leading-none flex-shrink-0">×</button>
+    </div>`;
+}
+
+// ── DRAWER MÓVIL ──
+function abrirDrawer(){
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function cerrarDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function toggleDrawerSub(id){
+  const el=document.getElementById(id);
+  el.classList.toggle('open');
+}
+
+// ── MEGA MENÚ ──
+function abrirMega(){
+  document.getElementById('mega-dropdown').classList.add('open');
+  document.getElementById('mega-overlay').style.display='block';
+}
+function cerrarMega(){
+  document.getElementById('mega-dropdown').classList.remove('open');
+  document.getElementById('mega-overlay').style.display='none';
+}
+function toggleMega(){
+  const dd=document.getElementById('mega-dropdown');
+  if(dd.classList.contains('open')) cerrarMega(); else abrirMega();
+}
+function activarSub(id,btn){
+  document.querySelectorAll('.sub-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#mega-cats-list button').forEach(b=>b.classList.remove('active'));
+  const p=document.getElementById(id);
+  if(p) p.classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+function verCat(cat,titulo){cerrarMega();irCatalogo(cat,titulo);}
+
+// ── VISTAS ──
+function irInicio(){
+  document.getElementById('vista-inicio').classList.remove('hidden');
+  document.getElementById('vista-catalogo').classList.add('hidden');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function irCatalogo(cat, titulo, tipo='', sub=''){
+  document.getElementById('vista-inicio').classList.add('hidden');
+  document.getElementById('vista-catalogo').classList.remove('hidden');
+  document.getElementById('bread').textContent = titulo;
+  document.getElementById('cat-titulo').textContent = titulo;
+  document.getElementById('orden').value = 'rel';
+
+  let lista;
+  if (cat === 'ofertas') {
+    lista = DB.filter(p => p.oferta);
+  } else if (cat === 'todos') {
+    lista = [...DB];
+  } else {
+    lista = DB.filter(p => p.c === cat);
+  }
+
+  // Filtrar por subcategoria (campo sub) — más específico
+  if (sub) {
+    const subs = Array.isArray(sub) ? sub : [sub];
+    lista = lista.filter(p => subs.includes(p.sub));
+  }
+  // Filtrar por tipo_bsale — si no hay sub
+  else if (tipo) {
+    const tipos = Array.isArray(tipo) ? tipo : [tipo];
+    lista = lista.filter(p => tipos.includes(p.tipo));
+  }
+
+  listaCat = [...lista];
+  document.getElementById('cat-count').textContent = lista.length + ' productos';
+  pintarCatalogo(lista);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// verSubCat — filtra por subcategoria (campo sub) de la planilla
+function verSubCat(cat, sub, titulo) {
+  cerrarMega();
+  cerrarDrawer();
+  irCatalogo(cat, titulo, '', sub);
+}
+function buscarProducto(q){
+  const t=q.trim().toLowerCase();
+  if(!t){irInicio();return;}
+  const r=DB.filter(p=>p.n.toLowerCase().includes(t));
+  document.getElementById('vista-inicio').classList.add('hidden');
+  document.getElementById('vista-catalogo').classList.remove('hidden');
+  document.getElementById('bread').textContent=`"${q}"`;
+  document.getElementById('cat-titulo').textContent=`Resultados para "${q}"`;
+  document.getElementById('cat-count').textContent=r.length+' productos';
+  listaCat=[...r];
+  pintarCatalogo(r);
+}
+function reordenar(){
+  const v=document.getElementById('orden').value;
+  let l=[...listaCat];
+  if(v==='asc') l.sort((a,b)=>a.p-b.p);
+  else if(v==='desc') l.sort((a,b)=>b.p-a.p);
+  else if(v==='az') l.sort((a,b)=>a.n.localeCompare(b.n));
+  pintarCatalogo(l);
+}
+
+// ── RENDER ──
+function pintarCatalogo(lista){
+  const g=document.getElementById('cat-grid');
+  g.innerHTML='';
+  if(!lista.length){
+    g.innerHTML='<p class="col-span-full text-center text-gray-400 py-12 text-sm">No hay productos en esta categoría aún.</p>';
+    return;
+  }
+  lista.forEach(p=>g.appendChild(crearCard(p,false)));
+}
+function crearCard(p, mini) {
+  const en        = carrito.find(i => i.id === p.id);
+  const sinStock  = p.stock !== undefined && p.stock <= 0;
+  const pocoStock = p.stock !== undefined && p.stock > 0 && p.stock <= 5;
+  const d = document.createElement('div');
+  d.className = 'prod-card bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden relative flex flex-col';
+  if (sinStock) d.className += ' opacity-70';
+  const imgH = mini ? 'h-24 sm:h-28' : 'h-28 sm:h-36';
+
+  // Badge de stock
+  let stockBadge = '';
+  if (sinStock)   stockBadge = '<span class="absolute top-7 left-0 right-0 text-center text-[10px] font-black bg-gray-600 text-white py-0.5 z-10">SIN STOCK</span>';
+  else if (pocoStock) stockBadge = `<span class="absolute top-1 right-1 bg-orange-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full z-10">¡Últimas ${p.stock}!</span>`;
+
+  d.innerHTML = `
+    ${p.oferta && !sinStock ? '<span class="oferta-badge">OFERTA</span>' : ''}
+    ${stockBadge}
+    <div class="${imgH} bg-gray-50 flex items-center justify-center overflow-hidden relative">
+      <img src="${p.img}" alt="${p.n}" class="w-full h-full object-cover ${sinStock ? 'grayscale' : ''}"
+        onerror="this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=300&fit=crop'" loading="lazy">
+    </div>
+    <div class="p-2 sm:p-3 flex flex-col flex-1">
+      <h3 class="text-[11px] sm:text-xs font-semibold text-gray-700 leading-snug flex-1 mb-1.5 sm:mb-2" style="min-height:2.2rem">${p.n}</h3>
+      <div class="flex items-center justify-between mb-1.5 sm:mb-2">
+        <p class="text-verde font-black text-base sm:text-lg">$${p.p.toLocaleString('es-CL')}</p>
+        ${p.stock !== undefined && !sinStock && p.stock > 5 ? `<span class="text-[9px] text-gray-400 font-semibold">${p.stock} disp.</span>` : ''}
+      </div>
+      ${sinStock
+        ? `<button disabled class="bg-gray-200 text-gray-400 font-bold py-1.5 rounded-lg text-[11px] sm:text-xs w-full cursor-not-allowed">Sin stock</button>`
+        : en
+          ? `<div class="flex items-center justify-between bg-verde rounded-lg overflow-hidden">
+               <button class="text-white px-2.5 sm:px-3 py-1.5 hover:bg-green-700 font-bold text-sm" onclick="event.stopPropagation();restar(${p.id})">−</button>
+               <span class="text-white font-bold text-xs sm:text-sm">${en.cantidad}</span>
+               <button class="text-white px-2.5 sm:px-3 py-1.5 hover:bg-green-700 font-bold text-sm" onclick="event.stopPropagation();sumar(${p.id})">+</button>
+             </div>`
+          : `<button class="bg-amarillo hover:bg-yellow-400 text-gray-900 font-bold py-1.5 rounded-lg text-[11px] sm:text-xs transition-colors w-full shadow-sm"
+               onclick="event.stopPropagation();agregar(${p.id})">+ Añadir</button>`
+      }
+    </div>`;
+  return d;
+}
+function pintarHomeOfertas(){
+  const g=document.getElementById('home-ofertas');
+  if(!g)return;
+  g.innerHTML='';
+  DB.filter(p=>p.oferta).slice(0,10).forEach(p=>g.appendChild(crearCard(p,true)));
+}
+function pintarHomeTop(){
+  const g=document.getElementById('home-top');
+  if(!g)return;
+  g.innerHTML='';
+  DB.slice(0,5).forEach(p=>g.appendChild(crearCard(p,true)));
+}
+
+// ── CARRITO ──
+function toggleCarrito(){
+  document.getElementById('panel-carrito').classList.toggle('hidden');
+}
+function agregar(id){
+  const p=DB.find(x=>x.id===id);
+  const e=carrito.find(x=>x.id===id);
+  if(e) e.cantidad++; else carrito.push({...p,cantidad:1});
+  pintarCarrito();
+  document.getElementById('panel-carrito').classList.remove('hidden');
+  refrescarVistas();
+}
+function sumar(id){
+  const e=carrito.find(x=>x.id===id);
+  if(e){e.cantidad++;pintarCarrito();refrescarVistas();}
+}
+function restar(id){
+  const e=carrito.find(x=>x.id===id);
+  if(!e)return;
+  e.cantidad--;
+  if(e.cantidad<=0) carrito=carrito.filter(x=>x.id!==id);
+  pintarCarrito();refrescarVistas();
+}
+function quitar(id){
+  carrito=carrito.filter(x=>x.id!==id);
+  pintarCarrito();refrescarVistas();
+}
+function refrescarVistas(){
+  if(!document.getElementById('vista-catalogo').classList.contains('hidden'))
+    pintarCatalogo(listaCat);
+  pintarHomeOfertas();
+  pintarHomeTop();
+}
+function pintarCarrito(){
+  const cont=document.getElementById('items-carrito');
+  const totalEl=document.getElementById('total-carrito');
+  const badge=document.getElementById('badge-nav');
+  const badgeM=document.getElementById('badge-mob');
+  const badgeM2=document.getElementById('badge-mob2');
+  let total=0,cant=0;
+  cont.innerHTML='';
+  if(!carrito.length){
+    cont.innerHTML='<p class="text-gray-400 text-xs text-center italic py-3">El carrito está vacío</p>';
+    badge.textContent='0';
+    if(badgeM){badgeM.textContent='0';badgeM.classList.add('hidden');}
+    if(badgeM2){badgeM2.classList.add('hidden');}
+    totalEl.textContent='$0';return;
+  }
+  carrito.forEach(it=>{
+    cant+=it.cantidad;total+=it.p*it.cantidad;
+    const d=document.createElement('div');
+    d.className='flex items-start gap-2 py-2 border-b border-gray-100 last:border-0';
+    d.innerHTML=`
+      <img src="${it.img}" class="w-10 h-10 object-cover rounded-lg flex-shrink-0"
+        onerror="this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=80&h=80&fit=crop'" loading="lazy">
+      <div class="flex-1 min-w-0">
+        <p class="text-xs font-semibold text-gray-700 leading-snug">${it.n}</p>
+        <p class="text-verde font-bold text-xs">$${(it.p*it.cantidad).toLocaleString('es-CL')}</p>
+        <div class="flex items-center gap-1 mt-1">
+          <button onclick="restar(${it.id})" class="w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold flex items-center justify-center">−</button>
+          <span class="w-6 text-center text-xs font-bold">${it.cantidad}</span>
+          <button onclick="sumar(${it.id})" class="w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold flex items-center justify-center">+</button>
+        </div>
+      </div>
+      <button onclick="quitar(${it.id})" class="text-gray-300 hover:text-red-400 text-xl leading-none w-7 h-7 flex items-center justify-center flex-shrink-0">×</button>`;
+    cont.appendChild(d);
+  });
+  badge.textContent=cant;
+  if(badgeM){badgeM.textContent=cant;badgeM.classList.remove('hidden');}
+  if(badgeM2){badgeM2.textContent=cant;badgeM2.classList.remove('hidden');}
+  totalEl.textContent='$'+total.toLocaleString('es-CL');
+}
+
+// ── PÁGINAS INFORMATIVAS (Modales) ──────────────────
+const PAGINAS = {
+  'quienes': {
+    titulo: 'Quiénes somos',
+    html: `
+      <div style="text-align:center;margin-bottom:28px;">
+        <div style="background:#16a34a;color:#fcd34d;font-weight:900;font-size:24px;
+          padding:12px 24px;border-radius:14px;display:inline-block;letter-spacing:3px;margin-bottom:16px;">LA BARATA</div>
+        <p style="color:#16a34a;font-weight:700;font-size:15px;">Tu vecino online · Valdivia, Los Ríos</p>
+      </div>
+
+      <h3 style="font-size:17px;font-weight:800;color:#1a202c;margin-bottom:10px;">🏪 Nuestra historia</h3>
+      <p style="margin-bottom:14px;">
+        La Barata nació en <strong>2017</strong> con un pequeño local en Avenida Ramón Picarte, Valdivia.
+        Desde el primer día, nuestro objetivo fue simple: llevar productos de calidad a cada familia
+        de nuestra ciudad, con precios honestos y atención cercana.
+      </p>
+      <p style="margin-bottom:14px;">
+        Poco a poco fuimos creciendo, ganándonos la confianza de cientos de familias valdiviana.
+        Sin embargo, en <strong>2022 un incendio</strong> arrasó con todo lo que habíamos construido.
+        Fue un golpe duro — perdimos el local, la mercadería, el equipamiento. Todo.
+      </p>
+      <p style="margin-bottom:24px;">
+        Pero no nos rendimos. Con mucho esfuerzo, sacrificio y el apoyo de nuestra comunidad,
+        <strong>reabrimos en abril de 2025</strong>, más fuertes que nunca. Hoy operamos con despacho a
+        domicilio en toda Valdivia y seguimos con la misma filosofía que nos dio vida: cercanía,
+        calidad y precio justo.
+      </p>
+
+      <div style="background:#f0fdf4;border-left:4px solid #16a34a;border-radius:0 10px 10px 0;padding:14px 16px;margin-bottom:24px;">
+        <p style="font-weight:700;color:#166534;margin-bottom:4px;">💚 Nuestra promesa</p>
+        <p style="color:#374151;font-size:13px;">Somos una empresa valdiviana 100% local. Cada peso que gastas en La Barata
+        se queda en tu comunidad. Creemos en el comercio cercano, sin intermediarios y sin complicaciones.</p>
+      </div>
+
+      <h3 style="font-size:17px;font-weight:800;color:#1a202c;margin-bottom:12px;">📋 Información legal</h3>
+      <div style="background:#f8fafc;border-radius:10px;padding:14px 16px;font-size:13px;">
+        <p><strong>Razón Social:</strong> SOCIEDAD COMERCIAL FAF SPA</p>
+        <p style="margin-top:6px;"><strong>RUT:</strong> 77.557.632-4</p>
+        <p style="margin-top:6px;"><strong>Dirección:</strong> Av. Ramón Picarte 779, Valdivia, Región de Los Ríos</p>
+        <p style="margin-top:6px;"><strong>Email:</strong> compraslabarata@gmail.com</p>
+        <p style="margin-top:6px;"><strong>Teléfono:</strong> +56 9 4435 0559</p>
+      </div>`,
+  },
+
+  'como-comprar': {
+    titulo: 'Cómo comprar',
+    html: `
+      <p style="margin-bottom:20px;color:#64748b;">Comprar en La Barata es muy sencillo. Sigue estos pasos:</p>
+
+      <div style="display:flex;gap:14px;margin-bottom:16px;align-items:flex-start;">
+        <div style="width:36px;height:36px;background:#16a34a;color:#fff;border-radius:50%;
+          display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;flex-shrink:0;">1</div>
+        <div>
+          <p style="font-weight:700;color:#1a202c;margin-bottom:4px;">Explora el catálogo</p>
+          <p style="color:#64748b;font-size:13px;">Navega por las categorías o usa el buscador para encontrar lo que necesitas. Verás el precio y el stock disponible de cada producto.</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;margin-bottom:16px;align-items:flex-start;">
+        <div style="width:36px;height:36px;background:#16a34a;color:#fff;border-radius:50%;
+          display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;flex-shrink:0;">2</div>
+        <div>
+          <p style="font-weight:700;color:#1a202c;margin-bottom:4px;">Agrega al carrito</p>
+          <p style="color:#64748b;font-size:13px;">Haz clic en <strong>"+ Añadir"</strong> en los productos que quieras. Puedes agregar y quitar cantidades libremente antes de confirmar.</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;margin-bottom:16px;align-items:flex-start;">
+        <div style="width:36px;height:36px;background:#16a34a;color:#fff;border-radius:50%;
+          display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;flex-shrink:0;">3</div>
+        <div>
+          <p style="font-weight:700;color:#1a202c;margin-bottom:4px;">Finaliza tu pedido</p>
+          <p style="color:#64748b;font-size:13px;">Haz clic en <strong>"Mi Pedido"</strong> y luego en <strong>"Finalizar Pedido"</strong>. Completa tu nombre, dirección y teléfono.</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;margin-bottom:24px;align-items:flex-start;">
+        <div style="width:36px;height:36px;background:#16a34a;color:#fff;border-radius:50%;
+          display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;flex-shrink:0;">4</div>
+        <div>
+          <p style="font-weight:700;color:#1a202c;margin-bottom:4px;">Confirma por WhatsApp</p>
+          <p style="color:#64748b;font-size:13px;">Se abrirá WhatsApp con el resumen de tu pedido ya escrito. Solo envíalo. Nuestro equipo lo confirmará y coordinará el despacho contigo.</p>
+        </div>
+      </div>
+
+      <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:14px 16px;font-size:13px;">
+        <p style="font-weight:700;color:#92400e;margin-bottom:4px;">💡 Consejo</p>
+        <p style="color:#78350f;">Los pedidos realizados antes de las <strong>16:00 hrs de lunes a viernes</strong> son despachados el mismo día.</p>
+      </div>`,
+  },
+
+  'cobertura': {
+    titulo: 'Cobertura y despachos',
+    html: `
+      <h3 style="font-size:16px;font-weight:800;color:#1a202c;margin-bottom:12px;">🚚 ¿Dónde despachamos?</h3>
+      <p style="margin-bottom:16px;">Realizamos despacho a domicilio en <strong>Valdivia y sectores aledaños</strong> dentro del radio urbano. Consulta por WhatsApp si tu dirección está dentro de la cobertura.</p>
+
+      <div style="background:#f0fdf4;border-radius:10px;padding:14px 16px;margin-bottom:20px;">
+        <p style="font-weight:700;color:#166534;margin-bottom:10px;">📍 Zonas con despacho</p>
+        <ul style="list-style:none;font-size:13px;color:#374151;space-y:6px;">
+          <li style="padding:4px 0;border-bottom:1px solid #d1fae5;">✅ Valdivia (radio urbano completo)</li>
+          <li style="padding:4px 0;border-bottom:1px solid #d1fae5;">✅ Las Ánimas</li>
+          <li style="padding:4px 0;border-bottom:1px solid #d1fae5;">✅ Collico</li>
+          <li style="padding:4px 0;border-bottom:1px solid #d1fae5;">✅ Isla Teja</li>
+          <li style="padding:4px 0;">⚠️ Sectores rurales — consultar disponibilidad</li>
+        </ul>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:800;color:#1a202c;margin-bottom:12px;">⏰ Horarios y tiempos</h3>
+      <div style="background:#f8fafc;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;">
+        <p style="margin-bottom:8px;"><strong>Lunes a Viernes:</strong> 09:00 a 18:30 hrs</p>
+        <p style="margin-bottom:8px;"><strong>Sábado:</strong> 09:00 a 14:00 hrs</p>
+        <p style="margin-bottom:8px;"><strong>Domingo y festivos:</strong> Sin despacho</p>
+        <p style="color:#64748b;margin-top:12px;font-style:italic;">Pedidos antes de las 16:00 hrs se despachan el mismo día (de lunes a viernes).</p>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:800;color:#1a202c;margin-bottom:12px;">💵 Costo de despacho</h3>
+      <p style="font-size:13px;color:#374151;">El costo de despacho se informa al confirmar el pedido por WhatsApp según tu dirección. Consulta por promociones de despacho gratis en compras sobre monto mínimo.</p>`,
+  },
+
+  'cambios': {
+    titulo: 'Cambios y devoluciones',
+    html: `
+      <p style="margin-bottom:20px;color:#64748b;">En La Barata nos importa tu satisfacción. Si algo no está bien con tu pedido, aquí te explicamos cómo proceder.</p>
+
+      <h3 style="font-size:16px;font-weight:800;color:#1a202c;margin-bottom:12px;">✅ ¿Cuándo puedes hacer un cambio?</h3>
+      <ul style="list-style:none;font-size:14px;color:#374151;margin-bottom:20px;">
+        <li style="padding:8px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:10px;"><span>✔</span><span>Producto vencido o en mal estado al momento de la entrega</span></li>
+        <li style="padding:8px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:10px;"><span>✔</span><span>Producto distinto al que ordenaste</span></li>
+        <li style="padding:8px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:10px;"><span>✔</span><span>Cantidad incorrecta en tu pedido</span></li>
+        <li style="padding:8px 0;display:flex;gap:10px;"><span>✔</span><span>Producto con envase dañado o roto</span></li>
+      </ul>
+
+      <h3 style="font-size:16px;font-weight:800;color:#1a202c;margin-bottom:12px;">📋 ¿Cómo hacer la gestión?</h3>
+      <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;">
+        <div style="width:28px;height:28px;background:#16a34a;color:#fff;border-radius:50%;
+          display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;">1</div>
+        <p style="font-size:13px;color:#374151;">Contáctanos por WhatsApp al <strong>+56 9 4435 0559</strong> o escríbenos a <strong>compraslabarata@gmail.com</strong></p>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;">
+        <div style="width:28px;height:28px;background:#16a34a;color:#fff;border-radius:50%;
+          display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;">2</div>
+        <p style="font-size:13px;color:#374151;">Indica tu nombre, número de pedido y el motivo del reclamo. Adjunta una foto si el problema es visible.</p>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:24px;align-items:flex-start;">
+        <div style="width:28px;height:28px;background:#16a34a;color:#fff;border-radius:50%;
+          display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;">3</div>
+        <p style="font-size:13px;color:#374151;">Nuestro equipo resolverá tu caso a la brevedad con cambio del producto o nota de crédito.</p>
+      </div>
+
+      <div style="background:#fff0f0;border:1px solid #fca5a5;border-radius:10px;padding:14px 16px;font-size:13px;">
+        <p style="font-weight:700;color:#b91c1c;margin-bottom:4px;">⚠️ Importante</p>
+        <p style="color:#7f1d1d;">No se aceptan devoluciones de productos perecibles (frutas, verduras, carnes, lácteos) salvo que vengan en mal estado al momento de la entrega.</p>
+      </div>`,
+  },
+
+  'terminos': {
+    titulo: 'Términos y condiciones',
+    html: `
+      <p style="color:#64748b;font-size:13px;margin-bottom:20px;">Al realizar una compra en La Barata, aceptas los siguientes términos y condiciones.</p>
+
+      <h3 style="font-size:15px;font-weight:800;color:#1a202c;margin-bottom:8px;">1. Sobre los pedidos</h3>
+      <p style="font-size:13px;color:#374151;margin-bottom:16px;">Los pedidos se realizan a través del sitio web y se confirman por WhatsApp. Un pedido se considera confirmado solo cuando el cliente recibe la confirmación explícita de nuestro equipo vía WhatsApp.</p>
+
+      <h3 style="font-size:15px;font-weight:800;color:#1a202c;margin-bottom:8px;">2. Precios y stock</h3>
+      <p style="font-size:13px;color:#374151;margin-bottom:16px;">Los precios publicados en el sitio web incluyen IVA y están sujetos a cambios sin previo aviso. En caso de error en el precio publicado, La Barata se reserva el derecho de anular el pedido informando al cliente. El stock disponible se actualiza en tiempo real; si un producto se agota luego de realizar tu pedido, te contactaremos para ofrecer una alternativa.</p>
+
+      <h3 style="font-size:15px;font-weight:800;color:#1a202c;margin-bottom:8px;">3. Pago</h3>
+      <p style="font-size:13px;color:#374151;margin-bottom:16px;">El único medio de pago aceptado actualmente es la <strong>transferencia bancaria</strong>. El despacho se coordina una vez confirmada la transferencia. Datos bancarios: Banco Santander · Cta. Corriente N° 37522716 · Sociedad Comercial FAF SPA · RUT 77.557.632-4.</p>
+
+      <h3 style="font-size:15px;font-weight:800;color:#1a202c;margin-bottom:8px;">4. Despacho</h3>
+      <p style="font-size:13px;color:#374151;margin-bottom:16px;">El despacho se realiza dentro del radio urbano de Valdivia. Los tiempos de entrega son referenciales y pueden variar según la carga de pedidos del día. La Barata no se responsabiliza por retrasos causados por fuerza mayor.</p>
+
+      <h3 style="font-size:15px;font-weight:800;color:#1a202c;margin-bottom:8px;">5. Privacidad</h3>
+      <p style="font-size:13px;color:#374151;margin-bottom:16px;">Los datos personales entregados por el cliente (nombre, dirección, teléfono) son utilizados exclusivamente para coordinar los pedidos y no serán compartidos con terceros.</p>
+
+      <p style="font-size:12px;color:#94a3b8;">Última actualización: abril 2025 · contacto@labarata.cl</p>`,
+  },
+
+  'faq': {
+    titulo: 'Preguntas frecuentes',
+    html: `
+      ${[
+        ['¿Cómo realizo un pedido?', 'Agrega los productos que quieras al carrito, haz clic en "Finalizar Pedido", completa tus datos y confirma por WhatsApp. Nuestro equipo te responderá para coordinar el despacho.'],
+        ['¿Cuál es el horario de despacho?', 'Despachamos de lunes a viernes de 09:00 a 18:30 hrs y los sábados de 09:00 a 14:00 hrs. Los pedidos realizados antes de las 16:00 hrs se despachan el mismo día (lunes a viernes).'],
+        ['¿Solo aceptan transferencia?', 'Sí, actualmente el único medio de pago es la transferencia bancaria. Una vez realizada la transferencia, envía el comprobante por WhatsApp y coordinamos el despacho.'],
+        ['¿Hacen despacho a toda Valdivia?', 'Sí, dentro del radio urbano de Valdivia. Escríbenos por WhatsApp para confirmar si tu dirección está dentro de la cobertura.'],
+        ['¿Puedo hacer cambios en mi pedido una vez confirmado?', 'Puedes solicitar cambios contactándonos por WhatsApp antes de que el pedido sea despachado. Una vez en camino no es posible modificarlo.'],
+        ['¿Qué hago si mi pedido llegó incompleto o con algún problema?', 'Contáctanos inmediatamente al +56 9 4435 0559 o a compraslabarata@gmail.com con una foto del problema. Lo resolveremos a la brevedad.'],
+        ['¿Tienen local físico donde ir a comprar?', 'Actualmente operamos solo con despacho a domicilio en Valdivia. No contamos con local de atención al público.'],
+        ['¿Cómo sé que mi pedido fue confirmado?', 'Recibirás una confirmación por WhatsApp de parte de nuestro equipo. Si no recibes respuesta en 30 minutos, puedes escribirnos directamente al +56 9 4435 0559.'],
+      ].map(([p,r]) => `
+        <details style="border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;overflow:hidden;">
+          <summary style="padding:14px 16px;font-weight:700;font-size:14px;color:#1a202c;cursor:pointer;
+            list-style:none;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;">
+            ${p} <span style="color:#16a34a;font-size:18px;">+</span>
+          </summary>
+          <div style="padding:12px 16px;font-size:13px;color:#374151;background:#fff;line-height:1.6;">${r}</div>
+        </details>`).join('')}`,
+  },
+
+  'trabaja': {
+    titulo: 'Trabaja con nosotros',
+    html: `
+      <div style="text-align:center;margin-bottom:28px;">
+        <div style="font-size:48px;margin-bottom:12px;">🤝</div>
+        <h3 style="font-size:20px;font-weight:900;color:#1a202c;margin-bottom:8px;">Únete al equipo La Barata</h3>
+        <p style="color:#64748b;font-size:14px;">Somos una empresa valdiviana en crecimiento. Si tienes ganas de trabajar, eres responsable y te identificas con nuestros valores, queremos conocerte.</p>
+      </div>
+
+      <div style="background:#f0fdf4;border-radius:12px;padding:18px;margin-bottom:20px;">
+        <p style="font-weight:700;color:#166534;margin-bottom:12px;">¿Qué buscamos en nuestro equipo?</p>
+        <ul style="list-style:none;font-size:13px;color:#374151;">
+          <li style="padding:5px 0;display:flex;gap:10px;"><span>✅</span><span>Actitud positiva y ganas de aprender</span></li>
+          <li style="padding:5px 0;display:flex;gap:10px;"><span>✅</span><span>Responsabilidad y puntualidad</span></li>
+          <li style="padding:5px 0;display:flex;gap:10px;"><span>✅</span><span>Buen trato con los clientes</span></li>
+          <li style="padding:5px 0;display:flex;gap:10px;"><span>✅</span><span>Residencia en Valdivia</span></li>
+        </ul>
+      </div>
+
+      <p style="font-size:14px;color:#374151;margin-bottom:20px;">Actualmente buscamos <strong>repartidores / despachadoras</strong> y <strong>personas para preparación de pedidos</strong>. Si estás interesado, envíanos un mensaje con tu nombre, edad y experiencia.</p>
+
+      <a href="https://wa.me/56944350559?text=Hola%2C%20me%20interesa%20trabajar%20en%20La%20Barata" target="_blank"
+        style="display:block;background:#25d366;color:#fff;font-weight:900;font-size:14px;
+          padding:14px;border-radius:12px;text-align:center;text-decoration:none;margin-top:10px;">
+        💬 Postular por WhatsApp
+      </a>`,
+  },
+};
+
+function abrirPagina(id) {
+  const pag = PAGINAS[id];
+  if (!pag) return;
+  document.getElementById('modal-titulo').textContent = pag.titulo;
+  document.getElementById('modal-contenido').innerHTML = pag.html;
+  document.getElementById('modal-pagina').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function cerrarPagina() {
+  document.getElementById('modal-pagina').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+// Cerrar modal al hacer clic en el fondo
+document.getElementById('modal-pagina').addEventListener('click', function(e) {
+  if (e.target === this) cerrarPagina();
+});
+
+// ── CHECKOUT ──
+function abrirCheckout(){
+  if(!carrito.length){alert('¡Agrega productos primero!');return;}
+  toggleCarrito();
+  const cont=document.getElementById('chk-items');
+  let total=0;cont.innerHTML='';
+  carrito.forEach(it=>{
+    total+=it.p*it.cantidad;
+    cont.innerHTML+=`<div class="flex justify-between gap-2 text-xs"><span>${it.cantidad}× ${it.n}</span><span class="font-bold whitespace-nowrap">$${(it.p*it.cantidad).toLocaleString('es-CL')}</span></div>`;
+  });
+  document.getElementById('chk-total').textContent='$'+total.toLocaleString('es-CL');
+  document.getElementById('checkout-overlay').classList.remove('hidden');
+}
+function cerrarCheckout(){
+  document.getElementById('checkout-overlay').classList.add('hidden');
+}
+function enviarPedido(){
+  const n=document.getElementById('chk-nombre').value.trim();
+  const d=document.getElementById('chk-dir').value.trim();
+  const r=document.getElementById('chk-ref').value.trim();
+  const t=document.getElementById('chk-tel').value.trim();
+  const m=document.querySelector('input[name="pago"]:checked').value;
+  if(!n||!d||!r||!t){alert('Por favor completa todos los campos obligatorios.');return;}
+
+  // ── Armar mensaje WhatsApp ──
+  let msg=`*🛒 DISTRIBUIDORA LA BARATA — NUEVO PEDIDO*%0A`;
+  msg+=`📍 _Valdivia · Despacho a domicilio_%0A━━━━━━━━━━━━━━━━━━━━━━%0A`;
+  let tot=0;
+  carrito.forEach(it=>{tot+=it.p*it.cantidad;msg+=`• ${it.cantidad}× ${it.n} — $${(it.p*it.cantidad).toLocaleString('es-CL')}%0A`;});
+  msg+=`━━━━━━━━━━━━━━━━━━━━━━%0A*TOTAL: $${tot.toLocaleString('es-CL')}*%0A%0A`;
+  msg+=`👤 *Cliente:* ${n}%0A📍 *Dirección:* ${d}%0A🏠 *Referencia:* ${r}%0A📞 *Teléfono:* ${t}%0A💵 *Pago:* ${m}`;
+  if(m==='Transferencia') msg+=`%0A%0A📸 _Realizaré la transferencia y enviaré comprobante por este chat._`;
+
+  // ── Registrar en Bsale (en paralelo, no bloquea WhatsApp) ──
+  if (BACKEND_URL !== 'LOCAL') {
+    fetch(`${BACKEND_URL}/api/pedido`, {
+      method:  'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        cliente: {nombre:n, telefono:t, direccion:d, referencia:r},
+        pago:    m,
+        items:   carrito.map(it=>({
+          variantId:      it.variantId || it.id,
+          cantidad:       it.cantidad,
+          precioUnitario: it.p,
+          nombre:         it.n,
+        })),
+      }),
+    })
+    .then(res=>res.json())
+    .then(data=>{
+      if(data.ok) console.log(`✅ Nota de venta Bsale #${data.number} creada`);
+      else        console.warn('⚠️ Bsale no registró el pedido:', data.error);
+    })
+    .catch(err=>console.warn('⚠️ Error registrando en Bsale:', err.message));
+  }
+
+  // ── Abrir WhatsApp inmediatamente (no espera Bsale) ──
+  window.open(`https://wa.me/${WHATSAPP}?text=${msg}`,'_blank');
+  cerrarCheckout();
+
+  // Limpiar carrito después de confirmar
+  carrito=[];
+  pintarCarrito();
+  refrescarVistas();
+}
+
+// ── BANNER ──
+let bnr=0;const TOT=5;let itv;
+let touchStartX=0;
+function updBanner(){
+  document.getElementById('banner-track').style.transform=`translateX(-${bnr*20}%)`;
+  for(let i=0;i<TOT;i++){
+    const dd=document.getElementById('bd'+i);
+    if(!dd)continue;
+    dd.style.opacity=i===bnr?'1':'0.45';
+    dd.style.transform=i===bnr?'scale(1.3)':'scale(1)';
+    dd.style.background=i===bnr?'#fff':'rgba(255,255,255,.7)';
+  }
+}
+function moveBanner(dir){bnr=(bnr+dir+TOT)%TOT;updBanner();resetItv();}
+function goBanner(i){bnr=i;updBanner();resetItv();}
+function resetItv(){clearInterval(itv);itv=setInterval(()=>moveBanner(1),4500);}
+
+// Swipe en banner
+document.addEventListener('DOMContentLoaded',()=>{
+  const bc=document.getElementById('banner-container');
+  if(bc){
+    bc.addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;},{passive:true});
+    bc.addEventListener('touchend',e=>{
+      const dx=e.changedTouches[0].clientX-touchStartX;
+      if(Math.abs(dx)>50) moveBanner(dx<0?1:-1);
+    },{passive:true});
+  }
+  irInicio();
+  // 🔑 Carga productos desde Bsale (o respaldo si no hay backend)
+  cargarProductos();
+  pintarCarrito();
+  resetItv();
+  const firstBtn=document.querySelector('#mega-cats-list button');
+  if(firstBtn) activarSub('sub-despensa',firstBtn);
+});
+document.addEventListener('click',e=>{
+  const w=document.getElementById('mega-wrapper');
+  if(w&&!w.contains(e.target)) cerrarMega();
+});
+</script>
+</body>
+</html>
