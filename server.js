@@ -76,7 +76,7 @@ async function cargarProductos() {
     if (precio <= 0)     continue;
 
     const stockRaw = (f.stock || '').replace(/[.\s]/g, '').replace(',', '.');
-    const stock    = parseInt(stockRaw) || 0;
+    const stock    = parseInt(stockRaw) || 999;
     const cat      = (f.categoria || 'despensa').toLowerCase().trim();
     const img      = (f.imagen_url || '').trim();
     const barcode  = (f.barcode   || '').trim();
