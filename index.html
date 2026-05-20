@@ -863,7 +863,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 
 <!-- ════════ FOOTER ════════ -->
-<footer class="bg-verde text-white">
+<footer class="bg-verde text-white" style="position:relative;overflow:hidden;">
+<canvas id="footer-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:0.18;"></canvas>
   <!-- Flecha volver arriba -->
   <div class="text-center pt-6 pb-2">
     <button onclick="window.scrollTo({top:0,behavior:'smooth'})"
@@ -956,6 +957,77 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   <div class="border-t-4 py-4 text-center text-xs px-4" style="border-color:#F5B800; background:#0d5c2a; color:#ffffff; font-weight:600; letter-spacing:0.02em;">
     © La Barata · Razón Social: SOCIEDAD COMERCIAL FAF SPA · RUT: 77.557.632-4 · Valdivia, Los Ríos, Chile · Todos los derechos reservados 2025
   </div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('footer-canvas');
+  const ctx    = canvas.getContext('2d');
+  const emojis = ['🛒','🥛','🧴','🥩','🥦','🍎','🧅','🧀','🥚','🍞','🧃','🫙','🥫','🍋','🧹'];
+  let mouse = {x:-999, y:-999};
+  let items = [];
+
+  function resize(){
+    const footer = canvas.parentElement;
+    canvas.width  = footer.offsetWidth;
+    canvas.height = footer.offsetHeight;
+  }
+
+  function init(){
+    resize();
+    items = Array.from({length:30}, () => ({
+      emoji: emojis[Math.floor(Math.random()*emojis.length)],
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height,
+      size: 18 + Math.random()*22,
+      vx: (Math.random()-0.5)*0.4,
+      vy: (Math.random()-0.5)*0.4,
+      angle: Math.random()*Math.PI*2,
+      va: (Math.random()-0.5)*0.012,
+    }));
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    items.forEach(it => {
+      const dx = it.x - mouse.x, dy = it.y - mouse.y;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      if(dist < 130 && dist > 0){
+        const force = (130-dist)/130*0.7;
+        it.vx += (dx/dist)*force;
+        it.vy += (dy/dist)*force;
+      }
+      it.vx *= 0.97; it.vy *= 0.97;
+      it.x += it.vx; it.y += it.vy;
+      it.angle += it.va;
+      if(it.x < 0) it.x = canvas.width;
+      if(it.x > canvas.width) it.x = 0;
+      if(it.y < 0) it.y = canvas.height;
+      if(it.y > canvas.height) it.y = 0;
+      ctx.save();
+      ctx.translate(it.x, it.y);
+      ctx.rotate(it.angle);
+      ctx.font = `${it.size}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(it.emoji, 0, 0);
+      ctx.restore();
+    });
+    requestAnimationFrame(draw);
+  }
+
+  const footer = canvas.parentElement;
+  footer.addEventListener('mousemove', e => {
+    const r = footer.getBoundingClientRect();
+    mouse.x = e.clientX - r.left;
+    mouse.y = e.clientY - r.top;
+  });
+  footer.addEventListener('mouseleave', () => { mouse.x=-999; mouse.y=-999; });
+  window.addEventListener('resize', resize);
+
+  init();
+  draw();
+})();
+</script>
 </footer>
 
 
