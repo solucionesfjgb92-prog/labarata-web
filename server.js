@@ -14,6 +14,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(cors({ origin: process.env.FRONTEND_URL || '*', methods: ['GET','POST'] }));
+app.use('/imagenes', express.static('IMAGENES PRODUCTOS'));
 
 // ── URL del Google Sheets publicado como CSV ──────
 const SHEETS_URL = process.env.SHEETS_URL ||
