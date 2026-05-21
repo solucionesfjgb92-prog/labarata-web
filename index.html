@@ -217,7 +217,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 <!-- ════════ HEADER ════════ -->
 <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-[200]">
-  <div class="w-full px-3 sm:px-4 h-[60px] sm:h-[68px] flex items-center gap-2 sm:gap-4">
+  <div class="w-full px-3 sm:px-6 h-[68px] sm:h-[84px] flex items-center gap-3 sm:gap-5">
 
     <!-- HAMBURGER (solo móvil) -->
     <button onclick="abrirDrawer()" class="md:hidden flex-shrink-0 w-10 h-10 flex items-center justify-center text-verde rounded-lg hover:bg-gray-100 active:bg-gray-200">
@@ -227,11 +227,54 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
     </button>
 
     <!-- LOGO -->
-    <div class="flex items-center gap-2 cursor-pointer flex-shrink-0" onclick="irInicio()">
-      <img src="./LOGO_LA_BARATA.jpg" alt="La Barata" class="h-12 sm:h-14 w-auto rounded-xl shadow object-contain" style="max-width:160px;">
+    <div class="flex items-center gap-2.5 cursor-pointer flex-shrink-0" onclick="irInicio()">
+      <img src="./LOGO_LA_BARATA.jpg" alt="La Barata" class="h-14 sm:h-[62px] w-auto rounded-xl shadow object-contain" style="max-width:175px;">
       <div class="header-logo-text hidden lg:block leading-tight">
-        <div class="text-[10px] text-gray-400 uppercase tracking-wider">Distribuidora</div>
-        <div class="text-[11px] font-bold text-verde">Tu vecino online · Valdivia</div>
+        <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Distribuidora</div>
+        <div class="text-sm font-black text-verde">Tu vecino online</div>
+        <div class="text-[11px] font-semibold text-naranja">📍 Valdivia</div>
+      </div>
+    </div>
+
+    <!-- ¿CÓMO RECIBIRÁS TU COMPRA? -->
+    <div class="hidden md:block flex-shrink-0 relative" id="despacho-wrapper">
+      <button onclick="toggleDespachoPanel()" id="despacho-btn"
+        class="flex items-center gap-2 border border-gray-200 hover:border-verde rounded-xl px-3 py-2 transition-colors group"
+        style="min-width:190px">
+        <svg class="w-5 h-5 text-verde flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        <div class="text-left">
+          <div class="text-[10px] text-gray-400 font-medium leading-none mb-0.5">¿Cómo recibirás tu compra?</div>
+          <div class="text-xs font-bold text-gray-700 flex items-center gap-1">
+            🚚 Despacho · Valdivia
+            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </div>
+        </div>
+      </button>
+      <!-- Panel desplegable -->
+      <div id="despacho-panel" class="hidden absolute top-full left-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 z-50" style="width:320px">
+        <p class="font-black text-gray-800 text-base mb-3">¿Cómo recibirás tu compra?</p>
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-3 bg-verde/5 border-2 border-verde rounded-xl p-3 cursor-pointer">
+            <span class="text-2xl">🚚</span>
+            <div>
+              <p class="font-bold text-gray-800 text-sm">Despacho a domicilio</p>
+              <p class="text-xs text-gray-500">Toda la ciudad de Valdivia</p>
+              <p class="text-xs text-verde font-semibold mt-0.5">Mismo día — pedidos antes de las 16:00</p>
+            </div>
+          </div>
+          <div class="text-center text-[11px] text-gray-400 mt-1">
+            Horario: Lun–Vie 08:30–19:00 · Sáb y Fer 09:00–17:00
+          </div>
+          <a href="https://wa.me/56944350559" target="_blank"
+            class="mt-1 w-full text-center bg-verde hover:bg-green-700 text-white font-bold text-sm py-2.5 rounded-xl transition-colors">
+            💬 Coordinar por WhatsApp
+          </a>
+        </div>
       </div>
     </div>
 
@@ -239,11 +282,11 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
     <div class="flex-1 min-w-0">
       <div class="relative">
         <input id="buscador" type="text" oninput="buscarProducto(this.value)"
-          placeholder="Buscar productos..."
-          class="w-full border-2 border-verde rounded-full py-2 sm:py-2.5 pl-4 pr-10 text-sm
-                 focus:outline-none focus:ring-2 focus:ring-verde/30 bg-white">
-        <button class="absolute right-3 top-1/2 -translate-y-1/2 text-verde">
-          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          placeholder="¿Qué estás buscando?"
+          class="w-full border-2 border-gray-300 hover:border-verde focus:border-verde rounded-full py-2.5 sm:py-3 pl-5 pr-12 text-sm sm:text-base
+                 focus:outline-none focus:ring-2 focus:ring-verde/20 bg-white transition-colors">
+        <button class="absolute right-0 top-0 bottom-0 bg-verde hover:bg-green-700 text-white rounded-full w-12 flex items-center justify-center transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
           </svg>
         </button>
@@ -262,12 +305,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
       </a>
       <button onclick="toggleCarrito()"
         class="flex items-center gap-1.5 bg-naranja hover:bg-orange-600 text-white
-               font-bold px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg transition-colors shadow-sm relative">
+               font-bold px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-colors shadow-sm relative">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
         </svg>
-        <span class="hidden sm:inline text-sm">Mi Pedido</span>
+        <span class="hidden sm:inline text-sm font-bold">Mi Pedido</span>
         <span id="badge-nav" class="bg-white text-naranja text-xs font-black rounded-full
                w-5 h-5 flex items-center justify-center leading-none">0</span>
       </button>
@@ -277,7 +320,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 
 <!-- ════════ NAV VERDE DESKTOP ════════ -->
-<div class="bg-verde sticky top-[60px] sm:top-[68px] z-[150] shadow-md hidden md:block" style="box-shadow:0 2px 8px rgba(0,0,0,.22)">
+<div class="bg-verde sticky top-[68px] sm:top-[84px] z-[150] shadow-md hidden md:block" style="box-shadow:0 2px 8px rgba(0,0,0,.22)">
   <div class="w-full flex items-center" style="height:52px">
 
     <div id="mega-wrapper" class="h-full flex-shrink-0">
@@ -1435,6 +1478,16 @@ function mostrarBannerModo(texto) {
       <button onclick="this.parentElement.parentElement.remove()" class="text-amber-500 hover:text-amber-800 font-bold text-lg leading-none flex-shrink-0">×</button>
     </div>`;
 }
+
+// ── PANEL DESPACHO ──
+function toggleDespachoPanel(){
+  const p=document.getElementById('despacho-panel');
+  p.classList.toggle('hidden');
+}
+document.addEventListener('click',function(e){
+  const w=document.getElementById('despacho-wrapper');
+  if(w && !w.contains(e.target)) document.getElementById('despacho-panel').classList.add('hidden');
+});
 
 // ── DRAWER MÓVIL ──
 function abrirDrawer(){
