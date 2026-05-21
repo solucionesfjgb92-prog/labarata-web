@@ -99,6 +99,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 #top-bar a{color:#bbf7d0;transition:color .15s;}
 #top-bar a:hover{color:#fff;}
 
+/* ── NAV VERDE DESKTOP ── */
+.nav-link{position:relative;}
+.nav-link::after{content:'';position:absolute;bottom:0;left:50%;right:50%;height:3px;background:#fff;border-radius:2px 2px 0 0;transition:left .18s,right .18s;}
+.nav-link:hover::after,.nav-link.active::after{left:8px;right:8px;}
+.nav-link:hover{background:rgba(0,0,0,.12);}
+
 /* ── WHATSAPP FLOAT ── */
 .wa-float{
   position:fixed;bottom:80px;right:16px;width:52px;height:52px;
@@ -271,13 +277,14 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 
 <!-- ════════ NAV VERDE DESKTOP ════════ -->
-<div class="bg-verde sticky top-[60px] sm:top-[68px] z-[150] shadow-md hidden md:block">
-  <div class="w-full flex items-center h-11">
+<div class="bg-verde sticky top-[60px] sm:top-[68px] z-[150] shadow-md hidden md:block" style="box-shadow:0 2px 8px rgba(0,0,0,.22)">
+  <div class="w-full flex items-center" style="height:52px">
 
     <div id="mega-wrapper" class="h-full flex-shrink-0">
       <button id="btn-categorias"
-        class="h-full px-5 flex items-center gap-2 font-bold text-white text-sm
+        class="h-full px-5 flex items-center gap-2 font-black text-white text-sm tracking-wide
                hover:bg-green-700 transition-colors border-r border-green-600 whitespace-nowrap"
+        style="letter-spacing:.03em"
         onclick="toggleMega()" onmouseenter="abrirMega()">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
@@ -500,13 +507,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
     </div>
 
     <nav id="nav-links-desktop" class="flex items-center h-full overflow-x-auto no-scroll">
-      <button onclick="irInicio()"                              class="px-3 h-full text-white/90 hover:text-white hover:bg-green-700 text-sm font-medium transition-colors whitespace-nowrap">Inicio</button>
-      <button onclick="verCat('ofertas','Ofertas')"             class="px-3 h-full text-amarillo font-bold hover:bg-green-700 text-sm transition-colors whitespace-nowrap">🔥 Ofertas</button>
-      <button onclick="verCat('despensa','Despensa')"           class="px-3 h-full text-white/90 hover:text-white hover:bg-green-700 text-sm transition-colors whitespace-nowrap">Despensa</button>
-      <button onclick="verCat('aseo','Limpieza y Aseo')"        class="px-3 h-full text-white/90 hover:text-white hover:bg-green-700 text-sm transition-colors whitespace-nowrap">Limpieza</button>
-      <button onclick="verCat('panaderia','Panadería')"         class="px-3 h-full text-white/90 hover:text-white hover:bg-green-700 text-sm transition-colors whitespace-nowrap">Panadería</button>
-      <button onclick="verCat('bebidas','Bebidas y Jugos')"     class="px-3 h-full text-white/90 hover:text-white hover:bg-green-700 text-sm transition-colors whitespace-nowrap">Bebidas</button>
-      <button onclick="verCat('mascotas','Mascotas')"           class="px-3 h-full text-white/90 hover:text-white hover:bg-green-700 text-sm transition-colors whitespace-nowrap">Mascotas</button>
+      <button onclick="irInicio()"                              class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Inicio</button>
+      <button onclick="verCat('ofertas','Ofertas')"             class="nav-link px-4 h-full text-amarillo font-bold text-sm transition-colors whitespace-nowrap">🔥 Ofertas</button>
+      <button onclick="verCat('despensa','Despensa')"           class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Despensa</button>
+      <button onclick="verCat('aseo','Limpieza y Aseo')"        class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Limpieza</button>
+      <button onclick="verCat('panaderia','Panadería')"         class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Panadería</button>
+      <button onclick="verCat('bebidas','Bebidas y Jugos')"     class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Bebidas</button>
+      <button onclick="verCat('mascotas','Mascotas')"           class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Mascotas</button>
     </nav>
   </div>
 </div>
