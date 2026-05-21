@@ -189,7 +189,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 <!-- ════════ TOP BAR ════════ -->
 <div id="top-bar" class="bg-green-900 text-white text-xs py-1.5 hidden sm:block">
-  <div class="max-w-7xl mx-auto px-4 flex justify-between items-center flex-wrap gap-2">
+  <div class="w-full px-4 flex justify-between items-center flex-wrap gap-2">
     <div class="flex items-center gap-3 flex-wrap">
       <span>📍 Av. Ramón Picarte 779, Valdivia</span>
       <span class="text-white/30">|</span>
@@ -211,7 +211,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 <!-- ════════ HEADER ════════ -->
 <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-[200]">
-  <div class="max-w-7xl mx-auto px-3 sm:px-4 h-[60px] sm:h-[68px] flex items-center gap-2 sm:gap-4">
+  <div class="w-full px-3 sm:px-4 h-[60px] sm:h-[68px] flex items-center gap-2 sm:gap-4">
 
     <!-- HAMBURGER (solo móvil) -->
     <button onclick="abrirDrawer()" class="md:hidden flex-shrink-0 w-10 h-10 flex items-center justify-center text-verde rounded-lg hover:bg-gray-100 active:bg-gray-200">
@@ -272,7 +272,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 <!-- ════════ NAV VERDE DESKTOP ════════ -->
 <div class="bg-verde sticky top-[60px] sm:top-[68px] z-[150] shadow-md hidden md:block">
-  <div class="max-w-7xl mx-auto flex items-center h-11">
+  <div class="w-full flex items-center h-11">
 
     <div id="mega-wrapper" class="h-full flex-shrink-0">
       <button id="btn-categorias"
@@ -626,7 +626,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 <!-- ════════ BARRA BENEFICIOS ════════ -->
 <div class="bg-white border-b border-gray-200 shadow-sm">
-  <div id="benefits-grid" class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+  <div id="benefits-grid" class="w-full px-3 sm:px-4 py-2.5 grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
     <div class="del-bar-item">
       <div class="del-icon">🚚</div>
       <div><p class="font-bold text-verde text-xs sm:text-sm leading-tight">Despacho a domicilio</p><p class="text-[10px] sm:text-xs text-gray-500">Toda Valdivia</p></div>
@@ -651,7 +651,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 <div id="vista-inicio">
 
   <!-- BANNER CAROUSEL -->
-  <div class="max-w-7xl mx-auto px-3 sm:px-4 pt-3 sm:pt-5">
+  <div class="w-full px-3 sm:px-4 pt-3 sm:pt-5">
     <div id="banner-container" class="relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg group" style="height:200px">
       <div id="banner-track" style="width:500%">
         <div class="slide-inner" style="width:20%;float:left;height:200px;background:linear-gradient(135deg,#16a34a,#22c55e,#4ade80);display:flex;align-items:center;padding:20px 24px">
@@ -699,7 +699,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   </div>
 
   <!-- CÍRCULOS CATEGORÍAS -->
-  <div class="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+  <div class="w-full px-3 sm:px-4 py-4 sm:py-6">
     <div class="flex gap-3 sm:gap-4 overflow-x-auto no-scroll pb-2">
       <div onclick="verCat('despensa','Despensa')"     class="flex-shrink-0 flex flex-col items-center gap-1.5 cursor-pointer group">
         <div class="cat-circle-img w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
@@ -750,7 +750,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   </div>
 
   <!-- OFERTAS DESTACADAS -->
-  <div class="max-w-7xl mx-auto px-3 sm:px-4 pb-5">
+  <div class="w-full px-3 sm:px-4 pb-5">
     <div class="flex items-center justify-between mb-3 sm:mb-4">
       <h2 class="sec-title">🔥 Ofertas destacadas <span class="bg-red-100 text-red-600 text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 rounded-full">Esta semana</span></h2>
       <button onclick="verCat('ofertas','Ofertas')" class="text-xs sm:text-sm text-verde font-bold border border-verde px-3 py-1.5 rounded-lg hover:bg-verde hover:text-white transition-colors whitespace-nowrap">Ver todas →</button>
@@ -759,7 +759,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   </div>
 
   <!-- BANNER DESPACHO GRATIS -->
-  <div class="max-w-7xl mx-auto px-3 sm:px-4 pb-5">
+  <div class="w-full px-3 sm:px-4 pb-5">
     <div class="bg-gradient-to-r from-amarillo via-yellow-300 to-amarillo rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 shadow-sm">
       <div>
         <h3 class="font-black text-lg sm:text-2xl text-gray-900">🎁 ¡Despacho GRATIS en tu primer pedido!</h3>
@@ -773,7 +773,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   </div>
 
   <!-- LO MÁS VENDIDO -->
-  <div class="max-w-7xl mx-auto px-3 sm:px-4 pb-5">
+  <div class="w-full px-3 sm:px-4 pb-5">
     <div class="flex items-center justify-between mb-3 sm:mb-4">
       <h2 class="sec-title">⭐ Lo más vendido</h2>
       <button onclick="verCat('despensa','Despensa')" class="text-xs sm:text-sm text-verde font-bold border border-verde px-3 py-1.5 rounded-lg hover:bg-verde hover:text-white transition-colors whitespace-nowrap">Ver todo →</button>
@@ -782,7 +782,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   </div>
 
   <!-- INFO -->
-  <div class="max-w-7xl mx-auto px-3 sm:px-4 pb-6">
+  <div class="w-full px-3 sm:px-4 pb-6">
     <div class="bg-white border border-gray-100 rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
       <div class="flex items-center gap-2 sm:gap-3">
         <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">📍</div>
@@ -808,7 +808,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 <!-- ════════ VISTA CATÁLOGO ════════ -->
 <div id="vista-catalogo" class="hidden">
-  <div class="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 flex gap-4 sm:gap-6">
+  <div class="w-full px-3 sm:px-4 py-4 sm:py-6 flex gap-4 sm:gap-6">
 
     <aside class="hidden lg:block w-52 flex-shrink-0">
       <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden sticky top-28">
@@ -873,7 +873,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
     </button>
   </div>
 
-  <div class="max-w-7xl mx-auto px-3 sm:px-4 pb-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 border-t border-white/20 pt-8">
+  <div class="w-full px-3 sm:px-4 pb-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 border-t border-white/20 pt-8">
 
     <!-- COL 1: Servicio al cliente -->
     <div>
@@ -1348,7 +1348,7 @@ function mostrarBannerModo(texto) {
   if (!el) {
     el = document.createElement('div');
     el.id = 'banner-modo';
-    el.className = 'max-w-7xl mx-auto px-3 sm:px-4 mt-3';
+    el.className = 'w-full px-3 sm:px-4 mt-3';
     document.getElementById('vista-inicio').prepend(el);
   }
   el.innerHTML = `
