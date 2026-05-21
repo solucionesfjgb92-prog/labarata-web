@@ -524,7 +524,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   <!-- Info rápida -->
   <div class="bg-green-50 px-4 py-2.5 border-b border-gray-200 flex-shrink-0">
     <p class="text-xs text-verde font-bold">📍 Av. Ramón Picarte 779, Valdivia</p>
-    <p class="text-xs text-gray-600 mt-0.5">⏰ Lun–Vie: 09:00–18:30 hrs · <a href="tel:+56944350559" class="text-verde font-bold">+56 9 4435 0559</a></p>
+    <p class="text-xs text-gray-600 mt-0.5">⏰ Lun–Vie: 08:30–19:00 · Sáb y Fer: 09:00–17:00 · <a href="tel:+56944350559" class="text-verde font-bold">+56 9 4435 0559</a></p>
   </div>
   <!-- Links rápidos -->
   <div class="px-4 py-3 border-b border-gray-200 flex-shrink-0 flex gap-2 flex-wrap">
@@ -633,7 +633,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
     </div>
     <div class="del-bar-item">
       <div class="del-icon" style="background:#fff7ed;">⏰</div>
-      <div><p class="font-bold text-naranja text-xs sm:text-sm leading-tight">Mismo día</p><p class="text-[10px] sm:text-xs text-gray-500">Lun–Vie 09:00–18:30</p></div>
+      <div><p class="font-bold text-naranja text-xs sm:text-sm leading-tight">Mismo día</p><p class="text-[10px] sm:text-xs text-gray-500">Lun–Vie 08:30–19:00</p></div>
     </div>
     <div class="del-bar-item">
       <div class="del-icon">🎁</div>
@@ -861,7 +861,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
       </div>
       <div class="flex items-center gap-2 sm:gap-3">
         <div class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">⏰</div>
-        <div><p class="font-bold text-naranja text-xs sm:text-sm leading-tight">Horario</p><p class="text-[10px] sm:text-xs text-gray-600">Lun–Vie 09:00–18:30</p></div>
+        <div><p class="font-bold text-naranja text-xs sm:text-sm leading-tight">Horario</p><p class="text-[10px] sm:text-xs text-gray-600">Lun–Vie 08:30–19:00 · Sáb y Fer 09:00–17:00</p></div>
       </div>
       <div class="flex items-center gap-2 sm:gap-3">
         <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">🚚</div>
@@ -976,7 +976,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
         </li>
         <li class="flex items-start gap-2">
           <span class="flex-shrink-0">⏰</span>
-          <span>Horario despachos:<br>Lun–Vie, 09:00 a 18:30 hrs<br>Sáb, 09:00 a 14:00 hrs</span>
+          <span>Horario despachos:<br>Lun–Vie, 08:30 a 19:00 hrs<br>Sáb y Feriados, 09:00 a 17:00 hrs</span>
         </li>
       </ul>
     </div>
@@ -1779,9 +1779,9 @@ const PAGINAS = {
 
       <h3 style="font-size:16px;font-weight:800;color:#1a202c;margin-bottom:12px;">⏰ Horarios y tiempos</h3>
       <div style="background:#f8fafc;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;">
-        <p style="margin-bottom:8px;"><strong>Lunes a Viernes:</strong> 09:00 a 18:30 hrs</p>
-        <p style="margin-bottom:8px;"><strong>Sábado:</strong> 09:00 a 14:00 hrs</p>
-        <p style="margin-bottom:8px;"><strong>Domingo y festivos:</strong> Sin despacho</p>
+        <p style="margin-bottom:8px;"><strong>Lunes a Viernes:</strong> 08:30 a 19:00 hrs</p>
+        <p style="margin-bottom:8px;"><strong>Sábado y Feriados:</strong> 09:00 a 17:00 hrs</p>
+        <p style="margin-bottom:8px;"><strong>Domingo:</strong> Sin despacho</p>
         <p style="color:#64748b;margin-top:12px;font-style:italic;">Pedidos antes de las 16:00 hrs se despachan el mismo día (de lunes a viernes).</p>
       </div>
 
@@ -1853,7 +1853,7 @@ const PAGINAS = {
     html: `
       ${[
         ['¿Cómo realizo un pedido?', 'Agrega los productos que quieras al carrito, haz clic en "Finalizar Pedido", completa tus datos y confirma por WhatsApp. Nuestro equipo te responderá para coordinar el despacho.'],
-        ['¿Cuál es el horario de despacho?', 'Despachamos de lunes a viernes de 09:00 a 18:30 hrs y los sábados de 09:00 a 14:00 hrs. Los pedidos realizados antes de las 16:00 hrs se despachan el mismo día (lunes a viernes).'],
+        ['¿Cuál es el horario de despacho?', 'Despachamos de lunes a viernes de 08:30 a 19:00 hrs y los sábados y feriados de 09:00 a 17:00 hrs. Los pedidos realizados antes de las 16:00 hrs se despachan el mismo día (lunes a viernes).'],
         ['¿Solo aceptan transferencia?', 'Sí, actualmente el único medio de pago es la transferencia bancaria. Una vez realizada la transferencia, envía el comprobante por WhatsApp y coordinamos el despacho.'],
         ['¿Hacen despacho a toda Valdivia?', 'Sí, dentro del radio urbano de Valdivia. Escríbenos por WhatsApp para confirmar si tu dirección está dentro de la cobertura.'],
         ['¿Puedo hacer cambios en mi pedido una vez confirmado?', 'Puedes solicitar cambios contactándonos por WhatsApp antes de que el pedido sea despachado. Una vez en camino no es posible modificarlo.'],
