@@ -233,4 +233,12 @@ app.get('/api/ping', (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Servidor La Barata v7.0 — Google Sheets — puerto ${PORT}`);
   console.log(`   SHEETS_URL configurada: ${SHEETS_URL.substring(0, 60)}...`);
+
+  // Auto-ping cada 14 min para evitar cold start en Render free tier
+  const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+  setInterval(() => {
+    fetch(`${SELF_URL}/api/ping`)
+      .then(() => console.log(`🏓 Self-ping OK — ${new Date().toISOString()}`))
+      .catch(err => console.warn(`⚠️ Self-ping falló: ${err.message}`));
+  }, 14 * 60 * 1000);
 });
