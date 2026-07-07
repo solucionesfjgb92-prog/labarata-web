@@ -267,7 +267,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   position:relative;z-index:9999;gap:8px;flex-wrap:wrap;
 ">
   <span style="display:flex;align-items:center;gap:8px;">
-    🚧 <span>Esta página está en construcción — algunos productos y funciones pueden no estar disponibles aún.</span>
+    🚧 <span>Sitio en mantención — las compras están temporalmente desactivadas. Para pedidos, contáctanos por WhatsApp.</span>
   </span>
   <button onclick="document.getElementById('alerta-construccion').remove()" style="
     background:rgba(0,0,0,.15);border:none;cursor:pointer;
@@ -1369,6 +1369,9 @@ const BACKEND_URL = 'https://labarata-backend.onrender.com';
 
 const WHATSAPP = "56944350559";
 
+// ── Sitio en mantención: compras desactivadas temporalmente ──
+const COMPRAS_DESACTIVADAS = true;
+
 // ── Escapa texto antes de insertarlo como HTML (evita XSS) ──
 function esc(str){
   const d = document.createElement('div');
@@ -1721,7 +1724,9 @@ function crearCard(p, mini) {
         <p class="text-verde font-black text-base sm:text-lg">$${p.p.toLocaleString('es-CL')}</p>
         ${p.stock !== undefined && !sinStock && p.stock > 5 ? `<span class="text-[9px] text-gray-400 font-semibold">${p.stock} disp.</span>` : ''}
       </div>
-      ${sinStock
+      ${COMPRAS_DESACTIVADAS
+        ? `<button disabled class="bg-gray-200 text-gray-400 font-bold py-1.5 rounded-lg text-[11px] sm:text-xs w-full cursor-not-allowed">No disponible</button>`
+        : sinStock
         ? `<button disabled class="bg-gray-200 text-gray-400 font-bold py-1.5 rounded-lg text-[11px] sm:text-xs w-full cursor-not-allowed">Sin stock</button>`
         : en
           ? `<div class="flex items-center justify-between bg-verde rounded-lg overflow-hidden">
@@ -1753,6 +1758,7 @@ function toggleCarrito(){
   document.getElementById('panel-carrito').classList.toggle('hidden');
 }
 function agregar(id){
+  if(COMPRAS_DESACTIVADAS){alert('El sitio está en mantención. Las compras están temporalmente desactivadas — escríbenos por WhatsApp para hacer tu pedido.');return;}
   const p=DB.find(x=>x.id===id);
   const e=carrito.find(x=>x.id===id);
   if(e) e.cantidad++; else carrito.push({...p,cantidad:1});
@@ -2068,6 +2074,7 @@ document.getElementById('modal-pagina').addEventListener('click', function(e) {
 
 // ── CHECKOUT ──
 function abrirCheckout(){
+  if(COMPRAS_DESACTIVADAS){alert('El sitio está en mantención. Las compras están temporalmente desactivadas — escríbenos por WhatsApp para hacer tu pedido.');return;}
   if(!carrito.length){alert('¡Agrega productos primero!');return;}
   toggleCarrito();
   const cont=document.getElementById('chk-items');
