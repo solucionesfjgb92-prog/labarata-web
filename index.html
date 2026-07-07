@@ -1369,6 +1369,13 @@ const BACKEND_URL = 'https://labarata-backend.onrender.com';
 
 const WHATSAPP = "56944350559";
 
+// ── Escapa texto antes de insertarlo como HTML (evita XSS) ──
+function esc(str){
+  const d = document.createElement('div');
+  d.textContent = String(str ?? '');
+  return d.innerHTML;
+}
+
 // ── Mapa de categorías Bsale → slug local ────────────
 // Cuando tengas Bsale activo, reemplaza los números por
 // los IDs reales de tus tipos de producto en Bsale
@@ -1705,11 +1712,11 @@ function crearCard(p, mini) {
     ${p.oferta && !sinStock ? '<span class="oferta-badge">OFERTA</span>' : ''}
     ${stockBadge}
     <div class="${imgH} bg-gray-50 flex items-center justify-center overflow-hidden relative">
-      <img src="${p.img}" alt="${p.n}" class="w-full h-full object-cover ${sinStock ? 'grayscale' : ''}"
+      <img src="${esc(p.img)}" alt="${esc(p.n)}" class="w-full h-full object-cover ${sinStock ? 'grayscale' : ''}"
         onerror="this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=300&fit=crop'" loading="lazy">
     </div>
     <div class="p-2 sm:p-3 flex flex-col flex-1">
-      <h3 class="text-[11px] sm:text-xs font-semibold text-gray-700 leading-snug flex-1 mb-1.5 sm:mb-2" style="min-height:2.2rem">${p.n}</h3>
+      <h3 class="text-[11px] sm:text-xs font-semibold text-gray-700 leading-snug flex-1 mb-1.5 sm:mb-2" style="min-height:2.2rem">${esc(p.n)}</h3>
       <div class="flex items-center justify-between mb-1.5 sm:mb-2">
         <p class="text-verde font-black text-base sm:text-lg">$${p.p.toLocaleString('es-CL')}</p>
         ${p.stock !== undefined && !sinStock && p.stock > 5 ? `<span class="text-[9px] text-gray-400 font-semibold">${p.stock} disp.</span>` : ''}
@@ -1794,10 +1801,10 @@ function pintarCarrito(){
     const d=document.createElement('div');
     d.className='flex items-start gap-2 py-2 border-b border-gray-100 last:border-0';
     d.innerHTML=`
-      <img src="${it.img}" class="w-10 h-10 object-cover rounded-lg flex-shrink-0"
+      <img src="${esc(it.img)}" alt="${esc(it.n)}" class="w-10 h-10 object-cover rounded-lg flex-shrink-0"
         onerror="this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=80&h=80&fit=crop'" loading="lazy">
       <div class="flex-1 min-w-0">
-        <p class="text-xs font-semibold text-gray-700 leading-snug">${it.n}</p>
+        <p class="text-xs font-semibold text-gray-700 leading-snug">${esc(it.n)}</p>
         <p class="text-verde font-bold text-xs">$${(it.p*it.cantidad).toLocaleString('es-CL')}</p>
         <div class="flex items-center gap-1 mt-1">
           <button onclick="restar(${it.id})" class="w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold flex items-center justify-center">−</button>
@@ -2067,7 +2074,7 @@ function abrirCheckout(){
   let total=0;cont.innerHTML='';
   carrito.forEach(it=>{
     total+=it.p*it.cantidad;
-    cont.innerHTML+=`<div class="flex justify-between gap-2 text-xs"><span>${it.cantidad}× ${it.n}</span><span class="font-bold whitespace-nowrap">$${(it.p*it.cantidad).toLocaleString('es-CL')}</span></div>`;
+    cont.innerHTML+=`<div class="flex justify-between gap-2 text-xs"><span>${it.cantidad}× ${esc(it.n)}</span><span class="font-bold whitespace-nowrap">$${(it.p*it.cantidad).toLocaleString('es-CL')}</span></div>`;
   });
   document.getElementById('chk-total').textContent='$'+total.toLocaleString('es-CL');
   document.getElementById('checkout-overlay').classList.remove('hidden');
@@ -2084,13 +2091,13 @@ function enviarPedido(){
   if(!n||!d||!r||!t){alert('Por favor completa todos los campos obligatorios.');return;}
 
   // ── Armar mensaje WhatsApp ──
-  let msg=`*🛒 DISTRIBUIDORA LA BARATA — NUEVO PEDIDO*%0A`;
-  msg+=`📍 _Valdivia · Despacho a domicilio_%0A━━━━━━━━━━━━━━━━━━━━━━%0A`;
+  let msg=`*🛒 DISTRIBUIDORA LA BARATA — NUEVO PEDIDO*\n`;
+  msg+=`📍 _Valdivia · Despacho a domicilio_\n━━━━━━━━━━━━━━━━━━━━━━\n`;
   let tot=0;
-  carrito.forEach(it=>{tot+=it.p*it.cantidad;msg+=`• ${it.cantidad}× ${it.n} — $${(it.p*it.cantidad).toLocaleString('es-CL')}%0A`;});
-  msg+=`━━━━━━━━━━━━━━━━━━━━━━%0A*TOTAL: $${tot.toLocaleString('es-CL')}*%0A%0A`;
-  msg+=`👤 *Cliente:* ${n}%0A📍 *Dirección:* ${d}%0A🏠 *Referencia:* ${r}%0A📞 *Teléfono:* ${t}%0A💵 *Pago:* ${m}`;
-  if(m==='Transferencia') msg+=`%0A%0A📸 _Realizaré la transferencia y enviaré comprobante por este chat._`;
+  carrito.forEach(it=>{tot+=it.p*it.cantidad;msg+=`• ${it.cantidad}× ${it.n} — $${(it.p*it.cantidad).toLocaleString('es-CL')}\n`;});
+  msg+=`━━━━━━━━━━━━━━━━━━━━━━\n*TOTAL: $${tot.toLocaleString('es-CL')}*\n\n`;
+  msg+=`👤 *Cliente:* ${n}\n📍 *Dirección:* ${d}\n🏠 *Referencia:* ${r}\n📞 *Teléfono:* ${t}\n💵 *Pago:* ${m}`;
+  if(m==='Transferencia') msg+=`\n\n📸 _Realizaré la transferencia y enviaré comprobante por este chat._`;
 
   // ── Registrar en Bsale (en paralelo, no bloquea WhatsApp) ──
   if (BACKEND_URL !== 'LOCAL') {
@@ -2117,7 +2124,7 @@ function enviarPedido(){
   }
 
   // ── Abrir WhatsApp inmediatamente (no espera Bsale) ──
-  window.open(`https://wa.me/${WHATSAPP}?text=${msg}`,'_blank');
+  window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`,'_blank');
   cerrarCheckout();
 
   // Limpiar carrito después de confirmar
