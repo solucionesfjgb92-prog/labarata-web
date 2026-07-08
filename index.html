@@ -259,21 +259,21 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 </head>
 <body>
 
-<!-- ── ALERTA PÁGINA EN CONSTRUCCIÓN ── -->
+<!-- ── AVISO MANTENCIÓN (mensaje único de estado del sitio) ── -->
 <div id="alerta-construccion" style="
   background:#f59e0b;color:#1c1917;
-  display:flex;align-items:center;justify-content:space-between;
+  display:flex;align-items:center;justify-content:center;
   padding:10px 16px;font-size:13px;font-weight:700;
-  position:relative;z-index:9999;gap:8px;flex-wrap:wrap;
+  position:relative;z-index:9999;gap:12px;flex-wrap:wrap;text-align:center;
 ">
-  <span style="display:flex;align-items:center;gap:8px;">
-    🚧 <span>Sitio en mantención — las compras están temporalmente desactivadas. Para pedidos, contáctanos por WhatsApp.</span>
+  <span style="display:flex;align-items:center;gap:8px;justify-content:center;">
+    🚧 <span>Estamos renovando nuestra tienda online. Por ahora recibimos tus pedidos directo por WhatsApp.</span>
   </span>
-  <button onclick="document.getElementById('alerta-construccion').remove()" style="
-    background:rgba(0,0,0,.15);border:none;cursor:pointer;
-    border-radius:6px;padding:3px 10px;font-size:16px;font-weight:700;color:#1c1917;
-    flex-shrink:0;
-  ">✕</button>
+  <a href="https://wa.me/56944350559?text=Hola%2C%20quiero%20hacer%20un%20pedido" target="_blank" style="
+    background:#16a34a;color:#fff;text-decoration:none;
+    border-radius:8px;padding:5px 14px;font-size:13px;font-weight:800;
+    white-space:nowrap;flex-shrink:0;
+  ">📲 Pedir por WhatsApp</a>
 </div>
 
 <!-- ════════ TOP BAR ════════ -->
@@ -1503,7 +1503,7 @@ async function cargarProductos(forzar = false) {
   } catch (err) {
     console.warn('⚠️ Backend no disponible, usando datos de respaldo:', err.message);
     DB = DB_RESPALDO;
-    mostrarBannerModo('⚠️ Sin conexión al servidor — mostrando catálogo de demostración');
+    mostrarBannerModo('⚠️ Catálogo temporalmente no disponible. Escríbenos por WhatsApp para hacer tu pedido.');
   } finally {
     cargando = false;
     pintarHomeOfertas();
@@ -1558,6 +1558,9 @@ function mostrarSkeletons(gridId, cantidad) {
 
 // ── Banner aviso modo demo ─────────────────────────────
 function mostrarBannerModo(texto) {
+  // Durante la mantención el aviso superior es el ÚNICO mensaje de estado.
+  // Evita apilar un segundo banner que contradiga o confunda al cliente.
+  if (COMPRAS_DESACTIVADAS) return;
   let el = document.getElementById('banner-modo');
   if (!el) {
     el = document.createElement('div');
