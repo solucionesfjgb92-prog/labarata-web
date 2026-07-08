@@ -7,16 +7,19 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start":   "node server.js",
-    "dev":     "nodemon server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "build:css": "tailwindcss -i ./tailwind.input.css -o ./tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./tailwind.input.css -o ./tailwind.css --watch"
   },
   "dependencies": {
-    "cors":       "^2.8.5",
-    "dotenv":     "^16.4.5",
-    "express":    "^4.19.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
     "node-fetch": "^2.7.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.4"
+    "nodemon": "^3.1.4",
+    "tailwindcss": "^3.4.19"
   }
 }
