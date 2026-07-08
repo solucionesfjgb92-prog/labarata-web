@@ -1234,9 +1234,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
         <p class="font-bold text-gray-700 text-xs uppercase tracking-wide mb-2 sm:mb-3">📋 Resumen del pedido</p>
         <div id="chk-items" class="space-y-1.5 max-h-36 overflow-y-auto text-xs text-gray-600 border-b pb-3 mb-3"></div>
         <div class="flex justify-between items-center">
-          <span class="font-bold text-gray-700 text-sm">Total a pagar</span>
+          <span class="font-bold text-gray-700 text-sm">Subtotal productos</span>
           <span id="chk-total" class="font-black text-verde text-xl">$0</span>
         </div>
+        <p class="text-[11px] text-gray-500 mt-1.5">🚚 El costo de despacho no está incluido — se confirma por WhatsApp según tu dirección.</p>
       </div>
       <div class="space-y-2 sm:space-y-3">
         <p class="font-bold text-gray-800 border-b pb-1.5 flex items-center gap-2 text-sm">
@@ -1262,12 +1263,19 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
           <input type="radio" name="pago" value="Transferencia" checked class="ml-auto w-4 h-4 accent-verde">
         </div>
         <div id="caja-banco" class="bg-blue-50 border-2 border-blue-200 rounded-xl p-3 sm:p-4 text-xs">
-          <p class="font-black text-blue-900 mb-2 text-xs uppercase">Datos Banco Santander</p>
-          <div class="bg-white rounded-lg p-2 sm:p-3 space-y-1 text-gray-700 shadow-sm text-xs">
+          <p class="font-black text-blue-900 mb-1 text-xs uppercase">Datos Banco Santander</p>
+          <p class="text-blue-700 text-[11px] mb-2">La Barata opera bajo la razón social <strong>Sociedad Comercial FAF SpA</strong> — es la cuenta correcta para tu transferencia.</p>
+          <div class="bg-white rounded-lg p-2 sm:p-3 space-y-1.5 text-gray-700 shadow-sm text-xs">
             <p><strong class="text-blue-600">Nombre:</strong> SOCIEDAD COMERCIAL FAF SPA</p>
-            <p><strong class="text-blue-600">RUT:</strong> 77.557.632-4</p>
+            <p class="flex items-center justify-between gap-2">
+              <span><strong class="text-blue-600">RUT:</strong> 77.557.632-4</span>
+              <button type="button" onclick="copiarValor('77.557.632-4', this)" class="text-blue-600 hover:text-blue-800 text-[10px] font-bold border border-blue-200 rounded px-2 py-0.5 flex-shrink-0">📋 Copiar</button>
+            </p>
             <p><strong class="text-blue-600">Banco:</strong> Santander · Cta. Corriente</p>
-            <p><strong class="text-blue-600">N° Cuenta:</strong> 37522716</p>
+            <p class="flex items-center justify-between gap-2">
+              <span><strong class="text-blue-600">N° Cuenta:</strong> 37522716</span>
+              <button type="button" onclick="copiarValor('37522716', this)" class="text-blue-600 hover:text-blue-800 text-[10px] font-bold border border-blue-200 rounded px-2 py-0.5 flex-shrink-0">📋 Copiar</button>
+            </p>
             <p><strong class="text-blue-600">Email:</strong> compraslabarata@gmail.com</p>
           </div>
           <p class="text-blue-700 font-semibold mt-2">⚠️ Envía el comprobante por WhatsApp junto a tu pedido.</p>
@@ -1302,6 +1310,33 @@ function esc(str){
   const d = document.createElement('div');
   d.textContent = String(str ?? '');
   return d.innerHTML;
+}
+
+// ── Copiar dato bancario al portapapeles ──
+function copiarValor(valor, btn){
+  const original = btn.textContent;
+  navigator.clipboard.writeText(valor).then(() => {
+    btn.textContent = '✓ Copiado';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  }).catch(() => {
+    alert('No se pudo copiar automáticamente. Copia manualmente: ' + valor);
+  });
+}
+
+// ── Toast de confirmación (feedback visual dentro del sitio) ──
+function mostrarToast(msg, ms){
+  ms = ms || 5000;
+  let t = document.getElementById('toast-global');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast-global';
+    t.style.cssText = 'position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#16a34a;color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:9999;max-width:90vw;text-align:center;transition:opacity .3s;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(() => { t.style.opacity = '0'; }, ms);
 }
 
 // ── Mapa de categorías Bsale → slug local ────────────
@@ -1634,10 +1669,12 @@ function crearCard(p, mini) {
   if (sinStock) d.className += ' opacity-70';
   const imgH = mini ? 'h-24 sm:h-28' : 'h-28 sm:h-36';
 
-  // Badge de stock
+  // Badge de stock (la urgencia de stock no aplica si las compras están desactivadas)
   let stockBadge = '';
   if (sinStock)   stockBadge = '<span class="absolute top-7 left-0 right-0 text-center text-[10px] font-black bg-gray-600 text-white py-0.5 z-10">SIN STOCK</span>';
-  else if (pocoStock) stockBadge = `<span class="absolute top-1 right-1 bg-orange-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full z-10">¡Últimas ${p.stock}!</span>`;
+  else if (pocoStock && !COMPRAS_DESACTIVADAS) stockBadge = `<span class="absolute top-1 right-1 bg-orange-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full z-10">¡Últimas ${p.stock}!</span>`;
+
+  const waProductoHref = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hola, me interesa este producto: ${p.n} ($${p.p.toLocaleString('es-CL')})`)}`;
 
   d.innerHTML = `
     ${p.oferta && !sinStock ? '<span class="oferta-badge">OFERTA</span>' : ''}
@@ -1650,10 +1687,10 @@ function crearCard(p, mini) {
       <h3 class="text-[11px] sm:text-xs font-semibold text-gray-700 leading-snug flex-1 mb-1.5 sm:mb-2" style="min-height:2.2rem">${esc(p.n)}</h3>
       <div class="flex items-center justify-between mb-1.5 sm:mb-2">
         <p class="text-verde font-black text-base sm:text-lg">$${p.p.toLocaleString('es-CL')}</p>
-        ${p.stock !== undefined && !sinStock && p.stock > 5 ? `<span class="text-[9px] text-gray-400 font-semibold">${p.stock} disp.</span>` : ''}
+        ${p.stock !== undefined && !sinStock && p.stock > 5 && !COMPRAS_DESACTIVADAS ? `<span class="text-[9px] text-gray-400 font-semibold">${p.stock} disp.</span>` : ''}
       </div>
       ${COMPRAS_DESACTIVADAS
-        ? `<button disabled class="bg-gray-200 text-gray-400 font-bold py-1.5 rounded-lg text-[11px] sm:text-xs w-full cursor-not-allowed">No disponible</button>`
+        ? `<a href="${waProductoHref}" target="_blank" onclick="event.stopPropagation()" class="flex items-center justify-center gap-1 bg-verde hover:bg-green-700 text-white font-bold py-1.5 rounded-lg text-[11px] sm:text-xs w-full transition-colors">💬 Pedir por WhatsApp</a>`
         : sinStock
         ? `<button disabled class="bg-gray-200 text-gray-400 font-bold py-1.5 rounded-lg text-[11px] sm:text-xs w-full cursor-not-allowed">Sin stock</button>`
         : en
@@ -1683,6 +1720,10 @@ function pintarHomeTop(){
 
 // ── CARRITO ──
 function toggleCarrito(){
+  if (COMPRAS_DESACTIVADAS) {
+    window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Hola, quiero hacer un pedido')}`, '_blank');
+    return;
+  }
   document.getElementById('panel-carrito').classList.toggle('hidden');
 }
 function agregar(id){
@@ -1803,6 +1844,10 @@ const PAGINAS = {
   'como-comprar': {
     titulo: 'Cómo comprar',
     html: `
+      ${COMPRAS_DESACTIVADAS ? `<div style="background:#fffbeb;border:2px solid #f59e0b;border-radius:12px;padding:14px;margin-bottom:20px;">
+        <p style="font-weight:800;color:#92400e;margin-bottom:4px;">🚧 Estamos renovando nuestra tienda online</p>
+        <p style="color:#92400e;font-size:13px;">Mientras tanto, coordina tu pedido directo por <strong>WhatsApp al +56 9 4435 0559</strong> — te respondemos al toque con precios y disponibilidad.</p>
+      </div>` : ''}
       <p style="margin-bottom:20px;color:#64748b;">Comprar en La Barata es muy sencillo. Sigue estos pasos:</p>
 
       <div style="display:flex;gap:14px;margin-bottom:16px;align-items:flex-start;">
@@ -1935,8 +1980,14 @@ const PAGINAS = {
   'faq': {
     titulo: 'Preguntas frecuentes',
     html: `
+      ${COMPRAS_DESACTIVADAS ? `<div style="background:#fffbeb;border:2px solid #f59e0b;border-radius:12px;padding:14px;margin-bottom:16px;">
+        <p style="font-weight:800;color:#92400e;margin-bottom:4px;">🚧 Estamos renovando nuestra tienda online</p>
+        <p style="color:#92400e;font-size:13px;">Mientras el carrito está desactivado, coordina tu pedido directo por <strong>WhatsApp al +56 9 4435 0559</strong>.</p>
+      </div>` : ''}
       ${[
-        ['¿Cómo realizo un pedido?', 'Agrega los productos que quieras al carrito, haz clic en "Finalizar Pedido", completa tus datos y confirma por WhatsApp. Nuestro equipo te responderá para coordinar el despacho.'],
+        ['¿Cómo realizo un pedido?', COMPRAS_DESACTIVADAS
+          ? 'Mientras renovamos la tienda online, escríbenos directo por WhatsApp al +56 9 4435 0559 con lo que necesitas — te confirmamos precio, stock y coordinamos el despacho por ese mismo medio.'
+          : 'Agrega los productos que quieras al carrito, haz clic en "Finalizar Pedido", completa tus datos y confirma por WhatsApp. Nuestro equipo te responderá para coordinar el despacho.'],
         ['¿Cuál es el horario de despacho?', 'Despachamos de lunes a viernes de 08:30 a 19:00 hrs y los sábados y feriados de 09:00 a 17:00 hrs. Los pedidos realizados antes de las 16:00 hrs se despachan el mismo día (lunes a viernes).'],
         ['¿Solo aceptan transferencia?', 'Sí, actualmente el único medio de pago es la transferencia bancaria. Una vez realizada la transferencia, envía el comprobante por WhatsApp y coordinamos el despacho.'],
         ['¿Hacen despacho a toda Valdivia?', 'Sí, dentro del radio urbano de Valdivia. Escríbenos por WhatsApp para confirmar si tu dirección está dentro de la cobertura.'],
@@ -2061,6 +2112,7 @@ function enviarPedido(){
   // ── Abrir WhatsApp inmediatamente (no espera Bsale) ──
   window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`,'_blank');
   cerrarCheckout();
+  mostrarToast('✅ Tu pedido se abrió en WhatsApp — solo confirma el envío allí para completarlo.', 6000);
 
   // Limpiar carrito después de confirmar
   carrito=[];
