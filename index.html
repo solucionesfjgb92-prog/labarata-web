@@ -178,10 +178,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 .del-icon{width:38px;height:38px;border-radius:50%;background:#dcfce7;
   display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
 
-/* ── TOP BAR LINKS ── */
-#top-bar a{color:#bbf7d0;transition:color .15s;}
-#top-bar a:hover{color:#fff;}
-
 /* ── NAV VERDE DESKTOP ── */
 .nav-link{position:relative;}
 .nav-link::after{content:'';position:absolute;bottom:0;left:50%;right:50%;height:3px;background:#fff;border-radius:2px 2px 0 0;transition:left .18s,right .18s;}
@@ -222,9 +218,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 /* ── RESPONSIVE AJUSTES ── */
 @media(max-width:767px){
-  /* Top bar solo esencial */
-  #topbar-extra{display:none;}
-
   /* Header más compacto */
   .header-logo-text{display:none;}
 
@@ -274,28 +267,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
     border-radius:8px;padding:5px 14px;font-size:13px;font-weight:800;
     white-space:nowrap;flex-shrink:0;
   ">📲 Pedir por WhatsApp</a>
-</div>
-
-<!-- ════════ TOP BAR ════════ -->
-<div id="top-bar" class="bg-green-900 text-white text-xs py-1.5 hidden sm:block">
-  <div class="w-full px-4 flex justify-between items-center flex-wrap gap-2">
-    <div class="flex items-center gap-3 flex-wrap">
-      <span>📍 Av. Ramón Picarte 779, Valdivia</span>
-      <span class="text-white/30">|</span>
-      <a href="tel:+56944350559">📞 +56 9 4435 0559</a>
-      <span id="topbar-extra" class="flex items-center gap-3">
-        <span class="text-white/30">|</span>
-        <a href="mailto:compraslabarata@gmail.com">✉ compraslabarata@gmail.com</a>
-      </span>
-    </div>
-    <div class="flex items-center gap-3 flex-wrap">
-      <a href="https://www.facebook.com/p/Distribuidora-La-Barata-Valdivia-61574921535493/" target="_blank">Facebook</a>
-      <span class="text-white/30">|</span>
-      <a href="https://www.instagram.com/distribuidora_labarata/" target="_blank">Instagram</a>
-      <span class="text-white/30">|</span>
-      <span class="text-yellow-300 font-semibold">🎁 ¡1er despacho gratis!</span>
-    </div>
-  </div>
 </div>
 
 <!-- ════════ HEADER ════════ -->
