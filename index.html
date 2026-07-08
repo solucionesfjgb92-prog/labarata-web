@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Distribuidora La Barata — Supermercado online · Valdivia</title>
 <meta name="description" content="Distribuidora La Barata, tu vecino online en Valdivia. Compra abarrotes, limpieza, lácteos, bebidas y más con despacho a domicilio el mismo día. Pedidos por WhatsApp.">
 <meta name="keywords" content="distribuidora valdivia, supermercado online valdivia, abarrotes valdivia, despacho a domicilio valdivia, la barata valdivia, compras online valdivia, despensa valdivia">
@@ -783,6 +783,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 <!-- ════════ VISTA INICIO ════════ -->
 <div id="vista-inicio">
 
+  <h1 class="sr-only">Distribuidora La Barata — Supermercado online en Valdivia con despacho a domicilio</h1>
+
   <!-- BANNER CAROUSEL -->
   <div class="w-full px-3 sm:px-6 pt-3 sm:pt-5">
     <div id="banner-container" class="relative overflow-hidden rounded-2xl shadow-xl group" style="height:260px">
@@ -893,13 +895,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
   </div>
 
-  <!-- LO MÁS VENDIDO -->
+  <!-- PRODUCTOS DESTACADOS -->
   <div class="w-full px-3 sm:px-4 pb-4">
     <div class="flex items-center justify-between mb-3">
-      <h2 class="sec-title">🔥 Lo más vendido</h2>
+      <h2 class="sec-title">⭐ Productos destacados</h2>
       <button onclick="verCat('despensa','Despensa')" class="text-verde text-xs font-bold hover:underline">Ver todo →</button>
     </div>
-    <div id="home-top" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3"></div>
+    <div id="home-top" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3"></div>
   </div>
 
   <!-- CATEGORÍAS EN GRID -->
@@ -976,15 +978,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
     </div>
   </div>
 
-  <!-- LO MÁS VENDIDO -->
-  <div class="w-full px-3 sm:px-4 pb-5">
-    <div class="flex items-center justify-between mb-3 sm:mb-4">
-      <h2 class="sec-title">⭐ Lo más vendido</h2>
-      <button onclick="verCat('despensa','Despensa')" class="text-xs sm:text-sm text-verde font-bold border border-verde px-3 py-1.5 rounded-lg hover:bg-verde hover:text-white transition-colors whitespace-nowrap">Ver todo →</button>
-    </div>
-    <div id="home-top" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3"></div>
-  </div>
-
   <!-- INFO -->
   <div class="w-full px-3 sm:px-4 pb-6">
     <div class="bg-white border border-gray-100 rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
@@ -1012,18 +1005,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 <!-- ════════ VISTA CATÁLOGO ════════ -->
 <div id="vista-catalogo" class="hidden">
-  <div class="w-full px-3 sm:px-4 py-4 sm:py-6 flex gap-4 sm:gap-6">
-
-    <aside class="hidden lg:block w-52 flex-shrink-0">
-      <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden sticky top-28">
-        <div class="bg-verde text-white text-xs font-bold uppercase tracking-wide px-4 py-3">Filtrar por</div>
-        <div class="divide-y divide-gray-100 text-sm text-gray-600">
-          <div class="flex justify-between items-center px-4 py-3 cursor-pointer hover:text-verde hover:bg-gray-50"><span>Marcas</span><span class="text-lg font-light">+</span></div>
-          <div class="flex justify-between items-center px-4 py-3 cursor-pointer hover:text-verde hover:bg-gray-50"><span>Rango de precio</span><span class="text-lg font-light">+</span></div>
-          <div class="flex justify-between items-center px-4 py-3 cursor-pointer hover:text-verde hover:bg-gray-50"><span>Solo ofertas</span><span class="text-lg font-light">+</span></div>
-        </div>
-      </div>
-    </aside>
+  <div class="w-full px-3 sm:px-4 py-4 sm:py-6">
 
     <main class="flex-1 min-w-0">
       <p class="text-xs text-gray-400 mb-2 sm:mb-3">
@@ -1052,23 +1034,22 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 </div>
 
 
-<!-- ════════ NEWSLETTER ════════ -->
+<!-- ════════ OFERTAS POR WHATSAPP ════════ -->
 <div class="bg-gray-100 border-t border-gray-200 py-8 sm:py-10">
   <div class="max-w-3xl mx-auto px-3 sm:px-4 text-center">
-    <h3 class="text-lg sm:text-xl font-black text-gray-800 mb-1">📬 Suscríbete a nuestro newsletter</h3>
-    <p class="text-xs sm:text-sm text-gray-500 mb-4">Entérate primero de las ofertas y novedades de La Barata.</p>
-    <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-xl mx-auto">
-      <input type="text"  placeholder="Tu nombre"  class="flex-1 border-2 border-gray-200 rounded-xl py-2.5 sm:py-3 px-4 text-sm focus:outline-none focus:border-verde">
-      <input type="email" placeholder="Tu email"   class="flex-1 border-2 border-gray-200 rounded-xl py-2.5 sm:py-3 px-4 text-sm focus:outline-none focus:border-verde">
-      <button class="bg-verde hover:bg-green-700 text-white font-bold px-6 py-2.5 sm:py-3 rounded-xl text-sm transition-colors shadow-sm">Suscribir</button>
-    </div>
+    <h3 class="text-lg sm:text-xl font-black text-gray-800 mb-1">📬 Recibe nuestras ofertas por WhatsApp</h3>
+    <p class="text-xs sm:text-sm text-gray-500 mb-4">Escríbenos y te avisamos primero de las promociones y novedades de La Barata.</p>
+    <a href="https://wa.me/56944350559?text=Hola%2C%20quiero%20recibir%20las%20ofertas%20de%20La%20Barata%20por%20WhatsApp" target="_blank"
+      class="inline-flex items-center justify-center gap-2 bg-verde hover:bg-green-700 text-white font-bold px-8 py-3 rounded-xl text-sm transition-colors shadow-sm">
+      💬 Quiero recibir ofertas
+    </a>
   </div>
 </div>
 
 
 <!-- ════════ FOOTER ════════ -->
 <footer class="bg-verde text-white" style="position:relative;overflow:hidden;">
-<canvas id="footer-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:0.45;"></canvas>
+<canvas id="footer-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:0.18;"></canvas>
   <!-- Flecha volver arriba -->
   <div class="text-center pt-6 pb-2">
     <button onclick="window.scrollTo({top:0,behavior:'smooth'})"
@@ -1121,7 +1102,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
         <li><button onclick="abrirPagina('quienes')"  class="hover:text-amarillo transition-colors text-left w-full">Quiénes somos</button></li>
         <li><button onclick="abrirPagina('cambios')"  class="hover:text-amarillo transition-colors text-left w-full">Política de cambios y devoluciones</button></li>
         <li><button onclick="abrirPagina('faq')"      class="hover:text-amarillo transition-colors text-left w-full">Preguntas frecuentes</button></li>
-        <li><button onclick="abrirPagina('cobertura')" class="hover:text-amarillo transition-colors text-left w-full">Ofertas y precios exclusivos web</button></li>
+        <li><button onclick="abrirPagina('cobertura')" class="hover:text-amarillo transition-colors text-left w-full">Cobertura y zonas de despacho</button></li>
         <li><button onclick="abrirPagina('trabaja')"  class="hover:text-amarillo transition-colors text-left w-full">Trabaja con nosotros</button></li>
       </ul>
     </div>
@@ -1159,11 +1140,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
   <!-- Sub-pie estilo Trébol -->
   <div class="border-t-4 py-4 text-center text-xs px-4" style="border-color:#F5B800; background:#0d5c2a; color:#ffffff; font-weight:600; letter-spacing:0.02em;">
-    © La Barata · Razón Social: SOCIEDAD COMERCIAL FAF SPA · RUT: 77.557.632-4 · Valdivia, Los Ríos, Chile · Todos los derechos reservados 2025
+    © <span id="footer-year">2025</span> La Barata · Razón Social: SOCIEDAD COMERCIAL FAF SPA · RUT: 77.557.632-4 · Valdivia, Los Ríos, Chile · Todos los derechos reservados
   </div>
 
 <script>
 (function(){
+  const yEl = document.getElementById('footer-year');
+  if (yEl) yEl.textContent = new Date().getFullYear();
   const canvas = document.getElementById('footer-canvas');
   const ctx    = canvas.getContext('2d');
   const emojis = ['🛒','🥛','🧴','🥩','🥦','🍎','🧅','🧀','🥚','🍞','🧃','🫙','🥫','🍋','🧹'];
@@ -2004,7 +1987,7 @@ const PAGINAS = {
       <h3 style="font-size:15px;font-weight:800;color:#1a202c;margin-bottom:8px;">5. Privacidad</h3>
       <p style="font-size:13px;color:#374151;margin-bottom:16px;">Los datos personales entregados por el cliente (nombre, dirección, teléfono) son utilizados exclusivamente para coordinar los pedidos y no serán compartidos con terceros.</p>
 
-      <p style="font-size:12px;color:#94a3b8;">Última actualización: abril 2025 · contacto@labarata.cl</p>`,
+      <p style="font-size:12px;color:#94a3b8;">Última actualización: abril 2025 · compraslabarata@gmail.com</p>`,
   },
 
   'faq': {
