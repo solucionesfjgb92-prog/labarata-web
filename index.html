@@ -184,23 +184,26 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 .nav-link:hover{background:rgba(0,0,0,.12);}
 
 /* ── WHATSAPP FLOAT ── */
+/* Oculto en móvil: el bottom-nav ya trae su propia pestaña de WhatsApp */
 .wa-float{
-  position:fixed;bottom:80px;right:16px;width:52px;height:52px;
+  display:none;
+  position:fixed;bottom:24px;right:24px;width:52px;height:52px;
   background:#25d366;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
+  align-items:center;justify-content:center;
   font-size:26px;box-shadow:0 4px 16px rgba(37,211,102,.5);
   z-index:480;cursor:pointer;transition:transform .2s;text-decoration:none;
 }
 .wa-float:hover{transform:scale(1.1);}
 @media(min-width:768px){
-  .wa-float{bottom:24px;right:24px;}
+  .wa-float{display:flex;}
 }
 
 /* ── BOTTOM NAV MÓVIL ── */
 #bottom-nav{
   display:flex;position:fixed;bottom:0;left:0;right:0;
   background:#fff;border-top:1px solid #e5e7eb;
-  z-index:470;height:60px;
+  z-index:470;height:calc(60px + env(safe-area-inset-bottom, 0px));
+  padding-bottom:env(safe-area-inset-bottom, 0px);
 }
 #bottom-nav button, #bottom-nav a{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -213,7 +216,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 @media(min-width:768px){#bottom-nav{display:none;}}
 
 /* ── BODY PADDING BOTTOM MÓVIL ── */
-@media(max-width:767px){body{padding-bottom:60px;}}
+@media(max-width:767px){body{padding-bottom:calc(60px + env(safe-area-inset-bottom, 0px));}}
+
+/* ── SAFE AREA CARRITO FLOTANTE (gesto de "volver" en iPhone) ── */
+#carrito-footer{padding-bottom:calc(0.75rem + env(safe-area-inset-bottom, 0px));}
 
 /* ── RESPONSIVE AJUSTES ── */
 @media(max-width:767px){
@@ -336,7 +342,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
       <div class="relative">
         <input id="buscador" type="text" oninput="buscarProducto(this.value)"
           placeholder="¿Qué estás buscando?"
-          class="w-full border-2 border-gray-300 hover:border-verde focus:border-verde rounded-full py-2.5 sm:py-3 pl-5 pr-12 text-sm sm:text-base
+          class="w-full border-2 border-gray-300 hover:border-verde focus:border-verde rounded-full py-2.5 sm:py-3 pl-5 pr-12 text-base
                  focus:outline-none focus:ring-2 focus:ring-verde/20 bg-white transition-colors">
         <button class="absolute right-0 top-0 bottom-0 bg-verde hover:bg-green-700 text-white rounded-full w-12 flex items-center justify-center transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -607,6 +613,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
       <button onclick="verCat('ofertas','Ofertas')"             class="nav-link px-4 h-full text-amarillo font-bold text-sm transition-colors whitespace-nowrap">🔥 Ofertas</button>
       <button onclick="verCat('despensa','Despensa')"           class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Despensa</button>
       <button onclick="verCat('aseo','Limpieza y Aseo')"        class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Limpieza</button>
+      <button onclick="verCat('lacteos','Lácteos')"             class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Lácteos</button>
       <button onclick="verCat('panaderia','Panadería')"         class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Panadería</button>
       <button onclick="verCat('bebidas','Bebidas y Jugos')"     class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Bebidas</button>
       <button onclick="verCat('mascotas','Mascotas')"           class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Mascotas</button>
@@ -627,6 +634,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   <!-- Info rápida -->
   <div class="bg-green-50 px-4 py-2.5 border-b border-gray-200 flex-shrink-0">
     <p class="text-xs text-verde font-bold">📍 Av. Ramón Picarte 779, Valdivia</p>
+    <p class="text-[10px] text-gray-500">Centro de despacho — sin atención de público</p>
     <p class="text-xs text-gray-600 mt-0.5">⏰ Lun–Vie: 08:30–19:00 · Sáb y Fer: 09:00–17:00 · <a href="tel:+56944350559" class="text-verde font-bold">+56 9 4435 0559</a></p>
   </div>
   <!-- Links rápidos -->
@@ -811,30 +819,39 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
       <div class="absolute right-4 top-1/2 -translate-y-1/2 text-7xl opacity-20 group-hover:opacity-30 transition-opacity">🧺</div>
     </div>
 
-    <div onclick="verCat('aseo','Limpieza y Aseo')" class="relative overflow-hidden rounded-2xl cursor-pointer group" style="background:linear-gradient(135deg,#1d4ed8,#0ea5e9);min-height:130px;">
+    <div onclick="verCat('aseo','Limpieza y Aseo')" class="relative overflow-hidden rounded-2xl cursor-pointer group" style="background:linear-gradient(135deg,#ea580c,#f97316);min-height:130px;">
       <div class="p-5 flex flex-col justify-between h-full" style="min-height:130px;">
         <div>
           <p class="text-white/70 text-xs font-semibold uppercase tracking-wider mb-1">Esta semana</p>
-          <h3 class="text-white font-black text-2xl sm:text-3xl leading-tight">Limpieza<br><span class="text-yellow-300">al costo</span></h3>
+          <h3 class="text-white font-black text-2xl sm:text-3xl leading-tight">Limpieza<br><span class="text-amarillo">al costo</span></h3>
           <p class="text-white/80 text-xs mt-1">Detergentes, limpiadores y más</p>
         </div>
-        <span class="mt-3 inline-block bg-white text-blue-700 font-bold text-xs px-4 py-1.5 rounded-full w-fit group-hover:bg-yellow-300 transition-colors">Ver productos →</span>
+        <span class="mt-3 inline-block bg-white text-orange-700 font-bold text-xs px-4 py-1.5 rounded-full w-fit group-hover:bg-amarillo transition-colors">Ver productos →</span>
       </div>
       <div class="absolute right-4 top-1/2 -translate-y-1/2 text-7xl opacity-20 group-hover:opacity-30 transition-opacity">🧴</div>
     </div>
 
-    <div onclick="verCat('bebidas','Bebidas y Jugos')" class="relative overflow-hidden rounded-2xl cursor-pointer group" style="background:linear-gradient(135deg,#7c3aed,#ec4899);min-height:130px;">
+    <div onclick="verCat('bebidas','Bebidas y Jugos')" class="relative overflow-hidden rounded-2xl cursor-pointer group" style="background:linear-gradient(135deg,#b45309,#f59e0b);min-height:130px;">
       <div class="p-5 flex flex-col justify-between h-full" style="min-height:130px;">
         <div>
           <p class="text-white/70 text-xs font-semibold uppercase tracking-wider mb-1">Refresca tu día</p>
-          <h3 class="text-white font-black text-2xl sm:text-3xl leading-tight">Bebidas<br><span class="text-yellow-300">y Jugos</span></h3>
+          <h3 class="text-white font-black text-2xl sm:text-3xl leading-tight">Bebidas<br><span class="text-white">y Jugos</span></h3>
           <p class="text-white/80 text-xs mt-1">Las mejores marcas para ti</p>
         </div>
-        <span class="mt-3 inline-block bg-white text-purple-700 font-bold text-xs px-4 py-1.5 rounded-full w-fit group-hover:bg-yellow-300 transition-colors">Ver productos →</span>
+        <span class="mt-3 inline-block bg-white text-amber-700 font-bold text-xs px-4 py-1.5 rounded-full w-fit group-hover:bg-amarillo transition-colors">Ver productos →</span>
       </div>
       <div class="absolute right-4 top-1/2 -translate-y-1/2 text-7xl opacity-20 group-hover:opacity-30 transition-opacity">🥤</div>
     </div>
 
+  </div>
+
+  <!-- OFERTAS DESTACADAS (primero: es la prioridad anunciada en el hero) -->
+  <div class="w-full px-3 sm:px-4 pb-5">
+    <div class="flex items-center justify-between mb-3 sm:mb-4">
+      <h2 class="sec-title">🔥 Ofertas destacadas <span class="bg-red-100 text-red-600 text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 rounded-full">Esta semana</span></h2>
+      <button onclick="verCat('ofertas','Ofertas')" class="text-xs sm:text-sm text-verde font-bold border border-verde px-3 py-1.5 rounded-lg hover:bg-verde hover:text-white transition-colors whitespace-nowrap">Ver todas →</button>
+    </div>
+    <div id="home-ofertas" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3"></div>
   </div>
 
   <!-- PRODUCTOS DESTACADOS -->
@@ -848,7 +865,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
   <!-- CATEGORÍAS EN GRID -->
   <div class="w-full px-3 sm:px-4 py-4 sm:py-6">
-    <div class="grid grid-cols-5 sm:grid-cols-9 gap-2 sm:gap-3">
+    <div class="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-3">
       <div onclick="verCat('despensa','Despensa')"     class="flex flex-col items-center gap-1.5 cursor-pointer group">
         <div class="cat-circle-img w-full aspect-square rounded-2xl overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
           <img src="https://images.unsplash.com/photo-1586201375761-83865001e31c?w=150&h=150&fit=crop" class="w-full h-full object-cover" loading="lazy"></div>
@@ -889,21 +906,24 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
           <img src="https://images.unsplash.com/photo-1584473457406-6240486418e9?w=150&h=150&fit=crop" class="w-full h-full object-cover" loading="lazy"></div>
         <span class="text-[10px] sm:text-xs font-bold text-gray-600 group-hover:text-verde text-center">Congelados</span>
       </div>
-      <div onclick="verCat('carnes','Carnes')" class="flex flex-col items-center gap-1.5 cursor-pointer group">
+      <div onclick="verCat('carnes','Carnes y Embutidos')" class="flex flex-col items-center gap-1.5 cursor-pointer group">
         <div class="cat-circle-img w-full aspect-square rounded-2xl overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
           <img src="https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=150&h=150&fit=crop" class="w-full h-full object-cover" loading="lazy"></div>
         <span class="text-[10px] sm:text-xs font-bold text-gray-600 group-hover:text-verde text-center">Carnes</span>
       </div>
+      <div onclick="verCat('bebe','Mi Bebé')" class="flex flex-col items-center gap-1.5 cursor-pointer group">
+        <div class="cat-circle-img w-full aspect-square rounded-2xl overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
+          <img src="https://images.unsplash.com/photo-1519689680058-324335c77eba?w=150&h=150&fit=crop" class="w-full h-full object-cover" loading="lazy"
+            onerror="this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=150&h=150&fit=crop'"></div>
+        <span class="text-[10px] sm:text-xs font-bold text-gray-600 group-hover:text-verde text-center">Mi Bebé</span>
+      </div>
+      <div onclick="verCat('farmacia','Farmacia y Cuidado')" class="flex flex-col items-center gap-1.5 cursor-pointer group">
+        <div class="cat-circle-img w-full aspect-square rounded-2xl overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
+          <img src="https://images.unsplash.com/photo-1584308972272-9e4e7685e80f?w=150&h=150&fit=crop" class="w-full h-full object-cover" loading="lazy"
+            onerror="this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=150&h=150&fit=crop'"></div>
+        <span class="text-[10px] sm:text-xs font-bold text-gray-600 group-hover:text-verde text-center">Farmacia</span>
+      </div>
     </div>
-  </div>
-
-  <!-- OFERTAS DESTACADAS -->
-  <div class="w-full px-3 sm:px-4 pb-5">
-    <div class="flex items-center justify-between mb-3 sm:mb-4">
-      <h2 class="sec-title">🔥 Ofertas destacadas <span class="bg-red-100 text-red-600 text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 rounded-full">Esta semana</span></h2>
-      <button onclick="verCat('ofertas','Ofertas')" class="text-xs sm:text-sm text-verde font-bold border border-verde px-3 py-1.5 rounded-lg hover:bg-verde hover:text-white transition-colors whitespace-nowrap">Ver todas →</button>
-    </div>
-    <div id="home-ofertas" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3"></div>
   </div>
 
   <!-- BANNER DESPACHO GRATIS -->
@@ -917,28 +937,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
         class="w-full sm:w-auto bg-verde hover:bg-green-700 text-white font-black px-6 py-3 rounded-xl shadow transition-colors whitespace-nowrap text-center text-sm sm:text-base">
         Pedir ahora 💬
       </a>
-    </div>
-  </div>
-
-  <!-- INFO -->
-  <div class="w-full px-3 sm:px-4 pb-6">
-    <div class="bg-white border border-gray-100 rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
-      <div class="flex items-center gap-2 sm:gap-3">
-        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">📍</div>
-        <div><p class="font-bold text-gray-800 text-xs sm:text-sm leading-tight">Av. Ramón Picarte 779</p><p class="text-[10px] sm:text-xs text-gray-500">Valdivia, Los Ríos</p></div>
-      </div>
-      <div class="flex items-center gap-2 sm:gap-3">
-        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">⏰</div>
-        <div><p class="font-bold text-naranja text-xs sm:text-sm leading-tight">Horario</p><p class="text-[10px] sm:text-xs text-gray-600">Lun–Vie 08:30–19:00 · Sáb y Fer 09:00–17:00</p></div>
-      </div>
-      <div class="flex items-center gap-2 sm:gap-3">
-        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">🚚</div>
-        <div><p class="font-bold text-verde text-xs sm:text-sm leading-tight">Despacho directo</p><p class="text-[10px] sm:text-xs text-gray-500">Toda Valdivia</p></div>
-      </div>
-      <div class="flex items-center gap-2 sm:gap-3">
-        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">💬</div>
-        <div><p class="font-bold text-gray-800 text-xs sm:text-sm leading-tight">WhatsApp</p><p class="text-[10px] sm:text-xs text-gray-500">+56 9 4435 0559</p></div>
-      </div>
     </div>
   </div>
 
@@ -1000,17 +998,19 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
     </button>
   </div>
 
-  <div class="w-full px-3 sm:px-4 pb-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 border-t border-white/20 pt-8">
+  <div class="w-full px-3 sm:px-4 pb-10 grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10 border-t border-white/20 pt-8">
 
-    <!-- COL 1: Servicio al cliente -->
+    <!-- COL 1: Servicio al cliente (fusiona ex "La Barata", sin links duplicados) -->
     <div>
       <h4 class="font-black text-base sm:text-lg mb-4 border-b border-white/20 pb-2">Servicio al cliente</h4>
       <ul class="space-y-2 text-xs sm:text-sm text-white">
+        <li><button onclick="abrirPagina('quienes')"      class="hover:text-amarillo transition-colors text-left w-full">Quiénes somos</button></li>
         <li><button onclick="abrirPagina('como-comprar')" class="hover:text-amarillo transition-colors text-left w-full">Cómo comprar</button></li>
         <li><button onclick="abrirPagina('cobertura')"    class="hover:text-amarillo transition-colors text-left w-full">Cobertura y despachos</button></li>
         <li><button onclick="abrirPagina('cambios')"      class="hover:text-amarillo transition-colors text-left w-full">Cambios y devoluciones</button></li>
         <li><button onclick="abrirPagina('terminos')"     class="hover:text-amarillo transition-colors text-left w-full">Términos y condiciones</button></li>
         <li><button onclick="abrirPagina('faq')"          class="hover:text-amarillo transition-colors text-left w-full">Preguntas frecuentes</button></li>
+        <li><button onclick="abrirPagina('trabaja')"      class="hover:text-amarillo transition-colors text-left w-full">Trabaja con nosotros</button></li>
       </ul>
     </div>
 
@@ -1020,7 +1020,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
       <ul class="space-y-2.5 text-xs sm:text-sm text-white">
         <li class="flex items-start gap-2">
           <span class="flex-shrink-0">📍</span>
-          <span>Av. Ramón Picarte 779, Valdivia, Región de Los Ríos</span>
+          <span>Av. Ramón Picarte 779, Valdivia, Región de Los Ríos<br><span class="text-white/60 text-[11px]">Centro de despacho — sin atención de público</span></span>
         </li>
         <li class="flex items-start gap-2">
           <span class="flex-shrink-0">📞</span>
@@ -1037,19 +1037,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
       </ul>
     </div>
 
-    <!-- COL 3: La Barata -->
-    <div>
-      <h4 class="font-black text-base sm:text-lg mb-4 border-b border-white/20 pb-2">La Barata</h4>
-      <ul class="space-y-2 text-xs sm:text-sm text-white">
-        <li><button onclick="abrirPagina('quienes')"  class="hover:text-amarillo transition-colors text-left w-full">Quiénes somos</button></li>
-        <li><button onclick="abrirPagina('cambios')"  class="hover:text-amarillo transition-colors text-left w-full">Política de cambios y devoluciones</button></li>
-        <li><button onclick="abrirPagina('faq')"      class="hover:text-amarillo transition-colors text-left w-full">Preguntas frecuentes</button></li>
-        <li><button onclick="abrirPagina('cobertura')" class="hover:text-amarillo transition-colors text-left w-full">Cobertura y zonas de despacho</button></li>
-        <li><button onclick="abrirPagina('trabaja')"  class="hover:text-amarillo transition-colors text-left w-full">Trabaja con nosotros</button></li>
-      </ul>
-    </div>
-
-    <!-- COL 4: Síguenos + Empresa -->
+    <!-- COL 3: Síguenos + Empresa -->
     <div>
       <h4 class="font-black text-base sm:text-lg mb-4 border-b border-white/20 pb-2">Síguenos</h4>
       <div class="flex gap-3 mb-5">
@@ -1074,9 +1062,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
         </div>
       </div>
 
-      <img src="./LOGO_LA_BARATA.jpg" alt="La Barata" class="h-14 w-auto rounded-xl object-contain mb-2" style="max-width:160px;">
-      <p class="text-white/90 text-xs">Operado por: SOCIEDAD COMERCIAL FAF SPA</p>
-      <p class="text-white/90 text-xs">RUT: 77.557.632-4</p>
+      <img src="./LOGO_LA_BARATA.jpg" alt="La Barata" class="h-14 w-auto rounded-xl object-contain" style="max-width:160px;">
     </div>
   </div>
 
@@ -1188,7 +1174,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
     <div id="items-carrito" class="max-h-52 overflow-y-auto px-4 py-2 min-h-[64px] flex flex-col justify-center">
       <p class="text-gray-400 text-xs text-center italic">El carrito está vacío</p>
     </div>
-    <div class="px-4 py-3 border-t bg-gray-50">
+    <div id="carrito-footer" class="px-4 pt-3 border-t bg-gray-50">
       <button onclick="abrirCheckout()" class="w-full bg-verde hover:bg-green-700 text-white font-bold py-3 rounded-xl text-sm transition-colors shadow-sm">
         ✅ FINALIZAR PEDIDO
       </button>
@@ -1244,10 +1230,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
           <span class="w-5 h-5 bg-verde text-white rounded-full flex items-center justify-center text-xs font-black flex-shrink-0">1</span>
           Datos de Despacho
         </p>
-        <input id="chk-nombre" type="text" placeholder="Nombre y Apellido *" class="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-verde transition-colors">
-        <input id="chk-dir"    type="text" placeholder="Dirección exacta *" class="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-verde transition-colors">
-        <input id="chk-ref"    type="text" placeholder="Referencia (casa amarilla con reja) *" class="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-verde transition-colors">
-        <input id="chk-tel"    type="tel"  placeholder="WhatsApp de contacto *" class="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-verde transition-colors">
+        <input id="chk-nombre" type="text" placeholder="Nombre y Apellido *" class="w-full border border-gray-200 rounded-xl p-3 text-base focus:outline-none focus:border-verde transition-colors">
+        <input id="chk-dir"    type="text" placeholder="Dirección exacta *" class="w-full border border-gray-200 rounded-xl p-3 text-base focus:outline-none focus:border-verde transition-colors">
+        <input id="chk-ref"    type="text" placeholder="Referencia (casa amarilla con reja) *" class="w-full border border-gray-200 rounded-xl p-3 text-base focus:outline-none focus:border-verde transition-colors">
+        <input id="chk-tel"    type="tel"  placeholder="WhatsApp de contacto *" class="w-full border border-gray-200 rounded-xl p-3 text-base focus:outline-none focus:border-verde transition-colors">
       </div>
       <div class="space-y-2 sm:space-y-3">
         <p class="font-bold text-gray-800 border-b pb-1.5 flex items-center gap-2 text-sm">
@@ -1377,27 +1363,27 @@ const DB_RESPALDO = [
   {id:13, n:"Mantequilla Colún 200g",         p:2190, img:"https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=300&h=300&fit=crop", c:"lacteos",  oferta:true,  stock:7},
   {id:14, n:"Huevos Jumbo x12",               p:3990, img:"https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=300&h=300&fit=crop", c:"lacteos",  oferta:false, stock:35},
   {id:15, n:"Crema Nestlé 200ml",             p:890,  img:"https://images.unsplash.com/photo-1559181567-c3190ca9be46?w=300&h=300&fit=crop", c:"lacteos",  oferta:false, stock:28},
-  {id:16, n:"Queso Chanco Colún 200g",        p:2490, img:"https://images.unsplash.com/photo-1486297678162-eb2a19b0a318?w=300&h=300&fit=crop", c:"quesos",   oferta:false, stock:9},
-  {id:17, n:"Queso Camembert 125g",           p:3500, img:"https://images.unsplash.com/photo-1452195100486-9cc805987862?w=300&h=300&fit=crop", c:"quesos",   oferta:false, stock:5},
-  {id:18, n:"Jamón de Cerdo 150g",            p:2190, img:"https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=300&fit=crop", c:"quesos",   oferta:true,  stock:3},
+  {id:16, n:"Queso Chanco Colún 200g",        p:2490, img:"https://images.unsplash.com/photo-1486297678162-eb2a19b0a318?w=300&h=300&fit=crop", c:"lacteos",  oferta:false, stock:9},
+  {id:17, n:"Queso Camembert 125g",           p:3500, img:"https://images.unsplash.com/photo-1452195100486-9cc805987862?w=300&h=300&fit=crop", c:"lacteos",  oferta:false, stock:5},
+  {id:18, n:"Jamón de Cerdo 150g",            p:2190, img:"", c:"despensa",  oferta:true,  stock:3},
   {id:19, n:"Detergente OMO Matic 3L",        p:6500, img:"https://images.unsplash.com/photo-1563453392212-326f5e854473?w=300&h=300&fit=crop", c:"aseo",     oferta:true,  stock:11},
   {id:20, n:"Lavaloza Quix Limón 750ml",      p:1490, img:"https://images.unsplash.com/photo-1585421514738-01798e348b17?w=300&h=300&fit=crop", c:"aseo",     oferta:false, stock:17},
   {id:21, n:"Shampoo Head & Shoulders 375ml", p:3990, img:"https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&h=300&fit=crop", c:"aseo",     oferta:false, stock:6},
   {id:22, n:"Papel Higiénico Elite x4",       p:1990, img:"https://images.unsplash.com/photo-1584556812952-905ffd0c611a?w=300&h=300&fit=crop", c:"aseo",     oferta:true,  stock:45},
-  {id:23, n:"Vino Casillero del Diablo 750ml",p:5990, img:"https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=300&h=300&fit=crop", c:"vinos",    oferta:false, stock:8},
-  {id:24, n:"Pisco Control 750ml",            p:7990, img:"https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=300&h=300&fit=crop", c:"vinos",    oferta:true,  stock:4},
+  {id:23, n:"Vino Casillero del Diablo 750ml",p:5990, img:"https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=300&h=300&fit=crop", c:"bebidas",  oferta:false, stock:8},
+  {id:24, n:"Pisco Control 750ml",            p:7990, img:"https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=300&h=300&fit=crop", c:"bebidas",  oferta:true,  stock:4},
   {id:25, n:"Alimento Perro Dog Chow 3kg",    p:12990,img:"https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=300&h=300&fit=crop", c:"mascotas", oferta:false, stock:6},
   {id:26, n:"Arena Gatos Premium 4kg",        p:4990, img:"https://images.unsplash.com/photo-1601758124510-52d02ddb7cbd?w=300&h=300&fit=crop", c:"mascotas", oferta:false, stock:9},
   {id:27, n:"Coca-Cola 2L",                   p:1990, img:"https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300&h=300&fit=crop", c:"bebidas",  oferta:true,  stock:50},
   {id:28, n:"Jugo Watts Naranja 1L",          p:990,  img:"https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=300&h=300&fit=crop", c:"bebidas",  oferta:false, stock:22},
   {id:29, n:"Pollo Entero kg",                p:3290, img:"https://images.unsplash.com/photo-1578020190125-f4f7c18bc9cb?w=300&h=300&fit=crop", c:"carnes",   oferta:true,  stock:18},
   {id:30, n:"Lomo Vetado kg",                 p:8990, img:"https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=300&h=300&fit=crop", c:"carnes",   oferta:false, stock:10},
-  {id:31, n:"Manzana Fuji kg",                p:990,  img:"https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?w=300&h=300&fit=crop", c:"frutas",   oferta:false, stock:30},
-  {id:32, n:"Palta Hass kg",                  p:2490, img:"https://images.unsplash.com/photo-1519162808019-7de1683fa2ad?w=300&h=300&fit=crop", c:"frutas",   oferta:true,  stock:12},
-  {id:33, n:"Tomate kg",                      p:890,  img:"https://images.unsplash.com/photo-1546094096-0df4bcaaa337?w=300&h=300&fit=crop", c:"frutas",   oferta:false, stock:25},
+  {id:31, n:"Manzana Fuji kg",                p:990,  img:"https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?w=300&h=300&fit=crop", c:"despensa", oferta:false, stock:30},
+  {id:32, n:"Palta Hass kg",                  p:2490, img:"https://images.unsplash.com/photo-1519162808019-7de1683fa2ad?w=300&h=300&fit=crop", c:"despensa", oferta:true,  stock:12},
+  {id:33, n:"Tomate kg",                      p:890,  img:"https://images.unsplash.com/photo-1546094096-0df4bcaaa337?w=300&h=300&fit=crop", c:"despensa", oferta:false, stock:25},
   {id:34, n:"Vienesas Súper Pollo 500g",      p:2890, img:"https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=300&fit=crop", c:"carnes",   oferta:true,  stock:16},
-  {id:35, n:"Cerveza Cristal 350ml x6",       p:4990, img:"https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=300&h=300&fit=crop", c:"cervezas", oferta:false, stock:24},
-  {id:36, n:"Cerveza Austral 500ml",          p:2190, img:"https://images.unsplash.com/photo-1608270586620-248524c67de9?w=300&h=300&fit=crop", c:"cervezas", oferta:false, stock:19},
+  {id:35, n:"Cerveza Cristal 350ml x6",       p:4990, img:"https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=300&h=300&fit=crop", c:"bebidas",  oferta:false, stock:24},
+  {id:36, n:"Cerveza Austral 500ml",          p:2190, img:"https://images.unsplash.com/photo-1608270586620-248524c67de9?w=300&h=300&fit=crop", c:"bebidas",  oferta:false, stock:19},
 ];
 
 // Estado global
@@ -1518,9 +1504,6 @@ function mostrarSkeletons(gridId, cantidad) {
 
 // ── Banner aviso modo demo ─────────────────────────────
 function mostrarBannerModo(texto) {
-  // Durante la mantención el aviso superior es el ÚNICO mensaje de estado.
-  // Evita apilar un segundo banner que contradiga o confunda al cliente.
-  if (COMPRAS_DESACTIVADAS) return;
   let el = document.getElementById('banner-modo');
   if (!el) {
     el = document.createElement('div');
@@ -1684,22 +1667,22 @@ function crearCard(p, mini) {
         onerror="this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=300&fit=crop'" loading="lazy">
     </div>
     <div class="p-2 sm:p-3 flex flex-col flex-1">
-      <h3 class="text-[11px] sm:text-xs font-semibold text-gray-700 leading-snug flex-1 mb-1.5 sm:mb-2" style="min-height:2.2rem">${esc(p.n)}</h3>
+      <h3 class="text-xs sm:text-sm font-semibold text-gray-700 leading-snug flex-1 mb-1.5 sm:mb-2" style="min-height:2.2rem">${esc(p.n)}</h3>
       <div class="flex items-center justify-between mb-1.5 sm:mb-2">
         <p class="text-verde font-black text-base sm:text-lg">$${p.p.toLocaleString('es-CL')}</p>
         ${p.stock !== undefined && !sinStock && p.stock > 5 && !COMPRAS_DESACTIVADAS ? `<span class="text-[9px] text-gray-400 font-semibold">${p.stock} disp.</span>` : ''}
       </div>
       ${COMPRAS_DESACTIVADAS
-        ? `<a href="${waProductoHref}" target="_blank" onclick="event.stopPropagation()" class="flex items-center justify-center gap-1 bg-verde hover:bg-green-700 text-white font-bold py-1.5 rounded-lg text-[11px] sm:text-xs w-full transition-colors">💬 Pedir por WhatsApp</a>`
+        ? `<a href="${waProductoHref}" target="_blank" onclick="event.stopPropagation()" class="flex items-center justify-center gap-1 bg-verde hover:bg-green-700 text-white font-bold py-1.5 rounded-lg text-xs sm:text-sm w-full transition-colors">💬 Pedir por WhatsApp</a>`
         : sinStock
-        ? `<button disabled class="bg-gray-200 text-gray-400 font-bold py-1.5 rounded-lg text-[11px] sm:text-xs w-full cursor-not-allowed">Sin stock</button>`
+        ? `<button disabled class="bg-gray-200 text-gray-400 font-bold py-1.5 rounded-lg text-xs sm:text-sm w-full cursor-not-allowed">Sin stock</button>`
         : en
           ? `<div class="flex items-center justify-between bg-verde rounded-lg overflow-hidden">
-               <button class="text-white px-2.5 sm:px-3 py-1.5 hover:bg-green-700 font-bold text-sm" onclick="event.stopPropagation();restar(${p.id})">−</button>
+               <button class="text-white min-w-[40px] min-h-[40px] flex items-center justify-center hover:bg-green-700 font-bold text-base" onclick="event.stopPropagation();restar(${p.id})">−</button>
                <span class="text-white font-bold text-xs sm:text-sm">${en.cantidad}</span>
-               <button class="text-white px-2.5 sm:px-3 py-1.5 hover:bg-green-700 font-bold text-sm" onclick="event.stopPropagation();sumar(${p.id})">+</button>
+               <button class="text-white min-w-[40px] min-h-[40px] flex items-center justify-center hover:bg-green-700 font-bold text-base" onclick="event.stopPropagation();sumar(${p.id})">+</button>
              </div>`
-          : `<button class="bg-amarillo hover:bg-yellow-400 text-gray-900 font-bold py-1.5 rounded-lg text-[11px] sm:text-xs transition-colors w-full shadow-sm"
+          : `<button class="bg-amarillo hover:bg-yellow-400 text-gray-900 font-bold py-1.5 rounded-lg text-xs sm:text-sm transition-colors w-full shadow-sm"
                onclick="event.stopPropagation();agregar(${p.id})">+ Añadir</button>`
       }
     </div>`;
@@ -1781,13 +1764,13 @@ function pintarCarrito(){
       <div class="flex-1 min-w-0">
         <p class="text-xs font-semibold text-gray-700 leading-snug">${esc(it.n)}</p>
         <p class="text-verde font-bold text-xs">$${(it.p*it.cantidad).toLocaleString('es-CL')}</p>
-        <div class="flex items-center gap-1 mt-1">
-          <button onclick="restar(${it.id})" class="w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold flex items-center justify-center">−</button>
+        <div class="flex items-center gap-1.5 mt-1">
+          <button onclick="restar(${it.id})" class="w-9 h-9 bg-gray-100 hover:bg-gray-200 rounded text-sm font-bold flex items-center justify-center">−</button>
           <span class="w-6 text-center text-xs font-bold">${it.cantidad}</span>
-          <button onclick="sumar(${it.id})" class="w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold flex items-center justify-center">+</button>
+          <button onclick="sumar(${it.id})" class="w-9 h-9 bg-gray-100 hover:bg-gray-200 rounded text-sm font-bold flex items-center justify-center">+</button>
         </div>
       </div>
-      <button onclick="quitar(${it.id})" class="text-gray-300 hover:text-red-400 text-xl leading-none w-7 h-7 flex items-center justify-center flex-shrink-0">×</button>`;
+      <button onclick="quitar(${it.id})" class="text-gray-300 hover:text-red-400 text-xl leading-none w-9 h-9 flex items-center justify-center flex-shrink-0">×</button>`;
     cont.appendChild(d);
   });
   badge.textContent=cant;
