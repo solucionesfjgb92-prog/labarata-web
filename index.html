@@ -628,7 +628,7 @@ html{scroll-behavior:smooth;}
       <button onclick="verCat('lacteos','Lácteos')"             class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Lácteos</button>
       <button onclick="verCat('panaderia','Panadería')"         class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Panadería</button>
       <button onclick="verCat('bebidas','Bebidas y Jugos')"     class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Bebidas</button>
-      <button onclick="verCat('mascotas','Mascotas')"           class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Mascotas</button>
+      <button onclick="verSubCat('panaderia','Pastelería','Pastelería')" class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Pastelería</button>
     </nav>
   </div>
 </div>
@@ -935,6 +935,12 @@ html{scroll-behavior:smooth;}
             onerror="this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=150&h=150&fit=crop'"></div>
         <span class="text-[10px] sm:text-xs font-bold text-gray-600 group-hover:text-verde text-center">Farmacia</span>
       </div>
+      <div onclick="verSubCat('panaderia','Pastelería','Pastelería')" class="flex flex-col items-center gap-1.5 cursor-pointer group">
+        <div class="cat-circle-img w-full aspect-square rounded-2xl overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
+          <img src="https://images.unsplash.com/photo-1486427944299-d1955d23e34d?w=150&h=150&fit=crop" class="w-full h-full object-cover" loading="lazy"
+            onerror="this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=150&h=150&fit=crop'"></div>
+        <span class="text-[10px] sm:text-xs font-bold text-gray-600 group-hover:text-verde text-center">Pastelería</span>
+      </div>
     </div>
   </div>
 
@@ -950,6 +956,36 @@ html{scroll-behavior:smooth;}
         Consultar 💬
       </a>
     </div>
+  </div>
+
+  <!-- BANNER INVIERNO -->
+  <div class="wrap reveal w-full px-3 sm:px-4 pb-5">
+    <div class="relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg"
+      style="background:linear-gradient(115deg,#14532d 0%,#166534 45%,#15803d 100%);">
+      <div class="absolute inset-0 opacity-[0.13] text-[110px] sm:text-[150px] leading-none select-none pointer-events-none"
+        style="letter-spacing:8px;white-space:nowrap;" aria-hidden="true">☕🥧🍞🧁☕🥧🍞🧁</div>
+      <div class="relative p-5 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="max-w-xl">
+          <p class="text-amarillo text-[10px] sm:text-xs font-bold uppercase tracking-[0.14em] mb-1.5">Para el frío invierno valdiviano</p>
+          <h3 class="text-white font-black text-2xl sm:text-4xl leading-[1.1] mb-2">Afuera llueve,<br><span class="text-amarillo">adentro no falta nada</span></h3>
+          <p class="text-white/80 text-xs sm:text-sm">Té, café, harina para sopaipillas y todo lo rico del invierno. Te lo llevamos a la puerta.</p>
+        </div>
+        <button onclick="verCat('desayuno','Desayuno y Dulces')"
+          class="w-full sm:w-auto bg-amarillo hover:bg-yellow-300 text-gray-900 font-black px-7 py-3 rounded-full shadow-lg transition-colors whitespace-nowrap text-sm sm:text-base flex-shrink-0">
+          Ver productos →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NUESTROS PROVEEDORES -->
+  <div class="wrap reveal w-full px-3 sm:px-4 pb-8">
+    <div class="flex items-center justify-between mb-3 sm:mb-4">
+      <h2 class="sec-title">🤝 Nuestros proveedores</h2>
+      <span class="text-xs sm:text-sm text-gray-400 font-semibold">Marcas que confían en nosotros</span>
+    </div>
+    <div id="grid-marcas" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 sm:gap-3"></div>
+    <p class="text-center text-[11px] sm:text-xs text-gray-400 mt-3">Toca una marca para ver todos sus productos disponibles.</p>
   </div>
 
 </div><!-- /vista-inicio -->
@@ -1506,6 +1542,7 @@ async function cargarProductos(forzar = false) {
     mostrarBannerModo('🔧 Modo demo — conecta tu backend Bsale para ver tus productos reales');
     pintarHomeOfertas();
     pintarHomeTop();
+    pintarMarcas();
     return;
   }
 
@@ -1553,6 +1590,7 @@ async function cargarProductos(forzar = false) {
     cargando = false;
     pintarHomeOfertas();
     pintarHomeTop();
+    pintarMarcas();
   }
 }
 
@@ -1799,6 +1837,49 @@ function pintarHomeTop(){
   DB.filter(p=>p.stock>0).slice(0,12).forEach(p=>g.appendChild(crearCard(p,true)));
 }
 
+// ── NUESTROS PROVEEDORES ──
+// Marcas reales del catálogo. Solo se muestran las que tienen productos
+// disponibles, así que un clic siempre lleva a resultados.
+const MARCAS_PROVEEDORES = [
+  {nombre:'Colún',     buscar:'COLUN'},
+  {nombre:'Ideal',     buscar:'IDEAL'},
+  {nombre:'Soprole',   buscar:'SOPROLE'},
+  {nombre:'Carozzi',   buscar:'CAROZZI'},
+  {nombre:'Lucchetti', buscar:'LUCCHETTI'},
+  {nombre:'Marinela',  buscar:'MARINELA'},
+  {nombre:'Omo',       buscar:'OMO'},
+  {nombre:'Virutex',   buscar:'VIRUTEX'},
+  {nombre:'Virginia',  buscar:'VIRGINIA'},
+  {nombre:'Pampers',   buscar:'PAMPERS'},
+  {nombre:'Huggies',   buscar:'HUGGIES'},
+  {nombre:'Babysec',   buscar:'BABYSEC'},
+];
+
+function pintarMarcas(){
+  const g=document.getElementById('grid-marcas');
+  if(!g||!DB.length)return;
+  g.innerHTML='';
+  MARCAS_PROVEEDORES.forEach(m=>{
+    const cant = DB.filter(p=>p.n.toUpperCase().includes(m.buscar)).length;
+    if(!cant) return; // no mostramos marcas sin stock en la planilla
+    const d=document.createElement('button');
+    d.className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:border-verde transition-all py-4 px-2 flex flex-col items-center justify-center gap-0.5 group';
+    d.onclick=()=>verMarca(m.buscar,m.nombre);
+    d.innerHTML=`<span class="font-black text-gray-700 group-hover:text-verde text-sm sm:text-base leading-tight text-center transition-colors">${esc(m.nombre)}</span>
+                 <span class="text-[10px] text-gray-400 font-semibold">${cant} producto${cant===1?'':'s'}</span>`;
+    g.appendChild(d);
+  });
+}
+
+function verMarca(termino, nombre){
+  const b=document.getElementById('buscador');
+  if(b) b.value = nombre;
+  buscarProducto(termino);
+  document.getElementById('cat-titulo').textContent = nombre;
+  document.getElementById('bread').textContent = nombre;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
 // ── CARRITO ──
 function toggleCarrito(){
   if (COMPRAS_DESACTIVADAS) {
@@ -1836,6 +1917,7 @@ function refrescarVistas(){
     pintarCatalogo(listaCat);
   pintarHomeOfertas();
   pintarHomeTop();
+    pintarMarcas();
 }
 function pintarCarrito(){
   const cont=document.getElementById('items-carrito');
