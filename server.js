@@ -56,6 +56,71 @@ async function flowGetStatus(token) {
   return r.json();
 }
 
+// ── DESPACHO POR DISTANCIA (tramos por km) ────────
+// Origen: local de Av. Ramón Picarte 779, Valdivia.
+// Tramos "kmMax:precio" separados por coma; el último kmMax es el radio
+// máximo de despacho con tarjeta. DESPACHO_FIJO queda como tarifa de
+// respaldo cuando la dirección no se puede geolocalizar.
+const ORIGEN_LAT = parseFloat(process.env.ORIGEN_LAT) || -39.8196;
+const ORIGEN_LON = parseFloat(process.env.ORIGEN_LON) || -73.2452;
+const DESPACHO_TRAMOS = (process.env.DESPACHO_TRAMOS || '3:2000,6:3000,10:4500')
+  .split(',')
+  .map(t => { const [km, p] = t.split(':'); return { km: parseFloat(km), precio: parseInt(p) }; })
+  .filter(t => t.km > 0 && t.precio > 0)
+  .sort((a, b) => a.km - b.km);
+const KM_MAX      = DESPACHO_TRAMOS[DESPACHO_TRAMOS.length - 1].km;
+const FACTOR_RUTA = 1.3; // línea recta → aproximación de ruta en auto
+
+const geoCache = new Map(); // dirección normalizada -> {lat,lon} | null
+
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371, rad = d => d * Math.PI / 180;
+  const dLat = rad(lat2 - lat1), dLon = rad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// Geocodifica con Nominatim (OpenStreetMap): gratis, sin API key.
+// Su política pide identificarse con User-Agent y max ~1 req/s — el
+// caché en memoria mantiene el uso muy por debajo de ese límite.
+async function geocodificar(direccion) {
+  const limpia = direccion.trim().toLowerCase().replace(/\s+/g, ' ');
+  if (geoCache.has(limpia)) return geoCache.get(limpia);
+  const q = /valdivia/i.test(direccion)
+    ? `${direccion}, Chile`
+    : `${direccion}, Valdivia, Región de Los Ríos, Chile`;
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=cl&q=${encodeURIComponent(q)}`;
+  const r = await fetch(url, {
+    headers: { 'User-Agent': 'LaBarata-Valdivia/1.0 (compraslabarata@gmail.com)' },
+    timeout: 8000,
+  });
+  if (!r.ok) throw new Error(`Nominatim HTTP ${r.status}`);
+  const data = await r.json();
+  const hit = Array.isArray(data) && data[0]
+    ? { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) }
+    : null;
+  geoCache.set(limpia, hit);
+  if (geoCache.size > 1000) geoCache.delete(geoCache.keys().next().value);
+  return hit;
+}
+
+// { ok:true, metodo:'distancia'|'fijo', km, costo } o { ok:false, fueraDeCobertura:true, km }
+async function calcularDespacho(direccion) {
+  try {
+    const punto = await geocodificar(direccion);
+    if (!punto) return { ok: true, metodo: 'fijo', km: null, costo: DESPACHO_FIJO };
+    const km = Math.round(haversineKm(ORIGEN_LAT, ORIGEN_LON, punto.lat, punto.lon) * FACTOR_RUTA * 10) / 10;
+    if (km > 60) return { ok: true, metodo: 'fijo', km: null, costo: DESPACHO_FIJO }; // geocodificación claramente errada
+    if (km > KM_MAX) return { ok: false, fueraDeCobertura: true, km };
+    const tramo = DESPACHO_TRAMOS.find(t => km <= t.km);
+    return { ok: true, metodo: 'distancia', km, costo: tramo.precio };
+  } catch (err) {
+    console.warn('⚠️ Geocodificación falló:', err.message);
+    return { ok: true, metodo: 'fijo', km: null, costo: DESPACHO_FIJO };
+  }
+}
+
 // ── Cache en memoria (5 minutos) ──────────────────
 let cache = { data: null, ts: 0 };
 const CACHE_MS = 5 * 60 * 1000; // 5 minutos
@@ -300,7 +365,17 @@ app.post('/api/pago/crear', async (req, res) => {
     }
 
     const subtotal = lineas.reduce((s, l) => s + l.p * l.cantidad, 0);
-    const total    = subtotal + DESPACHO_FIJO;
+
+    // Despacho según distancia real a la dirección (calculado en el servidor)
+    const desp = await calcularDespacho(cliente.direccion);
+    if (!desp.ok) {
+      return res.status(422).json({
+        ok: false, fueraDeCobertura: true, km: desp.km,
+        error: `Tu dirección está a ~${desp.km} km de nuestro local — con tarjeta despachamos hasta ${KM_MAX} km. Escríbenos por WhatsApp y coordinamos tu pedido.`,
+      });
+    }
+    const despacho = desp.costo;
+    const total    = subtotal + despacho;
     if (total < 350) return res.status(400).json({ ok: false, error: 'El monto mínimo para pagar con tarjeta es $350' });
 
     const commerceOrder = `LB-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`;
@@ -312,7 +387,8 @@ app.post('/api/pago/crear', async (req, res) => {
       dir:  `${cliente.direccion.trim()} / ${(cliente.referencia || '').trim()}`.slice(0, 120),
       det:  lineas.map(l => `${l.cantidad}x ${l.n}`).join(', ').slice(0, 400),
       sub:  subtotal,
-      desp: DESPACHO_FIJO,
+      desp: despacho,
+      km:   desp.km,
     });
 
     const params = {
@@ -342,17 +418,40 @@ app.post('/api/pago/crear', async (req, res) => {
 
     pedidosFlow.set(commerceOrder, {
       cliente: { nombre: cliente.nombre, telefono: cliente.telefono, direccion: cliente.direccion, referencia: cliente.referencia || '', email },
-      lineas, subtotal, despacho: DESPACHO_FIJO, total,
+      lineas, subtotal, despacho, km: desp.km, total,
       flowOrder: data.flowOrder, creado: new Date().toISOString(),
     });
     if (pedidosFlow.size > 500) pedidosFlow.delete(pedidosFlow.keys().next().value);
 
-    console.log(`💳 Orden Flow creada: ${commerceOrder} (flowOrder ${data.flowOrder}) — $${total.toLocaleString('es-CL')} (${lineas.length} productos + despacho $${DESPACHO_FIJO.toLocaleString('es-CL')})`);
-    res.json({ ok: true, redirect: `${data.url}?token=${data.token}`, commerceOrder, subtotal, despacho: DESPACHO_FIJO, total });
+    console.log(`💳 Orden Flow creada: ${commerceOrder} (flowOrder ${data.flowOrder}) — $${total.toLocaleString('es-CL')} (${lineas.length} productos + despacho $${despacho.toLocaleString('es-CL')}${desp.km ? ` a ${desp.km} km` : ' tarifa estándar'})`);
+    res.json({ ok: true, redirect: `${data.url}?token=${data.token}`, commerceOrder, subtotal, despacho, km: desp.km, metodoDespacho: desp.metodo, total });
 
   } catch (err) {
     console.error('❌ /api/pago/crear:', err.message);
     res.status(500).json({ ok: false, error: 'Error interno creando el pago' });
+  }
+});
+
+// ════════════════════════════════════════════════
+//  RUTA 6b — POST /api/despacho/calcular
+//  Calcula el costo de despacho por distancia para
+//  mostrarlo en el checkout antes de pagar.
+// ════════════════════════════════════════════════
+app.post('/api/despacho/calcular', async (req, res) => {
+  try {
+    const direccion = (req.body?.direccion || '').trim();
+    if (direccion.length < 5) return res.status(400).json({ ok: false, error: 'Escribe una dirección válida' });
+    const d = await calcularDespacho(direccion);
+    if (!d.ok) {
+      return res.json({
+        ok: false, fueraDeCobertura: true, km: d.km,
+        error: `Tu dirección está a ~${d.km} km — con tarjeta despachamos hasta ${KM_MAX} km. Escríbenos por WhatsApp y lo coordinamos.`,
+      });
+    }
+    res.json({ ok: true, metodo: d.metodo, km: d.km, costo: d.costo });
+  } catch (err) {
+    console.error('❌ /api/despacho/calcular:', err.message);
+    res.status(500).json({ ok: false, error: 'No se pudo calcular el despacho' });
   }
 });
 
