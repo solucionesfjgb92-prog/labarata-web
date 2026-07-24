@@ -7,12 +7,14 @@
 const express = require('express');
 const cors    = require('cors');
 const fetch   = require('node-fetch');
+const crypto  = require('crypto');
 require('dotenv').config();
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Flow envía sus webhooks como form-urlencoded
 app.use(cors({ origin: process.env.FRONTEND_URL || '*', methods: ['GET','POST'] }));
 app.use('/imagenes', express.static('IMAGENES PRODUCTOS'));
 
@@ -21,6 +23,38 @@ const SHEETS_URL = process.env.SHEETS_URL ||
   'https://docs.google.com/spreadsheets/d/e/2PACX-1vTxs_HEpIQwQ2GqbvBDHUwKAtvbz9YDliZE8JdPeOeBMUkLAnk6jW7unzIfkd8cGg/pub?gid=292915002&single=true&output=csv';
 
 const WHATSAPP = process.env.WHATSAPP || '56944350559';
+
+// ── FLOW (pagos con tarjeta) ──────────────────────
+// Credenciales SIEMPRE por variables de entorno, nunca en el código.
+// Sandbox por defecto: para producción setear FLOW_API_URL=https://www.flow.cl/api
+const FLOW_API_KEY    = process.env.FLOW_API_KEY    || '';
+const FLOW_SECRET_KEY = process.env.FLOW_SECRET_KEY || '';
+const FLOW_API_URL    = process.env.FLOW_API_URL    || 'https://sandbox.flow.cl/api';
+const DESPACHO_FIJO   = parseInt(process.env.DESPACHO_FIJO) || 3000;
+const PUBLIC_URL      = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+const FRONTEND_REDIRECT = process.env.FRONTEND_URL || 'https://www.distribuidoralabarata.cl';
+
+// Pedidos pendientes de pago en memoria (respaldo adicional: campo "optional" en Flow).
+// Nota: en Render free tier el proceso puede reiniciarse; el detalle compacto del
+// pedido viaja también en "optional" para no perderlo.
+const pedidosFlow    = new Map(); // commerceOrder -> pedido completo
+const pagosLogueados = new Set(); // idempotencia entre webhook y retorno
+
+// Firma Flow: params ordenados alfabéticamente, concatenados key+value sin
+// separadores, HMAC-SHA256 hex con la secretKey. Se firman los valores SIN
+// url-encodear (URLSearchParams codifica recién al enviar).
+function firmarFlow(params) {
+  const cadena = Object.keys(params).sort().map(k => k + params[k]).join('');
+  return crypto.createHmac('sha256', FLOW_SECRET_KEY).update(cadena).digest('hex');
+}
+
+async function flowGetStatus(token) {
+  const q = { apiKey: FLOW_API_KEY, token };
+  q.s = firmarFlow(q);
+  const r = await fetch(`${FLOW_API_URL}/payment/getStatus?${new URLSearchParams(q)}`);
+  if (!r.ok) throw new Error(`Flow getStatus HTTP ${r.status}`);
+  return r.json();
+}
 
 // ── Cache en memoria (5 minutos) ──────────────────
 let cache = { data: null, ts: 0 };
@@ -217,6 +251,177 @@ app.get('/api/reload', async (req, res) => {
     res.status(500).json({ ok: false, error: err.message });
   }
 });
+
+// ════════════════════════════════════════════════
+//  RUTA 6 — POST /api/pago/crear
+//  Crea una orden de pago en Flow y devuelve la URL
+//  de redirección. El total se calcula SIEMPRE en el
+//  servidor con los precios del Google Sheets — los
+//  precios enviados por el navegador se ignoran.
+// ════════════════════════════════════════════════
+app.post('/api/pago/crear', async (req, res) => {
+  try {
+    if (!FLOW_API_KEY || !FLOW_SECRET_KEY) {
+      return res.status(503).json({ ok: false, error: 'Pagos con tarjeta no disponibles por ahora. Puedes pagar por transferencia.' });
+    }
+
+    const { cliente, items } = req.body;
+    if (!cliente?.nombre?.trim() || !cliente?.direccion?.trim() || !cliente?.telefono?.trim()) {
+      return res.status(400).json({ ok: false, error: 'Faltan datos del cliente' });
+    }
+    const email = (cliente.email || '').trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ ok: false, error: 'Email inválido (Flow lo necesita para el comprobante)' });
+    }
+    if (!Array.isArray(items) || !items.length || items.length > 200) {
+      return res.status(400).json({ ok: false, error: 'Carrito vacío o inválido' });
+    }
+
+    // Resolver cada ítem contra el catálogo del servidor (precio real)
+    const catalogo = await cargarProductos();
+    const porId = new Map(catalogo.map(p => [p.id, p]));
+    const lineas = [];
+    for (const it of items) {
+      const cant = parseInt(it.cantidad);
+      if (!cant || cant < 1 || cant > 999) {
+        return res.status(400).json({ ok: false, error: 'Cantidad inválida en el carrito' });
+      }
+      // Los ids se asignan por orden de fila del Sheet: si la planilla cambió
+      // entre que el cliente cargó la página y pagó, el id puede apuntar a otra
+      // fila. Se verifica por nombre y se recurre a búsqueda exacta si no calza.
+      let prod = porId.get(parseInt(it.id));
+      if (!prod || (it.n && prod.n !== it.n)) {
+        prod = it.n ? catalogo.find(p => p.n === it.n) : null;
+      }
+      if (!prod) {
+        return res.status(409).json({ ok: false, error: 'El catálogo cambió mientras comprabas. Recarga la página e intenta de nuevo.' });
+      }
+      lineas.push({ id: prod.id, n: prod.n, p: prod.p, cantidad: cant });
+    }
+
+    const subtotal = lineas.reduce((s, l) => s + l.p * l.cantidad, 0);
+    const total    = subtotal + DESPACHO_FIJO;
+    if (total < 350) return res.status(400).json({ ok: false, error: 'El monto mínimo para pagar con tarjeta es $350' });
+
+    const commerceOrder = `LB-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`;
+
+    // Respaldo compacto del pedido que viaja en Flow (sobrevive reinicios del server)
+    const optional = JSON.stringify({
+      nom:  cliente.nombre.trim().slice(0, 60),
+      tel:  cliente.telefono.trim().slice(0, 20),
+      dir:  `${cliente.direccion.trim()} / ${(cliente.referencia || '').trim()}`.slice(0, 120),
+      det:  lineas.map(l => `${l.cantidad}x ${l.n}`).join(', ').slice(0, 400),
+      sub:  subtotal,
+      desp: DESPACHO_FIJO,
+    });
+
+    const params = {
+      apiKey:          FLOW_API_KEY,
+      commerceOrder,
+      subject:         `Pedido La Barata ${commerceOrder}`,
+      currency:        'CLP',
+      amount:          total,
+      email,
+      paymentMethod:   9,
+      urlConfirmation: `${PUBLIC_URL}/api/pago/confirmacion`,
+      urlReturn:       `${PUBLIC_URL}/api/pago/retorno`,
+      optional,
+    };
+    params.s = firmarFlow(params);
+
+    const r = await fetch(`${FLOW_API_URL}/payment/create`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body:    new URLSearchParams(params).toString(),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.url || !data.token) {
+      console.error('❌ Flow payment/create:', r.status, JSON.stringify(data));
+      return res.status(502).json({ ok: false, error: data.message || 'Flow no aceptó la orden de pago. Intenta de nuevo.' });
+    }
+
+    pedidosFlow.set(commerceOrder, {
+      cliente: { nombre: cliente.nombre, telefono: cliente.telefono, direccion: cliente.direccion, referencia: cliente.referencia || '', email },
+      lineas, subtotal, despacho: DESPACHO_FIJO, total,
+      flowOrder: data.flowOrder, creado: new Date().toISOString(),
+    });
+    if (pedidosFlow.size > 500) pedidosFlow.delete(pedidosFlow.keys().next().value);
+
+    console.log(`💳 Orden Flow creada: ${commerceOrder} (flowOrder ${data.flowOrder}) — $${total.toLocaleString('es-CL')} (${lineas.length} productos + despacho $${DESPACHO_FIJO.toLocaleString('es-CL')})`);
+    res.json({ ok: true, redirect: `${data.url}?token=${data.token}`, commerceOrder, subtotal, despacho: DESPACHO_FIJO, total });
+
+  } catch (err) {
+    console.error('❌ /api/pago/crear:', err.message);
+    res.status(500).json({ ok: false, error: 'Error interno creando el pago' });
+  }
+});
+
+// ════════════════════════════════════════════════
+//  RUTA 7 — POST /api/pago/confirmacion
+//  Webhook servidor-a-servidor de Flow. Debe responder
+//  200 rápido (<15s). El estado SIEMPRE se valida con
+//  getStatus — nunca por la sola llegada del POST.
+// ════════════════════════════════════════════════
+app.post('/api/pago/confirmacion', async (req, res) => {
+  const token = req.body?.token;
+  if (!token) return res.sendStatus(400);
+  try {
+    const pago = await flowGetStatus(token);
+
+    if (pago.status === 2 && !pagosLogueados.has(pago.commerceOrder)) {
+      pagosLogueados.add(pago.commerceOrder);
+      console.log(`✅ PAGO CONFIRMADO — ${pago.commerceOrder} (flowOrder ${pago.flowOrder}) — $${Number(pago.amount).toLocaleString('es-CL')} — ${new Date().toISOString()}`);
+
+      const ped = pedidosFlow.get(pago.commerceOrder);
+      if (ped) {
+        console.log(`   Cliente: ${ped.cliente.nombre} | ${ped.cliente.telefono} | ${ped.cliente.email}`);
+        console.log(`   Dirección: ${ped.cliente.direccion} — ${ped.cliente.referencia}`);
+        ped.lineas.forEach(l => console.log(`   • ${l.cantidad}x ${l.n} — $${(l.p * l.cantidad).toLocaleString('es-CL')}`));
+        console.log(`   Subtotal $${ped.subtotal.toLocaleString('es-CL')} + Despacho $${ped.despacho.toLocaleString('es-CL')}`);
+      } else if (pago.optional) {
+        // El server se reinició: recuperar el respaldo que viajó en Flow
+        try {
+          const o = typeof pago.optional === 'string' ? JSON.parse(pago.optional) : pago.optional;
+          console.log(`   (recuperado de Flow) Cliente: ${o.nom} | ${o.tel}`);
+          console.log(`   (recuperado de Flow) Dirección: ${o.dir}`);
+          console.log(`   (recuperado de Flow) Detalle: ${o.det}`);
+        } catch (e) { console.log('   ⚠️ optional no parseable:', pago.optional); }
+      }
+    } else if (pago.status === 3 || pago.status === 4) {
+      console.log(`⚠️ Pago ${pago.status === 3 ? 'RECHAZADO' : 'ANULADO'} — ${pago.commerceOrder} (flowOrder ${pago.flowOrder})`);
+    }
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('❌ /api/pago/confirmacion:', err.message);
+    res.sendStatus(500);
+  }
+});
+
+// ════════════════════════════════════════════════
+//  RUTA 8 — /api/pago/retorno
+//  Flow redirige aquí el navegador del cliente (POST
+//  según doc vigente; GET defensivo por si acaso) y
+//  nosotros lo devolvemos al sitio con el resultado.
+// ════════════════════════════════════════════════
+async function manejarRetornoFlow(req, res) {
+  const token = req.body?.token || req.query?.token;
+  let destino = `${FRONTEND_REDIRECT}/?pago=error`;
+  if (token) {
+    try {
+      const pago  = await flowGetStatus(token);
+      const orden = encodeURIComponent(pago.commerceOrder || '');
+      if      (pago.status === 2) destino = `${FRONTEND_REDIRECT}/?pago=exitoso&orden=${orden}`;
+      else if (pago.status === 1) destino = `${FRONTEND_REDIRECT}/?pago=pendiente&orden=${orden}`;
+      else                        destino = `${FRONTEND_REDIRECT}/?pago=rechazado&orden=${orden}`;
+    } catch (err) {
+      console.error('❌ /api/pago/retorno:', err.message);
+    }
+  }
+  res.redirect(302, destino);
+}
+app.post('/api/pago/retorno', manejarRetornoFlow);
+app.get('/api/pago/retorno',  manejarRetornoFlow);
 
 // ════════════════════════════════════════════════
 //  RUTA PING
