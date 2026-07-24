@@ -1287,13 +1287,13 @@ html{scroll-behavior:smooth;}
           <span class="w-5 h-5 bg-verde text-white rounded-full flex items-center justify-center text-xs font-black flex-shrink-0">3</span>
           Método de Pago
         </p>
-        <label class="bg-green-50 border-2 border-verde rounded-xl p-3 sm:p-4 flex items-center gap-3 cursor-pointer">
+        <label id="opcion-tarjeta" class="bg-green-50 border-2 border-verde rounded-xl p-3 sm:p-4 flex items-center gap-3 cursor-pointer">
           <span class="text-2xl">💳</span>
           <div>
             <p class="font-black text-gray-800 text-sm">Tarjeta de crédito o débito</p>
             <p class="text-xs text-gray-500">Webpay y más — pago seguro procesado por Flow</p>
           </div>
-          <input type="radio" name="pago" value="Tarjeta" checked onchange="actualizarCheckout()" class="ml-auto w-4 h-4 accent-verde flex-shrink-0">
+          <input id="radio-tarjeta" type="radio" name="pago" value="Tarjeta" checked onchange="actualizarCheckout()" class="ml-auto w-4 h-4 accent-verde flex-shrink-0">
         </label>
         <label class="bg-blue-50 border-2 border-blue-400 rounded-xl p-3 sm:p-4 flex items-center gap-3 cursor-pointer">
           <span class="text-2xl">🏦</span>
@@ -1301,7 +1301,7 @@ html{scroll-behavior:smooth;}
             <p class="font-black text-gray-800 text-sm">Transferencia bancaria</p>
             <p class="text-xs text-gray-500">Envías el comprobante por WhatsApp</p>
           </div>
-          <input type="radio" name="pago" value="Transferencia" onchange="actualizarCheckout()" class="ml-auto w-4 h-4 accent-verde flex-shrink-0">
+          <input id="radio-transferencia" type="radio" name="pago" value="Transferencia" onchange="actualizarCheckout()" class="ml-auto w-4 h-4 accent-verde flex-shrink-0">
         </label>
         <label class="bg-emerald-50 border-2 border-emerald-300 rounded-xl p-3 sm:p-4 flex items-center gap-3 cursor-pointer">
           <span class="text-2xl">💵</span>
@@ -1383,6 +1383,12 @@ const WHATSAPP = "56944350559";
 
 // ── Sitio en mantención: compras desactivadas temporalmente ──
 const COMPRAS_DESACTIVADAS = false;
+
+// ── Pago con tarjeta (Flow) ──
+// Ponlo en true apenas Flow habilite la cuenta de La Barata para procesar pagos.
+// En false, la opción de tarjeta se oculta del checkout y el cliente paga por
+// transferencia o efectivo (el resto del flujo no cambia).
+const PAGO_TARJETA_ACTIVO = false;
 
 // ── Escapa texto antes de insertarlo como HTML (evita XSS) ──
 function esc(str){
@@ -2149,6 +2155,7 @@ function pagoActual(){
 function abrirCheckout(){
   if(COMPRAS_DESACTIVADAS){alert('El sitio está en mantención. Las compras están temporalmente desactivadas — escríbenos por WhatsApp para hacer tu pedido.');return;}
   if(!carrito.length){alert('¡Agrega productos primero!');return;}
+  aplicarDisponibilidadTarjeta();
   toggleCarrito();
   const cont=document.getElementById('chk-items');
   cont.innerHTML='';
@@ -2162,6 +2169,19 @@ function abrirCheckout(){
 }
 function cerrarCheckout(){
   document.getElementById('checkout-overlay').classList.add('hidden');
+}
+
+// ── Oculta el pago con tarjeta mientras Flow no esté habilitado ──
+function aplicarDisponibilidadTarjeta(){
+  if(PAGO_TARJETA_ACTIVO) return;
+  const opcion = document.getElementById('opcion-tarjeta');
+  const radioT = document.getElementById('radio-tarjeta');
+  if(opcion) opcion.classList.add('hidden');
+  if(radioT){ radioT.checked = false; radioT.disabled = true; }
+  const radioTransf = document.getElementById('radio-transferencia');
+  if(radioTransf && !document.querySelector('input[name="pago"]:checked')) radioTransf.checked = true;
+  const email = document.getElementById('chk-email');
+  if(email) email.placeholder = 'Email (opcional)';
 }
 
 // ── Estado completo del checkout: entrega + pago + resumen ──
