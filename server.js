@@ -174,8 +174,12 @@ async function cargarProductos() {
     if (!nombre)         continue;
     if (precio <= 0)     continue;
 
+    // Stock: celda vacía = sin control de stock (siempre disponible).
+    // Un 0 explícito SÍ significa agotado — por eso no se usa "|| 999",
+    // que convertía el 0 en 999 y mostraba disponible un producto agotado.
     const stockRaw = (f.stock || '').replace(/[.\s]/g, '').replace(',', '.');
-    const stock    = parseInt(stockRaw) || 999;
+    const stockNum = parseInt(stockRaw, 10);
+    const stock    = Number.isFinite(stockNum) ? stockNum : 999;
     const cat      = (f.categoria || 'despensa').toLowerCase().trim();
     const img      = (f.imagen_url || '').trim();
     const barcode  = (f.barcode   || '').trim();
