@@ -1616,7 +1616,16 @@ async function cargarMasProductos(offset) {
 
     DB = [...DB, ...nuevos];
     console.log(`📦 Total productos: ${DB.length} / ${totalBsale}`);
-    if (offset + 50 < totalBsale) cargarMasProductos(offset + 50);
+    if (offset + 50 < totalBsale) {
+      cargarMasProductos(offset + 50);
+    } else {
+      // Catálogo completo: repintar. Sin esto, las secciones quedan
+      // calculadas solo con los primeros 50 productos (por ejemplo,
+      // la grilla de proveedores salía vacía).
+      pintarHomeOfertas();
+      pintarHomeTop();
+      pintarMarcas();
+    }
   } catch (e) { /* silencioso */ }
 }
 
