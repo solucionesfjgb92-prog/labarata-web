@@ -1340,7 +1340,7 @@ html{scroll-behavior:smooth;}
       <div id="bloque-condiciones" class="bg-amber-50 border border-amber-200 rounded-xl p-3 sm:p-4">
         <label class="flex items-start gap-2.5 cursor-pointer">
           <input id="chk-condiciones" type="checkbox" class="mt-0.5 w-5 h-5 accent-verde flex-shrink-0">
-          <span class="text-xs text-amber-900">Acepto las <button type="button" onclick="abrirCondicionesEntrega()" class="font-bold underline text-amber-900">condiciones de la entrega</button>: me llamarán para coordinar, y si no me encuentro en mi dirección el día de la entrega, deberé retirar mi pedido en el local. *</span>
+          <span class="text-xs text-amber-900">Acepto la <button type="button" onclick="abrirCondicionesEntrega()" class="font-bold underline text-amber-900">política de despacho</button>: la fecha de entrega se coordinará vía telefónica y, si no me encuentro en el domicilio al momento de la entrega, el paquete quedará disponible para retiro en la tienda física. *</span>
         </label>
       </div>
 
@@ -1356,12 +1356,11 @@ html{scroll-behavior:smooth;}
 <div id="modal-condiciones" class="hidden fixed inset-0 z-[700] flex items-center justify-center p-4" style="background:rgba(0,0,0,.6)">
   <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-6 max-h-[85vh] overflow-y-auto">
     <div class="flex justify-between items-start mb-3">
-      <h3 class="font-black text-gray-800 text-base">🚚 Condiciones de la entrega</h3>
+      <h3 class="font-black text-gray-800 text-base">🚚 Política de despacho</h3>
       <button onclick="cerrarCondicionesEntrega()" class="text-gray-300 hover:text-red-400 text-2xl leading-none w-9 h-9 flex items-center justify-center flex-shrink-0">×</button>
     </div>
+    <p class="text-sm text-gray-700 mb-3">La fecha de entrega será coordinada previamente vía telefónica. Si al momento de efectuar la entrega el destinatario no se encuentra en el domicilio, el paquete quedará disponible para su retiro en nuestra tienda física <strong>(Av. Ramón Picarte 779, Valdivia)</strong>.</p>
     <ol class="space-y-3 text-sm text-gray-600 list-decimal pl-4">
-      <li><strong class="text-gray-800">Coordinación previa:</strong> una vez confirmado tu pedido, te llamaremos al teléfono indicado para coordinar el día y horario de entrega.</li>
-      <li><strong class="text-gray-800">Si no te encuentras:</strong> si el día coordinado no estás en la dirección indicada o no es posible ubicarte, el pedido quedará disponible para <strong>retiro en nuestro local</strong> (Av. Ramón Picarte 779, Valdivia).</li>
       <li><strong class="text-gray-800">Costo del despacho:</strong> se calcula según la distancia desde nuestro local a tu dirección (hasta 3 km $2.000 · 3–6 km $3.000 · 6–10 km $4.500). Sobre 10 km, coordinamos por WhatsApp.</li>
       <li><strong class="text-gray-800">Horarios de despacho:</strong> Lun–Vie 08:30–19:00 · Sáb y feriados 09:00–17:00. Pedidos antes de las 16:00 se despachan el mismo día (Lun–Vie).</li>
     </ol>
