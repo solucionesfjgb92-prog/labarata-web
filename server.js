@@ -282,7 +282,7 @@ app.get('/api/buscar', async (req, res) => {
 // ════════════════════════════════════════════════
 app.post('/api/pedido', async (req, res) => {
   try {
-    const { cliente, pago, items } = req.body;
+    const { cliente, pago, items, entrega } = req.body;
     if (!cliente?.nombre) return res.status(400).json({ ok: false, error: 'Falta nombre' });
     if (!Array.isArray(items) || !items.length) return res.status(400).json({ ok: false, error: 'Carrito vacío' });
 
@@ -291,8 +291,9 @@ app.post('/api/pedido', async (req, res) => {
     // Log del pedido
     console.log(`🛒 NUEVO PEDIDO — ${new Date().toISOString()}`);
     console.log(`   Cliente: ${cliente.nombre} | ${cliente.telefono}`);
+    console.log(`   Entrega: ${entrega === 'retiro' ? 'RETIRO EN LOCAL' : 'Envío a domicilio'}`);
     console.log(`   Dirección: ${cliente.direccion} — ${cliente.referencia}`);
-    console.log(`   Pago: ${pago} | Total: $${total.toLocaleString('es-CL')}`);
+    console.log(`   Pago: ${pago} | Subtotal productos: $${total.toLocaleString('es-CL')}`);
     items.forEach(it => console.log(`   • ${it.cantidad}x ${it.nombre}`));
 
     res.json({ ok: true, message: 'Pedido registrado', total });
@@ -331,8 +332,12 @@ app.post('/api/pago/crear', async (req, res) => {
     }
 
     const { cliente, items } = req.body;
-    if (!cliente?.nombre?.trim() || !cliente?.direccion?.trim() || !cliente?.telefono?.trim()) {
+    const entrega = req.body.entrega === 'retiro' ? 'retiro' : 'envio';
+    if (!cliente?.nombre?.trim() || !cliente?.telefono?.trim()) {
       return res.status(400).json({ ok: false, error: 'Faltan datos del cliente' });
+    }
+    if (entrega === 'envio' && !cliente?.direccion?.trim()) {
+      return res.status(400).json({ ok: false, error: 'Falta la dirección para el envío a domicilio' });
     }
     const email = (cliente.email || '').trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -366,13 +371,16 @@ app.post('/api/pago/crear', async (req, res) => {
 
     const subtotal = lineas.reduce((s, l) => s + l.p * l.cantidad, 0);
 
-    // Despacho según distancia real a la dirección (calculado en el servidor)
-    const desp = await calcularDespacho(cliente.direccion);
-    if (!desp.ok) {
-      return res.status(422).json({
-        ok: false, fueraDeCobertura: true, km: desp.km,
-        error: `Tu dirección está a ~${desp.km} km de nuestro local — con tarjeta despachamos hasta ${KM_MAX} km. Escríbenos por WhatsApp y coordinamos tu pedido.`,
-      });
+    // Despacho: $0 en retiro en local; según distancia real en envío
+    let desp = { metodo: 'retiro', km: null, costo: 0 };
+    if (entrega === 'envio') {
+      desp = await calcularDespacho(cliente.direccion);
+      if (!desp.ok) {
+        return res.status(422).json({
+          ok: false, fueraDeCobertura: true, km: desp.km,
+          error: `Tu dirección está a ~${desp.km} km de nuestro local — despachamos hasta ${KM_MAX} km. Elige retiro en local o escríbenos por WhatsApp.`,
+        });
+      }
     }
     const despacho = desp.costo;
     const total    = subtotal + despacho;
@@ -384,11 +392,12 @@ app.post('/api/pago/crear', async (req, res) => {
     const optional = JSON.stringify({
       nom:  cliente.nombre.trim().slice(0, 60),
       tel:  cliente.telefono.trim().slice(0, 20),
-      dir:  `${cliente.direccion.trim()} / ${(cliente.referencia || '').trim()}`.slice(0, 120),
+      dir:  entrega === 'retiro' ? 'RETIRO EN LOCAL' : `${cliente.direccion.trim()} / ${(cliente.referencia || '').trim()}`.slice(0, 120),
       det:  lineas.map(l => `${l.cantidad}x ${l.n}`).join(', ').slice(0, 400),
       sub:  subtotal,
       desp: despacho,
       km:   desp.km,
+      ent:  entrega,
     });
 
     const params = {
@@ -417,14 +426,15 @@ app.post('/api/pago/crear', async (req, res) => {
     }
 
     pedidosFlow.set(commerceOrder, {
-      cliente: { nombre: cliente.nombre, telefono: cliente.telefono, direccion: cliente.direccion, referencia: cliente.referencia || '', email },
-      lineas, subtotal, despacho, km: desp.km, total,
+      cliente: { nombre: cliente.nombre, telefono: cliente.telefono, direccion: cliente.direccion || 'RETIRO EN LOCAL', referencia: cliente.referencia || '', email },
+      entrega, lineas, subtotal, despacho, km: desp.km, total,
       flowOrder: data.flowOrder, creado: new Date().toISOString(),
     });
     if (pedidosFlow.size > 500) pedidosFlow.delete(pedidosFlow.keys().next().value);
 
-    console.log(`💳 Orden Flow creada: ${commerceOrder} (flowOrder ${data.flowOrder}) — $${total.toLocaleString('es-CL')} (${lineas.length} productos + despacho $${despacho.toLocaleString('es-CL')}${desp.km ? ` a ${desp.km} km` : ' tarifa estándar'})`);
-    res.json({ ok: true, redirect: `${data.url}?token=${data.token}`, commerceOrder, subtotal, despacho, km: desp.km, metodoDespacho: desp.metodo, total });
+    const detalleDesp = entrega === 'retiro' ? 'retiro en local' : `despacho $${despacho.toLocaleString('es-CL')}${desp.km ? ` a ${desp.km} km` : ' tarifa estándar'}`;
+    console.log(`💳 Orden Flow creada: ${commerceOrder} (flowOrder ${data.flowOrder}) — $${total.toLocaleString('es-CL')} (${lineas.length} productos, ${detalleDesp})`);
+    res.json({ ok: true, redirect: `${data.url}?token=${data.token}`, commerceOrder, entrega, subtotal, despacho, km: desp.km, metodoDespacho: desp.metodo, total });
 
   } catch (err) {
     console.error('❌ /api/pago/crear:', err.message);
