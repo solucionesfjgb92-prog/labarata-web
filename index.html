@@ -87,11 +87,29 @@
 
 <link rel="icon" type="image/jpeg" href="./LOGO_LA_BARATA.jpg">
 <link rel="apple-touch-icon" href="./LOGO_LA_BARATA.jpg">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./tailwind.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
+body{font-family:'Figtree','Segoe UI',Arial,sans-serif;background:#f6f7f9;color:#1f2937;}
+html{scroll-behavior:smooth;}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto;}
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}
+}
+
+/* ── CONTENEDOR CENTRAL (elegancia en pantallas anchas) ── */
+.wrap{max-width:1280px;margin-left:auto;margin-right:auto;}
+
+/* ── ACCESIBILIDAD: foco visible con teclado ── */
+:focus-visible{outline:2px solid #16a34a;outline-offset:2px;border-radius:4px;}
+
+/* ── REVEAL ON SCROLL (aparición suave de secciones) ── */
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;}
+.reveal.vis{opacity:1;transform:none;}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;}}
 
 /* ── SCROLLBARS ── */
 .no-scroll::-webkit-scrollbar{display:none;}
@@ -146,8 +164,19 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 .drawer-subcat a:hover{color:#16a34a;}
 
 /* ── CARDS ── */
-.prod-card{transition:all .2s ease;cursor:pointer;}
-.prod-card:hover{box-shadow:0 6px 24px rgba(0,0,0,.13);transform:translateY(-2px);}
+.prod-card{transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;cursor:pointer;}
+/* Producto completo sobre fondo blanco (nunca recortado), como los supermercados de referencia */
+.prod-media{aspect-ratio:1/1;background:#fff;display:flex;align-items:center;justify-content:center;}
+.prod-img{object-fit:contain;padding:8px;transition:transform .3s ease;}
+@media(hover:hover){
+  .prod-card:hover{box-shadow:0 12px 28px rgba(16,24,40,.13);transform:translateY(-3px);border-color:transparent;}
+  .prod-card:hover .prod-img{transform:scale(1.05);}
+}
+.prod-card button:active,.prod-card a:active{transform:scale(.96);}
+
+/* ── PANEL CARRITO: entrada suave ── */
+@keyframes slideUpIn{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:none;}}
+#panel-carrito:not(.hidden){animation:slideUpIn .28s ease;}
 .oferta-badge{position:absolute;top:7px;left:7px;background:#ef4444;color:#fff;
   font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.4px;}
 
@@ -167,7 +196,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 /* ── SECTION TITLE ── */
 .sec-title{
-  font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;color:#166534;
+  font-family:'Nunito',sans-serif;font-weight:900;font-size:22px;color:#166534;letter-spacing:-.01em;
   display:flex;align-items:center;gap:8px;flex-wrap:wrap;
 }
 .sec-title::before{content:'';display:block;width:5px;height:22px;background:#fcd34d;border-radius:3px;}
@@ -238,7 +267,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   #banner-container .deco-emoji{display:none!important;}
 
   /* Títulos sección */
-  .sec-title{font-size:16px;}
+  .sec-title{font-size:17px;}
 
   /* Circles más pequeños */
   .cat-circle-img{width:60px!important;height:60px!important;}
@@ -276,7 +305,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 <!-- ════════ HEADER ════════ -->
 <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-[200]">
-  <div class="w-full px-3 sm:px-6 h-[68px] sm:h-[84px] flex items-center gap-3 sm:gap-5">
+  <div class="wrap w-full px-3 sm:px-6 h-[68px] sm:h-[84px] flex items-center gap-3 sm:gap-5">
 
     <!-- HAMBURGER (solo móvil) -->
     <button onclick="abrirDrawer()" class="md:hidden flex-shrink-0 w-10 h-10 flex items-center justify-center text-verde rounded-lg hover:bg-gray-100 active:bg-gray-200">
@@ -380,7 +409,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 <!-- ════════ NAV VERDE DESKTOP ════════ -->
 <div class="bg-verde sticky top-[68px] sm:top-[84px] z-[150] shadow-md hidden md:block" style="box-shadow:0 2px 8px rgba(0,0,0,.22)">
-  <div class="w-full flex items-center" style="height:52px">
+  <div class="wrap w-full flex items-center" style="height:52px">
 
     <div id="mega-wrapper" class="h-full flex-shrink-0">
       <button id="btn-categorias"
@@ -737,7 +766,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 <!-- ════════ BARRA BENEFICIOS ════════ -->
 <div class="bg-white border-b border-gray-200 shadow-sm">
-  <div id="benefits-grid" class="w-full px-3 sm:px-4 py-2.5 grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+  <div id="benefits-grid" class="wrap w-full px-3 sm:px-4 py-2.5 grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
     <div class="del-bar-item">
       <div class="del-icon">🚚</div>
       <div><p class="font-bold text-verde text-xs sm:text-sm leading-tight">Despacho a domicilio</p><p class="text-[10px] sm:text-xs text-gray-500">Toda Valdivia</p></div>
@@ -764,7 +793,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   <h1 class="sr-only">Distribuidora La Barata — Supermercado online en Valdivia con despacho a domicilio</h1>
 
   <!-- BANNER CAROUSEL -->
-  <div class="w-full px-3 sm:px-6 pt-3 sm:pt-5">
+  <div class="wrap w-full px-3 sm:px-6 pt-3 sm:pt-5">
     <div id="banner-container" class="relative overflow-hidden rounded-2xl shadow-xl group" style="height:260px">
       <div id="banner-track" style="width:400%">
         <div class="slide-inner" style="width:25%;float:left;height:260px;background:linear-gradient(135deg,#16a34a,#22c55e,#4ade80);display:flex;align-items:center;padding:30px 40px">
@@ -805,7 +834,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   </div>
 
   <!-- GRID 3 BANNERS PROMOCIONALES -->
-  <div class="w-full px-3 sm:px-4 py-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+  <div class="wrap reveal w-full px-3 sm:px-4 py-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
 
     <div onclick="verCat('despensa','Despensa')" class="relative overflow-hidden rounded-2xl cursor-pointer group" style="background:linear-gradient(135deg,#16a34a,#15803d);min-height:130px;">
       <div class="p-5 flex flex-col justify-between h-full" style="min-height:130px;">
@@ -846,7 +875,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   </div>
 
   <!-- OFERTAS DESTACADAS (primero: es la prioridad anunciada en el hero) -->
-  <div class="w-full px-3 sm:px-4 pb-5">
+  <div class="wrap reveal w-full px-3 sm:px-4 pb-5">
     <div class="flex items-center justify-between mb-3 sm:mb-4">
       <h2 class="sec-title">🔥 Ofertas destacadas <span class="bg-red-100 text-red-600 text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 rounded-full">Esta semana</span></h2>
       <button onclick="verCat('ofertas','Ofertas')" class="text-xs sm:text-sm text-verde font-bold border border-verde px-3 py-1.5 rounded-lg hover:bg-verde hover:text-white transition-colors whitespace-nowrap">Ver todas →</button>
@@ -855,7 +884,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   </div>
 
   <!-- PRODUCTOS DESTACADOS -->
-  <div class="w-full px-3 sm:px-4 pb-4">
+  <div class="wrap reveal w-full px-3 sm:px-4 pb-4">
     <div class="flex items-center justify-between mb-3">
       <h2 class="sec-title">⭐ Productos destacados</h2>
       <button onclick="verCat('despensa','Despensa')" class="text-verde text-xs font-bold hover:underline">Ver todo →</button>
@@ -864,7 +893,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   </div>
 
   <!-- CATEGORÍAS EN GRID -->
-  <div class="w-full px-3 sm:px-4 py-4 sm:py-6">
+  <div class="wrap reveal w-full px-3 sm:px-4 py-4 sm:py-6">
     <div class="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-3">
       <div onclick="verCat('despensa','Despensa')"     class="flex flex-col items-center gap-1.5 cursor-pointer group">
         <div class="cat-circle-img w-full aspect-square rounded-2xl overflow-hidden shadow-md border-2 border-gray-100 group-hover:border-verde transition-all group-hover:scale-105">
@@ -927,7 +956,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
   </div>
 
   <!-- BANNER DESPACHO GRATIS -->
-  <div class="w-full px-3 sm:px-4 pb-5">
+  <div class="wrap reveal w-full px-3 sm:px-4 pb-5">
     <div class="bg-gradient-to-r from-amarillo via-yellow-300 to-amarillo rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 shadow-sm">
       <div>
         <h3 class="font-black text-lg sm:text-2xl text-gray-900">🎁 ¡Despacho GRATIS en tu primer pedido!</h3>
@@ -945,7 +974,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
 
 <!-- ════════ VISTA CATÁLOGO ════════ -->
 <div id="vista-catalogo" class="hidden">
-  <div class="w-full px-3 sm:px-4 py-4 sm:py-6">
+  <div class="wrap w-full px-3 sm:px-4 py-4 sm:py-6">
 
     <main class="flex-1 min-w-0">
       <p class="text-xs text-gray-400 mb-2 sm:mb-3">
@@ -998,7 +1027,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;color:#222;}
     </button>
   </div>
 
-  <div class="w-full px-3 sm:px-4 pb-10 grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10 border-t border-white/20 pt-8">
+  <div class="wrap w-full px-3 sm:px-4 pb-10 grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10 border-t border-white/20 pt-8">
 
     <!-- COL 1: Servicio al cliente (fusiona ex "La Barata", sin links duplicados) -->
     <div>
@@ -1510,7 +1539,7 @@ function mostrarSkeletons(gridId, cantidad) {
   for (let i = 0; i < cantidad; i++) {
     g.innerHTML += `
       <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden animate-pulse">
-        <div class="h-24 sm:h-28 bg-gray-200"></div>
+        <div class="aspect-square bg-gray-200"></div>
         <div class="p-2 sm:p-3 space-y-2">
           <div class="h-3 bg-gray-200 rounded w-3/4"></div>
           <div class="h-3 bg-gray-200 rounded w-1/2"></div>
@@ -1669,7 +1698,6 @@ function crearCard(p, mini) {
   const d = document.createElement('div');
   d.className = 'prod-card bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden relative flex flex-col';
   if (sinStock) d.className += ' opacity-70';
-  const imgH = mini ? 'h-24 sm:h-28' : 'h-28 sm:h-36';
 
   // Badge de stock (la urgencia de stock no aplica si las compras están desactivadas)
   let stockBadge = '';
@@ -1681,27 +1709,27 @@ function crearCard(p, mini) {
   d.innerHTML = `
     ${p.oferta && !sinStock ? '<span class="oferta-badge">OFERTA</span>' : ''}
     ${stockBadge}
-    <div class="${imgH} bg-gray-50 flex items-center justify-center overflow-hidden relative">
-      <img src="${esc(p.img)}" alt="${esc(p.n)}" class="w-full h-full object-cover ${sinStock ? 'grayscale' : ''}"
+    <div class="prod-media overflow-hidden relative">
+      <img src="${esc(p.img)}" alt="${esc(p.n)}" class="prod-img w-full h-full ${sinStock ? 'grayscale' : ''}"
         onerror="this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=300&fit=crop'" loading="lazy">
     </div>
     <div class="p-2 sm:p-3 flex flex-col flex-1">
       <h3 class="text-xs sm:text-sm font-semibold text-gray-700 leading-snug flex-1 mb-1.5 sm:mb-2" style="min-height:2.2rem">${esc(p.n)}</h3>
       <div class="flex items-center justify-between mb-1.5 sm:mb-2">
-        <p class="text-verde font-black text-base sm:text-lg">$${p.p.toLocaleString('es-CL')}</p>
+        <p class="text-gray-900 font-black text-base sm:text-lg" style="font-variant-numeric:tabular-nums">$${p.p.toLocaleString('es-CL')}</p>
         ${p.stock !== undefined && !sinStock && p.stock > 5 && !COMPRAS_DESACTIVADAS ? `<span class="text-[9px] text-gray-400 font-semibold">${p.stock} disp.</span>` : ''}
       </div>
       ${COMPRAS_DESACTIVADAS
-        ? `<a href="${waProductoHref}" target="_blank" onclick="event.stopPropagation()" class="flex items-center justify-center gap-1 bg-verde hover:bg-green-700 text-white font-bold py-1.5 rounded-lg text-xs sm:text-sm w-full transition-colors">💬 Pedir por WhatsApp</a>`
+        ? `<a href="${waProductoHref}" target="_blank" onclick="event.stopPropagation()" class="flex items-center justify-center gap-1 bg-verde hover:bg-green-700 text-white font-bold py-2 rounded-full text-xs sm:text-sm w-full transition-colors">💬 Pedir por WhatsApp</a>`
         : sinStock
-        ? `<button disabled class="bg-gray-200 text-gray-400 font-bold py-1.5 rounded-lg text-xs sm:text-sm w-full cursor-not-allowed">Sin stock</button>`
+        ? `<button disabled class="bg-gray-200 text-gray-400 font-bold py-2 rounded-full text-xs sm:text-sm w-full cursor-not-allowed">Sin stock</button>`
         : en
-          ? `<div class="flex items-center justify-between bg-verde rounded-lg overflow-hidden">
+          ? `<div class="flex items-center justify-between bg-verde rounded-full overflow-hidden">
                <button class="text-white min-w-[40px] min-h-[40px] flex items-center justify-center hover:bg-green-700 font-bold text-base" onclick="event.stopPropagation();restar(${p.id})">−</button>
                <span class="text-white font-bold text-xs sm:text-sm">${en.cantidad}</span>
                <button class="text-white min-w-[40px] min-h-[40px] flex items-center justify-center hover:bg-green-700 font-bold text-base" onclick="event.stopPropagation();sumar(${p.id})">+</button>
              </div>`
-          : `<button class="bg-amarillo hover:bg-yellow-400 text-gray-900 font-bold py-1.5 rounded-lg text-xs sm:text-sm transition-colors w-full shadow-sm"
+          : `<button class="bg-amarillo hover:bg-yellow-400 text-gray-900 font-bold py-2 rounded-full text-xs sm:text-sm transition-colors w-full shadow-sm"
                onclick="event.stopPropagation();agregar(${p.id})">+ Añadir</button>`
       }
     </div>`;
@@ -2351,6 +2379,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   cargarProductos().then(()=>restaurarCarritoPendiente());
   pintarCarrito();
   resetItv();
+  // ── Reveal on scroll: las secciones del home aparecen con un fade suave ──
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('vis'); obs.unobserve(e.target); } });
+  },{ threshold:.08, rootMargin:'0px 0px -30px 0px' });
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
   const firstBtn=document.querySelector('#mega-cats-list button');
   if(firstBtn) activarSub('sub-despensa',firstBtn);
 });
