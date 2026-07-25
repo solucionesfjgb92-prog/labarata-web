@@ -2522,8 +2522,17 @@ function procesarRetornoPago(){
     if(ped){
       waMsg += `Orden: ${ped.orden}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
       waMsg += ped.items.map(i=>`• ${i.cantidad}× ${i.n}`).join('\n');
-      waMsg += `\n━━━━━━━━━━━━━━━━━━━━━━\n*Total pagado: $${ped.total.toLocaleString('es-CL')}* (incluye despacho $${(ped.despacho||DESPACHO_RESPALDO).toLocaleString('es-CL')})\n`;
-      waMsg += `👤 ${ped.cliente.n}\n📍 ${ped.cliente.d} — ${ped.cliente.r}\n📞 ${ped.cliente.t}`;
+      // Ojo: el despacho vale 0 en retiro en local, así que no se puede usar
+      // "|| respaldo" (0 es falsy y mostraría un despacho inexistente).
+      const esRetiro = ped.entrega === 'retiro';
+      const costoDesp = Number.isFinite(ped.despacho) ? ped.despacho : DESPACHO_RESPALDO;
+      waMsg += `\n━━━━━━━━━━━━━━━━━━━━━━\n*Total pagado: $${ped.total.toLocaleString('es-CL')}*`;
+      waMsg += esRetiro ? ` (retiro en local, sin costo de despacho)\n`
+                        : ` (incluye despacho $${costoDesp.toLocaleString('es-CL')})\n`;
+      waMsg += `👤 ${ped.cliente.n}\n`;
+      waMsg += esRetiro ? `🏬 Retiro en local — Av. Ramón Picarte 779\n`
+                        : `📍 ${ped.cliente.d} — ${ped.cliente.r}\n`;
+      waMsg += `📞 ${ped.cliente.t}`;
     } else {
       waMsg += 'Acabo de pagar mi pedido con tarjeta en el sitio web.';
     }
