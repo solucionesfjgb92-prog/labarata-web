@@ -138,7 +138,19 @@ if (CORREO_ACTIVO) {
   transporter = nodemailer.createTransport({
     host: SMTP_HOST, port: SMTP_PORT, secure: SMTP_PORT === 465,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
+    // Sin timeouts explícitos, un puerto SMTP bloqueado deja la conexión
+    // colgada minutos antes de fallar y el error nunca aparece.
+    connectionTimeout: 15000,
+    greetingTimeout:   15000,
+    socketTimeout:     20000,
   });
+}
+
+// El envío es fire-and-forget para no frenar la venta, así que el error
+// se guarda acá: es la única forma de ver qué pasó sin leer los logs.
+let ultimoCorreo = null;
+function registrarCorreo(datos) {
+  ultimoCorreo = { ...datos, fecha: new Date().toISOString() };
 }
 
 const escHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
@@ -262,16 +274,23 @@ function enviarConfirmacion(ped, pago) {
     console.warn(`⚠️ Correo de confirmación NO enviado (SMTP sin configurar) — pedido ${ped.buyOrder || ped.orden}`);
     return;
   }
+  const orden = ped.buyOrder || ped.orden;
   const { html, texto } = armarCorreo(ped, pago);
   transporter.sendMail({
     from: `"Distribuidora La Barata" <${SMTP_USER}>`,
     to: destino,
     bcc: SMTP_USER, // copia para el comercio
-    subject: `Confirmación de tu pedido ${ped.buyOrder || ped.orden || ''} — La Barata`,
+    subject: `Confirmación de tu pedido ${orden || ''} — La Barata`,
     text: texto, html,
   })
-  .then(() => console.log(`📧 Confirmación enviada a ${destino} — pedido ${ped.buyOrder || ped.orden}`))
-  .catch(err => console.error(`❌ No se pudo enviar la confirmación a ${destino}:`, err.message));
+  .then(info => {
+    console.log(`📧 Confirmación enviada a ${destino} — pedido ${orden}`);
+    registrarCorreo({ ok: true, destino, orden, respuesta: info.response, aceptados: info.accepted, rechazados: info.rejected });
+  })
+  .catch(err => {
+    console.error(`❌ No se pudo enviar la confirmación a ${destino}:`, err.message);
+    registrarCorreo({ ok: false, destino, orden, error: err.message, codigo: err.code, comando: err.command, respuestaSmtp: err.response });
+  });
 }
 
 // ── DESPACHO POR DISTANCIA (tramos por km) ────────
@@ -1058,6 +1077,38 @@ app.get('/api/pago/retorno',  manejarRetornoFlow);
 // ════════════════════════════════════════════════
 //  RUTA PING
 // ════════════════════════════════════════════════
+// Diagnóstico del correo: prueba la conexión SMTP real desde Render y
+// muestra el resultado del último envío. No expone la contraseña; el largo
+// sirve para pillar el error más común (pegarla con los espacios de Google).
+app.get('/api/diagnostico/correo', async (req, res) => {
+  const info = {
+    configurado: CORREO_ACTIVO,
+    usuario: SMTP_USER || null,
+    host: SMTP_HOST,
+    puerto: SMTP_PORT,
+    seguro: SMTP_PORT === 465,
+    clavePresente: !!SMTP_PASS,
+    largoClave: SMTP_PASS.length, // Gmail entrega 16; 19 = se pegó con espacios
+    claveConEspacios: /\s/.test(SMTP_PASS),
+    ultimoEnvio: ultimoCorreo,
+  };
+
+  if (!CORREO_ACTIVO) {
+    return res.json({ ...info, conexion: { ok: false, error: 'SMTP_USER o SMTP_PASS sin configurar' } });
+  }
+
+  const t0 = Date.now();
+  try {
+    await transporter.verify();
+    res.json({ ...info, conexion: { ok: true, ms: Date.now() - t0 } });
+  } catch (err) {
+    res.json({ ...info, conexion: {
+      ok: false, ms: Date.now() - t0,
+      error: err.message, codigo: err.code, comando: err.command, respuestaSmtp: err.response,
+    }});
+  }
+});
+
 app.get('/api/ping', (req, res) => {
   res.json({
     ok:      true,
