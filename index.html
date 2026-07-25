@@ -1325,7 +1325,7 @@ html{scroll-behavior:smooth;}
           <input id="chk-dir"    type="text" placeholder="Dirección exacta *" onblur="calcularDespachoUI()" class="w-full border border-gray-200 rounded-xl p-3 text-base focus:outline-none focus:border-verde transition-colors">
           <input id="chk-ref"    type="text" placeholder="Referencia (casa amarilla con reja) *" class="w-full border border-gray-200 rounded-xl p-3 text-base focus:outline-none focus:border-verde transition-colors">
         </div>
-        <input id="chk-email"  type="email" placeholder="Email (opcional, para tu comprobante)" class="w-full border border-gray-200 rounded-xl p-3 text-base focus:outline-none focus:border-verde transition-colors">
+        <input id="chk-email"  type="email" placeholder="Email — obligatorio si pagas con tarjeta" class="w-full border border-gray-200 rounded-xl p-3 text-base focus:outline-none focus:border-verde transition-colors">
       </div>
 
       <div class="space-y-2 sm:space-y-3">
@@ -2519,8 +2519,10 @@ function enviarPedido(){
   if(esEnvio && !document.getElementById('chk-condiciones').checked){alert('Debes aceptar las condiciones de la entrega para continuar.');return;}
 
   if(m==='Tarjeta'){
-    // Webpay no exige email; si lo escriben, se valida el formato.
-    if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('El email no tiene un formato válido. Corrígelo o déjalo en blanco.');return;}
+    // Pagando con tarjeta el correo es obligatorio: es donde llega el
+    // comprobante de la compra, que la ley exige enviar por escrito.
+    if(!email){alert('Para pagar con tarjeta necesitamos tu email: ahí te enviamos el comprobante de tu compra.');document.getElementById('chk-email').focus();return;}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('El email no tiene un formato válido. Revísalo, por favor.');document.getElementById('chk-email').focus();return;}
     if(esEnvio && despachoCalc?.bloqueado){alert('Tu dirección está fuera del radio de despacho (10 km). Elige "Retiro en local" o escríbenos por WhatsApp.');return;}
     pagarConTarjeta(n,d,r,t,email,entrega);
     return;

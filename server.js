@@ -866,11 +866,20 @@ async function crearPagoFlow(req, res) {
       method:  'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body:    new URLSearchParams(params).toString(),
+      // Flow valida el correo del pagador contra el DNS y, con dominios raros,
+      // deja la conexión colgada 20 s antes de fallar. Sin tope, el cliente ve
+      // el checkout congelado todo ese rato. Mejor fallar rápido y claro.
+      timeout: 12000,
     });
     const data = await r.json();
     if (!r.ok || !data.url || !data.token) {
       console.error('❌ Flow payment/create:', r.status, JSON.stringify(data));
-      return res.status(502).json({ ok: false, error: data.message || 'Flow no aceptó la orden de pago. Intenta de nuevo.' });
+      // El 1620 es el rechazo de correo de Flow: hay que decirle al cliente
+      // qué arreglar, no darle un error genérico que no lo lleva a ninguna parte.
+      const mensaje = data.code === 1620
+        ? 'No pudimos validar tu correo. Revisa que esté bien escrito e inténtalo de nuevo.'
+        : (data.message || 'No se pudo iniciar el pago. Intenta de nuevo en un momento.');
+      return res.status(502).json({ ok: false, error: mensaje });
     }
 
     pedidosFlow.set(commerceOrder, {
@@ -922,7 +931,10 @@ app.post('/api/despacho/calcular', async (req, res) => {
 async function crearPagoWebpay(req, res) {
   try {
     // Webpay no pide email; se acepta opcional para el comprobante interno.
-    const prep = await prepararPedido(req.body, { emailObligatorio: false });
+    // El correo es obligatorio tambien con Webpay: es donde llega la
+    // confirmacion escrita que exige el art. 12 A de la Ley 19.496. Sin
+    // ella el plazo de retracto del cliente pasa de 10 a 90 dias.
+    const prep = await prepararPedido(req.body, { emailObligatorio: true });
     if (prep.error) return res.status(prep.error.status).json(prep.error.payload);
     const { cliente, entrega, email, lineas, subtotal, despacho, total, commerceOrder } = prep;
 
