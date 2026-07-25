@@ -185,6 +185,10 @@ async function despacharCorreo({ para, nombre, asunto, html, texto }) {
         sender:      { name: 'Distribuidora La Barata', email: REMITENTE },
         to:          [{ email: para, name: nombre || para }],
         bcc:         [{ email: CORREO_COMERCIO }], // copia para el comercio
+        // El dominio no tiene MX, así que si el remitente pasa a ser
+        // pedidos@distribuidoralabarata.cl las respuestas rebotarían.
+        // Se dirigen a la casilla que el comercio sí lee.
+        replyTo:     { email: CORREO_COMERCIO, name: 'Distribuidora La Barata' },
         subject:     asunto,
         htmlContent: html,
         textContent: texto,
