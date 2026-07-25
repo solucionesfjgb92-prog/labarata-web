@@ -8,8 +8,17 @@ const express = require('express');
 const cors    = require('cors');
 const fetch   = require('node-fetch');
 const crypto  = require('crypto');
-const nodemailer = require('nodemailer');
+// Solo se usa en la vía SMTP; con Brevo el envío va por HTTPS y no hace falta.
+let nodemailer = null;
+try { nodemailer = require('nodemailer'); } catch (_) {}
+const dns    = require('dns');
+const net    = require('net');
 require('dotenv').config();
+
+// Render solo tiene salida IPv4. Node 18 devuelve las direcciones en el
+// orden del DNS, que suele poner la IPv6 primero, y la conexión muere en
+// ENETUNREACH sin llegar a probar la IPv4. Esto aplica a todo el proceso.
+try { dns.setDefaultResultOrder('ipv4first'); } catch (_) {}
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -127,23 +136,71 @@ function marcarWebpay(buyOrder, estado, resp) {
 // confirmación escrita del contrato, el plazo de retracto del cliente se
 // extiende de 10 a 90 días. Debe incluir el detalle del pedido, el costo
 // de despacho, el total, los datos del proveedor y acceso a los términos.
+// El plan gratuito de Render bloquea la salida a los puertos 25, 465 y 587
+// (medido: timeout en los tres, 443 abierto en 12 ms), así que el SMTP
+// directo es imposible ahí. La vía real es la API HTTPS de Brevo, que sale
+// por el 443. El SMTP se conserva como camino alternativo: sirve en local y
+// volvería a funcionar si algún día Render pasa a un plan de pago.
+const BREVO_API_KEY  = process.env.BREVO_API_KEY || '';
+// Configurable solo para poder apuntar a un servidor falso en las pruebas.
+const BREVO_API_URL  = process.env.BREVO_API_URL || 'https://api.brevo.com/v3';
+const CORREO_COMERCIO = process.env.CORREO_COMERCIO || 'distribuidoralabaratavaldivia@gmail.com';
+// Cuando el dominio esté autenticado en Brevo (SPF/DKIM), conviene cambiarlo
+// a pedidos@distribuidoralabarata.cl: alinea DMARC y mejora la entrega.
+const REMITENTE = process.env.CORREO_REMITENTE || CORREO_COMERCIO;
+
 const SMTP_USER = process.env.SMTP_USER || '';
 const SMTP_PASS = process.env.SMTP_PASS || '';
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
 const SMTP_PORT = parseInt(process.env.SMTP_PORT) || 465;
-const CORREO_ACTIVO = !!(SMTP_USER && SMTP_PASS);
+
+const VIA_BREVO = !!BREVO_API_KEY;
+const VIA_SMTP  = !VIA_BREVO && !!(SMTP_USER && SMTP_PASS) && !!nodemailer;
+const CORREO_ACTIVO = VIA_BREVO || VIA_SMTP;
 
 let transporter = null;
-if (CORREO_ACTIVO) {
+if (VIA_SMTP) {
   transporter = nodemailer.createTransport({
     host: SMTP_HOST, port: SMTP_PORT, secure: SMTP_PORT === 465,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
+    // Render no tiene salida IPv6 y Node 18 prueba primero la AAAA, así que
+    // smtp.gmail.com moría en ENETUNREACH sin llegar a intentar la IPv4.
+    family: 4,
     // Sin timeouts explícitos, un puerto SMTP bloqueado deja la conexión
     // colgada minutos antes de fallar y el error nunca aparece.
     connectionTimeout: 15000,
     greetingTimeout:   15000,
     socketTimeout:     20000,
   });
+}
+
+// Un solo punto de envío para los dos caminos. Devuelve una promesa que
+// resuelve con un texto corto describiendo qué respondió el proveedor.
+async function despacharCorreo({ para, nombre, asunto, html, texto }) {
+  if (VIA_BREVO) {
+    const r = await fetch(`${BREVO_API_URL}/smtp/email`, {
+      method: 'POST',
+      headers: { 'api-key': BREVO_API_KEY, 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({
+        sender:      { name: 'Distribuidora La Barata', email: REMITENTE },
+        to:          [{ email: para, name: nombre || para }],
+        bcc:         [{ email: CORREO_COMERCIO }], // copia para el comercio
+        subject:     asunto,
+        htmlContent: html,
+        textContent: texto,
+      }),
+      timeout: 20000,
+    });
+    const cuerpo = await r.text();
+    if (!r.ok) throw new Error(`Brevo HTTP ${r.status}: ${cuerpo.slice(0, 300)}`);
+    return `Brevo ${r.status}: ${cuerpo.slice(0, 200)}`;
+  }
+
+  const info = await transporter.sendMail({
+    from: `"Distribuidora La Barata" <${SMTP_USER}>`,
+    to: para, bcc: SMTP_USER, subject: asunto, text: texto, html,
+  });
+  return `SMTP: ${info.response}`;
 }
 
 // El envío es fire-and-forget para no frenar la venta, así que el error
@@ -270,26 +327,27 @@ function armarCorreo(ped, pago) {
 function enviarConfirmacion(ped, pago) {
   const destino = (ped.cliente?.email || '').trim();
   if (!destino) return;
+  const orden = ped.buyOrder || ped.orden;
   if (!CORREO_ACTIVO) {
-    console.warn(`⚠️ Correo de confirmación NO enviado (SMTP sin configurar) — pedido ${ped.buyOrder || ped.orden}`);
+    console.warn(`⚠️ Correo de confirmación NO enviado (sin BREVO_API_KEY ni SMTP) — pedido ${orden}`);
+    registrarCorreo({ ok: false, destino, orden, error: 'proveedor de correo sin configurar' });
     return;
   }
-  const orden = ped.buyOrder || ped.orden;
   const { html, texto } = armarCorreo(ped, pago);
-  transporter.sendMail({
-    from: `"Distribuidora La Barata" <${SMTP_USER}>`,
-    to: destino,
-    bcc: SMTP_USER, // copia para el comercio
-    subject: `Confirmación de tu pedido ${orden || ''} — La Barata`,
-    text: texto, html,
+  despacharCorreo({
+    para: destino,
+    nombre: ped.cliente?.nombre,
+    asunto: `Confirmación de tu pedido ${orden || ''} — La Barata`,
+    html, texto,
   })
-  .then(info => {
+  .then(respuesta => {
     console.log(`📧 Confirmación enviada a ${destino} — pedido ${orden}`);
-    registrarCorreo({ ok: true, destino, orden, respuesta: info.response, aceptados: info.accepted, rechazados: info.rejected });
+    registrarCorreo({ ok: true, destino, orden, via: VIA_BREVO ? 'brevo' : 'smtp', respuesta });
   })
   .catch(err => {
     console.error(`❌ No se pudo enviar la confirmación a ${destino}:`, err.message);
-    registrarCorreo({ ok: false, destino, orden, error: err.message, codigo: err.code, comando: err.command, respuestaSmtp: err.response });
+    registrarCorreo({ ok: false, destino, orden, via: VIA_BREVO ? 'brevo' : 'smtp',
+                      error: err.message, codigo: err.code, comando: err.command, respuestaSmtp: err.response });
   });
 }
 
@@ -1077,30 +1135,80 @@ app.get('/api/pago/retorno',  manejarRetornoFlow);
 // ════════════════════════════════════════════════
 //  RUTA PING
 // ════════════════════════════════════════════════
-// Diagnóstico del correo: prueba la conexión SMTP real desde Render y
-// muestra el resultado del último envío. No expone la contraseña; el largo
-// sirve para pillar el error más común (pegarla con los espacios de Google).
+// Diagnóstico del correo: comprueba de verdad, desde Render, que el
+// proveedor responde, y muestra cómo terminó el último envío. No expone
+// ninguna credencial. Leer así cuando falle el correo:
+//   • vía brevo, conexion.ok false con status 401 → la API key está mala
+//   • vía smtp, 465 en timeout y 443 abierto → el hosting bloquea el SMTP
+//   • vía smtp, 465 abierto y error EAUTH → la contraseña está mala
 app.get('/api/diagnostico/correo', async (req, res) => {
   const info = {
     configurado: CORREO_ACTIVO,
-    usuario: SMTP_USER || null,
-    host: SMTP_HOST,
-    puerto: SMTP_PORT,
-    seguro: SMTP_PORT === 465,
-    clavePresente: !!SMTP_PASS,
-    largoClave: SMTP_PASS.length, // Gmail entrega 16; 19 = se pegó con espacios
-    claveConEspacios: /\s/.test(SMTP_PASS),
+    via: VIA_BREVO ? 'brevo (API HTTPS)' : (VIA_SMTP ? 'smtp' : 'ninguna'),
+    remitente: REMITENTE,
+    copiaComercio: CORREO_COMERCIO,
     ultimoEnvio: ultimoCorreo,
   };
+  if (VIA_SMTP) {
+    Object.assign(info, {
+      usuario: SMTP_USER || null, host: SMTP_HOST, puerto: SMTP_PORT,
+      clavePresente: !!SMTP_PASS,
+      largoClave: SMTP_PASS.length, // Gmail entrega 16; 19 = se pegó con espacios
+      claveConEspacios: /\s/.test(SMTP_PASS),
+    });
+  }
 
   if (!CORREO_ACTIVO) {
-    return res.json({ ...info, conexion: { ok: false, error: 'SMTP_USER o SMTP_PASS sin configurar' } });
+    return res.json({ ...info, conexion: { ok: false, error: 'falta BREVO_API_KEY (o SMTP_USER y SMTP_PASS)' } });
+  }
+
+  // A qué IP resuelve el proveedor: si aparece una IPv6 primero, volvió el
+  // ENETUNREACH que ya nos costó una tarde.
+  const hostDiag = VIA_BREVO ? new URL(BREVO_API_URL).hostname : SMTP_HOST;
+  try {
+    const dirs = await dns.promises.lookup(hostDiag, { all: true });
+    info.resuelveA = dirs.map(d => `IPv${d.family}: ${d.address}`);
+  } catch (err) {
+    info.resuelveA = `error de DNS: ${err.message}`;
+  }
+
+  // Sonda de puertos: distingue "clave mala" de "el hosting bloquea SMTP".
+  // El 443 es el control — si ese también falla, el problema es otro.
+  if (req.query.puertos === '1') {
+    const probar = (host, puerto) => new Promise(resolve => {
+      const t = Date.now();
+      const s = new net.Socket();
+      const fin = (r) => { s.destroy(); resolve(`${puerto}: ${r} (${Date.now() - t}ms)`); };
+      s.setTimeout(8000);
+      s.once('connect', () => fin('ABIERTO'));
+      s.once('timeout', () => fin('timeout'));
+      s.once('error',   (e) => fin(e.code || e.message));
+      s.connect({ port: puerto, host, family: 4 });
+    });
+    info.sondaPuertos = await Promise.all([
+      probar(SMTP_HOST, 25), probar(SMTP_HOST, 465),
+      probar(SMTP_HOST, 587), probar('www.google.com', 443),
+    ]);
   }
 
   const t0 = Date.now();
   try {
-    await transporter.verify();
-    res.json({ ...info, conexion: { ok: true, ms: Date.now() - t0 } });
+    if (VIA_BREVO) {
+      // /v3/account valida la API key sin gastar un envío del cupo diario.
+      const r = await fetch(`${BREVO_API_URL}/account`, {
+        headers: { 'api-key': BREVO_API_KEY, accept: 'application/json' }, timeout: 15000,
+      });
+      const cuerpo = await r.json().catch(() => ({}));
+      res.json({ ...info, conexion: {
+        ok: r.ok, ms: Date.now() - t0, status: r.status,
+        cuenta: cuerpo.email || null,
+        plan: Array.isArray(cuerpo.plan) ? cuerpo.plan.map(p => `${p.type} ${p.credits ?? ''}`.trim()) : null,
+        error: r.ok ? undefined : (cuerpo.message || `HTTP ${r.status}`),
+      }});
+    } else {
+      await transporter.verify();
+      res.json({ ...info, conexion: { ok: true, ms: Date.now() - t0 } });
+    }
   } catch (err) {
     res.json({ ...info, conexion: {
       ok: false, ms: Date.now() - t0,
