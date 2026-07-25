@@ -1800,6 +1800,32 @@ function pintarCatalogo(lista){
   }
   lista.forEach(p=>g.appendChild(crearCard(p,false)));
 }
+// ── PRODUCTOS EXCLUIDOS DEL DERECHO A RETRACTO ──
+// Decreto 52/2024: solo se puede excluir el retracto en perecibles y
+// productos con cadena de frío, y hay que avisarlo junto al precio (no
+// basta ponerlo en los términos). Todo lo demás SÍ tiene retracto.
+//
+// Criterio conservador a propósito: marcar de más le niega al cliente un
+// derecho que sí tiene (y eso lo sanciona el SERNAC), mientras que marcar
+// de menos solo significa aceptar un retracto que se podría haber
+// rechazado. Ante la duda, NO se marca.
+//
+// Ojo con dos categorías de la planilla que NO son perecibles pese al
+// nombre: "Pastelería" son insumos de repostería (cremas Bakels, rellenos)
+// y "Panadería" son harinas — ambos duran meses.
+const CATEGORIAS_PERECIBLES = ['congelados', 'carnes'];
+// Lácteos es mixta: la leche UHT en caja no necesita frío hasta abrirla,
+// pero cremas, quesos y yoghurt sí. Se marcan solo estos por nombre.
+const PALABRAS_CADENA_FRIO = ['CREMA', 'QUESO', 'QUESILLO', 'YOGH', 'YOGURT', 'MANTEQUILLA', 'MARGARINA', 'HELADO'];
+function esPerecible(p){
+  if(CATEGORIAS_PERECIBLES.includes((p.c || '').toLowerCase())) return true;
+  if((p.c || '').toLowerCase() === 'lacteos'){
+    const n = (p.n || '').toUpperCase();
+    return PALABRAS_CADENA_FRIO.some(k => n.includes(k));
+  }
+  return false;
+}
+
 function crearCard(p, mini) {
   const en        = carrito.find(i => i.id === p.id);
   const sinStock  = p.stock !== undefined && p.stock <= 0;
@@ -1815,6 +1841,12 @@ function crearCard(p, mini) {
 
   const waProductoHref = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hola, me interesa este producto: ${p.n} ($${p.p.toLocaleString('es-CL')})`)}`;
 
+  // Aviso legal de exclusión del retracto (Decreto 52/2024): debe ir junto
+  // al precio, no solo en los términos.
+  const avisoRetracto = esPerecible(p)
+    ? '<p class="text-[10px] sm:text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 leading-tight mb-1.5" title="Por ser un producto perecible o que requiere frío, está excluido del derecho a retracto (Decreto 52/2024). Tu garantía legal se mantiene intacta.">⚠️ Sin derecho a retracto</p>'
+    : '';
+
   d.innerHTML = `
     ${p.oferta && !sinStock ? '<span class="oferta-badge">OFERTA</span>' : ''}
     ${stockBadge}
@@ -1828,6 +1860,7 @@ function crearCard(p, mini) {
         <p class="text-gray-900 font-black text-base sm:text-lg" style="font-variant-numeric:tabular-nums">$${p.p.toLocaleString('es-CL')}</p>
         ${p.stock !== undefined && !sinStock && p.stock > 5 && !COMPRAS_DESACTIVADAS ? `<span class="text-[9px] text-gray-400 font-semibold">${p.stock} disp.</span>` : ''}
       </div>
+      ${avisoRetracto}
       ${COMPRAS_DESACTIVADAS
         ? `<a href="${waProductoHref}" target="_blank" onclick="event.stopPropagation()" class="flex items-center justify-center gap-1 bg-verde hover:bg-green-700 text-white font-bold py-2 rounded-full text-xs sm:text-sm w-full transition-colors">💬 Pedir por WhatsApp</a>`
         : sinStock
@@ -2108,39 +2141,74 @@ const PAGINAS = {
   },
 
   'cambios': {
-    titulo: 'Cambios y devoluciones',
+    titulo: 'Cambios, devoluciones y reembolsos',
     html: `
-      <p style="margin-bottom:20px;color:#64748b;">En La Barata nos importa tu satisfacción. Si algo no está bien con tu pedido, aquí te explicamos cómo proceder.</p>
+      <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:18px;font-size:12px;color:#64748b;line-height:1.6;">
+        <strong style="color:#1a202c;">Distribuidora La Barata</strong> — SOCIEDAD COMERCIAL FAF SPA · RUT 77.557.632-4<br>
+        Av. Ramón Picarte 779, Valdivia, Región de Los Ríos<br>
+        compraslabarata@gmail.com · WhatsApp +56 9 4435 0559<br>
+        Atención: Lun–Vie 08:30–19:00 · Sáb y feriados 09:00–17:00
+      </div>
 
-      <h3 style="font-size:16px;font-weight:800;color:#1a202c;margin-bottom:12px;">✅ ¿Cuándo puedes hacer un cambio?</h3>
-      <ul style="list-style:none;font-size:14px;color:#374151;margin-bottom:20px;">
-        <li style="padding:8px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:10px;"><span>✔</span><span>Producto vencido o en mal estado al momento de la entrega</span></li>
-        <li style="padding:8px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:10px;"><span>✔</span><span>Producto distinto al que ordenaste</span></li>
-        <li style="padding:8px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:10px;"><span>✔</span><span>Cantidad incorrecta en tu pedido</span></li>
-        <li style="padding:8px 0;display:flex;gap:10px;"><span>✔</span><span>Producto con envase dañado o roto</span></li>
+      <p style="margin-bottom:20px;color:#64748b;font-size:13px;line-height:1.7;">Esta política se rige por la <strong>Ley N° 19.496</strong> de Protección de los Derechos de los Consumidores, el Reglamento de Comercio Electrónico (Decreto N° 6 de 2021) y el Reglamento sobre exclusión del derecho a retracto (Decreto N° 52 de 2024). <strong>Nada de lo que dice aquí limita los derechos que la ley te reconoce.</strong></p>
+
+      <h3 style="font-size:16px;font-weight:800;color:#1a202c;margin-bottom:10px;">1. Si tu producto llegó malo, vencido, dañado, incompleto o equivocado</h3>
+      <p style="font-size:13px;color:#374151;margin-bottom:10px;">Es lo que la ley llama <strong>garantía legal</strong>. Puedes elegir, <strong>tú y sin costo</strong>, entre:</p>
+      <ul style="list-style:none;font-size:13px;color:#374151;margin-bottom:14px;">
+        <li style="padding:7px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:10px;"><span>🔄</span><span>El <strong>cambio</strong> del producto por uno igual</span></li>
+        <li style="padding:7px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:10px;"><span>💰</span><span>La <strong>devolución total de tu dinero</strong></span></li>
+        <li style="padding:7px 0;display:flex;gap:10px;"><span>🔧</span><span>La <strong>reparación gratuita</strong>, cuando corresponda al tipo de producto</span></li>
       </ul>
+      <p style="font-size:13px;color:#374151;margin-bottom:14px;"><strong>La elección es tuya.</strong> No te vamos a obligar a aceptar un cambio si prefieres que te devolvamos la plata.</p>
 
-      <h3 style="font-size:16px;font-weight:800;color:#1a202c;margin-bottom:12px;">📋 ¿Cómo hacer la gestión?</h3>
-      <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;">
-        <div style="width:28px;height:28px;background:#16a34a;color:#fff;border-radius:50%;
-          display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;">1</div>
-        <p style="font-size:13px;color:#374151;">Contáctanos por WhatsApp al <strong>+56 9 4435 0559</strong> o escríbenos a <strong>compraslabarata@gmail.com</strong></p>
-      </div>
-      <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;">
-        <div style="width:28px;height:28px;background:#16a34a;color:#fff;border-radius:50%;
-          display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;">2</div>
-        <p style="font-size:13px;color:#374151;">Indica tu nombre, número de pedido y el motivo del reclamo. Adjunta una foto si el problema es visible.</p>
-      </div>
-      <div style="display:flex;gap:12px;margin-bottom:24px;align-items:flex-start;">
-        <div style="width:28px;height:28px;background:#16a34a;color:#fff;border-radius:50%;
-          display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;">3</div>
-        <p style="font-size:13px;color:#374151;">Nuestro equipo resolverá tu caso a la brevedad con cambio del producto o nota de crédito.</p>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:14px;">
+        <p style="font-weight:700;color:#166534;margin-bottom:6px;">¿Hasta cuándo puedes pedirlo?</p>
+        <p style="color:#14532d;margin-bottom:5px;">• <strong>Productos frescos y perecibles</strong> (carnes, cecinas, lácteos, quesos, pan, congelados, verduras): hasta la <strong>fecha de vencimiento del producto</strong>. Si no trae fecha, <strong>7 días</strong> desde que lo recibiste.</p>
+        <p style="color:#14532d;">• <strong>Abarrotes, bebidas, aseo, bazar y demás no perecibles: 6 meses</strong> desde que lo recibiste.</p>
       </div>
 
-      <div style="background:#fff0f0;border:1px solid #fca5a5;border-radius:10px;padding:14px 16px;font-size:13px;">
-        <p style="font-weight:700;color:#b91c1c;margin-bottom:4px;">⚠️ Importante</p>
-        <p style="color:#7f1d1d;">No se aceptan devoluciones de productos perecibles (frutas, verduras, carnes, lácteos) salvo que vengan en mal estado al momento de la entrega.</p>
-      </div>`,
+      <p style="font-size:13px;color:#374151;margin-bottom:8px;"><strong>Casos cubiertos:</strong> producto vencido o en mal estado; que no sirve para su uso normal; distinto al que pediste; dañado; envase roto o cadena de frío interrumpida; contenido menor al indicado; producto faltante en tu pedido.</p>
+      <p style="font-size:13px;color:#374151;margin-bottom:8px;"><strong>Comprobante:</strong> te sirve la boleta electrónica, el correo de confirmación o el <strong>comprobante de pago de Webpay</strong>. No necesitas boleta en papel.</p>
+      <p style="font-size:13px;color:#374151;margin-bottom:8px;"><strong>Productos vencidos o en mal estado:</strong> por seguridad sanitaria <strong>no te pediremos que nos los devuelvas</strong>. Basta una foto, y no asumes ningún costo.</p>
+      <p style="font-size:13px;color:#374151;margin-bottom:20px;"><strong>Ofertas:</strong> los productos en oferta o liquidación tienen exactamente la misma garantía que el resto.</p>
+
+      <h3 style="font-size:16px;font-weight:800;color:#1a202c;margin-bottom:10px;">2. Si simplemente te arrepentiste (Derecho a Retracto)</h3>
+      <p style="font-size:13px;color:#374151;margin-bottom:12px;">Como compraste por internet, tienes <strong>derecho a retracto</strong>: puedes dejar sin efecto la compra dentro de los <strong>10 días siguientes a recibir el producto</strong>, sin dar explicaciones, y te devolvemos todo lo que pagaste <strong>sin descontarte gastos</strong>.</p>
+      <p style="font-size:13px;color:#374151;margin-bottom:12px;"><strong>Condición:</strong> el producto debe estar en buen estado, sin uso más allá de revisarlo, con su envase y etiquetas originales.</p>
+      <p style="font-size:13px;color:#374151;margin-bottom:14px;"><strong>Cómo ejercerlo:</strong> escríbenos al WhatsApp <strong>+56 9 4435 0559</strong> o a <strong>compraslabarata@gmail.com</strong> con tu número de pedido. El retiro lo coordinamos contigo. <strong>Si el motivo es un error nuestro</strong> (producto malo, vencido, faltante o equivocado), <strong>el retiro es gratis</strong> y también te devolvemos el despacho.</p>
+
+      <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:14px 16px;font-size:13px;margin-bottom:14px;">
+        <p style="font-weight:800;color:#92400e;margin-bottom:8px;">⚠️ Productos excluidos del derecho a retracto</p>
+        <p style="color:#78350f;margin-bottom:8px;">Por su naturaleza, el retracto <strong>no aplica</strong> a (Decreto N° 52 de 2024):</p>
+        <p style="color:#78350f;margin-bottom:4px;">• Alimentos frescos y perecibles que deben consumirse en menos de 10 días</p>
+        <p style="color:#78350f;margin-bottom:4px;">• Productos que requieren cadena de frío: refrigerados y congelados</p>
+        <p style="color:#78350f;margin-bottom:4px;">• Productos de higiene personal sellados, si se abrió el sello</p>
+        <p style="color:#78350f;margin-bottom:8px;">• Productos personalizados según tus indicaciones</p>
+        <p style="color:#78350f;">Estos productos aparecen <strong>marcados con un aviso junto a su precio</strong> en el catálogo.</p>
+      </div>
+
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:20px;">
+        <p style="color:#1e3a8a;"><strong>Importante:</strong> esta exclusión <strong>no afecta tu garantía legal</strong>. Si un producto excluido del retracto llega malo o vencido, igual tienes derecho a cambio o a que te devolvamos tu dinero (punto 1).</p>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:800;color:#1a202c;margin-bottom:10px;">3. Plazos para devolverte el dinero</h3>
+      <ul style="list-style:none;font-size:13px;color:#374151;margin-bottom:12px;">
+        <li style="padding:7px 0;border-bottom:1px solid #f1f5f9;"><strong>Garantía legal:</strong> dentro de <strong>10 días hábiles</strong> desde que aprobamos tu solicitud. Si faltó un producto en un pedido ya entregado, el reembolso proporcional se hace dentro de <strong>48 horas hábiles</strong>.</li>
+        <li style="padding:7px 0;"><strong>Retracto:</strong> dentro de <strong>10 días hábiles</strong> desde que recibimos el producto de vuelta, y nunca más allá del máximo legal de 45 días.</li>
+      </ul>
+      <p style="font-size:13px;color:#374151;margin-bottom:8px;"><strong>Medio:</strong> el reembolso se hace <strong>por el mismo medio de pago que usaste</strong>. Si pagaste con tarjeta por Webpay, mediante la anulación o reversa de la transacción; el abono depende de los plazos de tu banco.</p>
+      <p style="font-size:13px;color:#374151;margin-bottom:20px;"><strong>No usamos notas de crédito ni vales</strong> como forma obligatoria de devolución. Solo si tú lo prefieres.</p>
+
+      <h3 style="font-size:16px;font-weight:800;color:#1a202c;margin-bottom:10px;">4. Si un producto no está disponible</h3>
+      <p style="font-size:13px;color:#374151;margin-bottom:20px;">Te contactamos <strong>antes</strong> de despachar para ofrecerte un reemplazo equivalente sin costo adicional. Si no lo aceptas, te reembolsamos ese producto dentro de 48 horas hábiles. <strong>Nunca anularemos tu pedido completo por nuestra cuenta</strong> ni te cobraremos más de lo publicado al momento de comprar.</p>
+
+      <h3 style="font-size:16px;font-weight:800;color:#1a202c;margin-bottom:10px;">5. Revisión al momento de la entrega</h3>
+      <p style="font-size:13px;color:#374151;margin-bottom:20px;">Te recomendamos revisar tu pedido al recibirlo y avisar cualquier faltante o daño en el momento, para resolverlo al tiro. <strong>Es una facilidad, no una obligación:</strong> aunque no lo revises ahí mismo, conservas íntegros todos los plazos indicados arriba.</p>
+
+      <h3 style="font-size:16px;font-weight:800;color:#1a202c;margin-bottom:10px;">6. Reclamos</h3>
+      <p style="font-size:13px;color:#374151;margin-bottom:14px;">Escríbenos primero a nosotros: respondemos dentro de <strong>24 horas hábiles</strong>. Si no quedas conforme, puedes reclamar ante el <strong>SERNAC</strong> en www.sernac.cl o al 800 700 100.</p>
+
+      <p style="font-size:12px;color:#94a3b8;">Última actualización: julio de 2026</p>`,
   },
 
   'terminos': {
