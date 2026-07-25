@@ -1106,7 +1106,7 @@ html{scroll-behavior:smooth;}
       <h4 class="font-black text-sm mb-3">Medios de pago</h4>
       <div class="flex gap-2 flex-wrap mb-5">
         <div class="bg-white text-gray-800 font-black text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-          <span>💳</span> Tarjetas (Webpay/Flow)
+          <span>💳</span> Tarjetas (Webpay)
         </div>
         <div class="bg-white text-gray-800 font-black text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
           <span>🏦</span> Transferencia
@@ -1315,7 +1315,7 @@ html{scroll-behavior:smooth;}
           <input id="chk-dir"    type="text" placeholder="Dirección exacta *" onblur="calcularDespachoUI()" class="w-full border border-gray-200 rounded-xl p-3 text-base focus:outline-none focus:border-verde transition-colors">
           <input id="chk-ref"    type="text" placeholder="Referencia (casa amarilla con reja) *" class="w-full border border-gray-200 rounded-xl p-3 text-base focus:outline-none focus:border-verde transition-colors">
         </div>
-        <input id="chk-email"  type="email" placeholder="Email (para el comprobante de pago con tarjeta)" class="w-full border border-gray-200 rounded-xl p-3 text-base focus:outline-none focus:border-verde transition-colors">
+        <input id="chk-email"  type="email" placeholder="Email (opcional, para tu comprobante)" class="w-full border border-gray-200 rounded-xl p-3 text-base focus:outline-none focus:border-verde transition-colors">
       </div>
 
       <div class="space-y-2 sm:space-y-3">
@@ -1327,7 +1327,7 @@ html{scroll-behavior:smooth;}
           <span class="text-2xl">💳</span>
           <div>
             <p class="font-black text-gray-800 text-sm">Tarjeta de crédito o débito</p>
-            <p class="text-xs text-gray-500">Webpay y más — pago seguro procesado por Flow</p>
+            <p class="text-xs text-gray-500">Webpay de Transbank — pago seguro con crédito, débito o prepago</p>
           </div>
           <input id="radio-tarjeta" type="radio" name="pago" value="Tarjeta" checked onchange="actualizarCheckout()" class="ml-auto w-4 h-4 accent-verde flex-shrink-0">
         </label>
@@ -1348,7 +1348,7 @@ html{scroll-behavior:smooth;}
           <input type="radio" name="pago" value="Efectivo" onchange="actualizarCheckout()" class="ml-auto w-4 h-4 accent-verde flex-shrink-0">
         </label>
         <div id="caja-tarjeta" class="bg-green-50 border-2 border-green-200 rounded-xl p-3 sm:p-4 text-xs">
-          <p class="text-green-800 font-semibold">🔒 Serás redirigido a Flow (Webpay) para pagar el total de forma segura — sin cobros extra al recibir.</p>
+          <p class="text-green-800 font-semibold">🔒 Serás redirigido a Webpay de Transbank para pagar el total de forma segura — sin cobros extra al recibir.</p>
         </div>
         <div id="caja-efectivo" class="hidden bg-emerald-50 border-2 border-emerald-200 rounded-xl p-3 sm:p-4 text-xs">
           <p class="text-emerald-800 font-semibold">💵 Pagas en efectivo al momento de la entrega o del retiro. Si puedes, ten el monto justo — ¡se agradece!</p>
@@ -1383,7 +1383,7 @@ html{scroll-behavior:smooth;}
       <button id="chk-btn" onclick="enviarPedido()" class="w-full bg-verde hover:bg-green-700 text-white font-black py-3 sm:py-4 rounded-xl shadow-lg text-sm sm:text-base transition-all">
         💳 PAGAR CON TARJETA
       </button>
-      <p id="chk-caption" class="text-center text-xs text-gray-400">Serás redirigido al pago seguro de Flow</p>
+      <p id="chk-caption" class="text-center text-xs text-gray-400">Serás redirigido al pago seguro de Webpay</p>
     </div>
   </div>
 </div>
@@ -1420,11 +1420,12 @@ const WHATSAPP = "56944350559";
 // ── Sitio en mantención: compras desactivadas temporalmente ──
 const COMPRAS_DESACTIVADAS = false;
 
-// ── Pago con tarjeta (Flow) ──
-// Ponlo en true apenas Flow habilite la cuenta de La Barata para procesar pagos.
-// En false, la opción de tarjeta se oculta del checkout y el cliente paga por
-// transferencia o efectivo (el resto del flujo no cambia).
-const PAGO_TARJETA_ACTIVO = false;
+// ── Pago con tarjeta ──
+// La pasarela la elige el servidor (Transbank Webpay Plus por ahora; el
+// código de Flow se conserva y se reactiva con la variable PASARELA).
+// En false, la opción de tarjeta se oculta del checkout y el cliente paga
+// por transferencia o efectivo (el resto del flujo no cambia).
+const PAGO_TARJETA_ACTIVO = true;
 
 // ── Escapa texto antes de insertarlo como HTML (evita XSS) ──
 function esc(str){
@@ -2167,7 +2168,7 @@ const PAGINAS = {
           ? 'Mientras renovamos la tienda online, escríbenos directo por WhatsApp al +56 9 4435 0559 con lo que necesitas — te confirmamos precio, stock y coordinamos el despacho por ese mismo medio.'
           : 'Agrega los productos que quieras al carrito, haz clic en "Finalizar Pedido", completa tus datos y confirma por WhatsApp. Nuestro equipo te responderá para coordinar el despacho.'],
         ['¿Cuál es el horario de despacho?', 'Despachamos de lunes a viernes de 08:30 a 19:00 hrs y los sábados y feriados de 09:00 a 17:00 hrs. Los pedidos realizados antes de las 16:00 hrs se despachan el mismo día (lunes a viernes).'],
-        ['¿Qué medios de pago aceptan?', 'Aceptamos tarjetas de crédito y débito (pago seguro vía Flow/Webpay), transferencia bancaria (envías el comprobante por WhatsApp) y efectivo al recibir tu pedido o al retirarlo en el local.'],
+        ['¿Qué medios de pago aceptan?', 'Aceptamos tarjetas de crédito y débito (pago seguro vía Webpay de Transbank), transferencia bancaria (envías el comprobante por WhatsApp) y efectivo al recibir tu pedido o al retirarlo en el local.'],
         ['¿Hacen despacho a toda Valdivia?', 'Sí, dentro del radio urbano de Valdivia. Escríbenos por WhatsApp para confirmar si tu dirección está dentro de la cobertura.'],
         ['¿Puedo hacer cambios en mi pedido una vez confirmado?', 'Puedes solicitar cambios contactándonos por WhatsApp antes de que el pedido sea despachado. Una vez en camino no es posible modificarlo.'],
         ['¿Qué hago si mi pedido llegó incompleto o con algún problema?', 'Contáctanos inmediatamente al +56 9 4435 0559 o a compraslabarata@gmail.com con una foto del problema. Lo resolveremos a la brevedad.'],
@@ -2262,7 +2263,7 @@ function cerrarCheckout(){
   document.getElementById('checkout-overlay').classList.add('hidden');
 }
 
-// ── Oculta el pago con tarjeta mientras Flow no esté habilitado ──
+// ── Oculta el pago con tarjeta si la pasarela no está habilitada ──
 function aplicarDisponibilidadTarjeta(){
   if(PAGO_TARJETA_ACTIVO) return;
   const opcion = document.getElementById('opcion-tarjeta');
@@ -2292,7 +2293,7 @@ function actualizarCheckout(){
   document.getElementById('bloque-condiciones').classList.toggle('hidden', !esEnvio);
   // Botón y leyenda
   document.getElementById('chk-btn').textContent = esTarjeta ? '💳 PAGAR CON TARJETA' : '✅ CONFIRMAR Y ENVIAR POR WHATSAPP';
-  document.getElementById('chk-caption').textContent = esTarjeta ? 'Serás redirigido al pago seguro de Flow' : 'Serás redirigido a WhatsApp para confirmar tu pedido';
+  document.getElementById('chk-caption').textContent = esTarjeta ? 'Serás redirigido al pago seguro de Webpay' : 'Serás redirigido a WhatsApp para confirmar tu pedido';
 
   actualizarResumen();
 
@@ -2369,14 +2370,30 @@ document.getElementById('modal-condiciones').addEventListener('click', function(
   if(e.target === this) cerrarCondicionesEntrega();
 });
 
-// ── Pago con tarjeta vía Flow ──
+// ── Ir a Webpay: Transbank EXIGE un form POST con token_ws ──
+// Una redirección normal (window.location) no sirve: sin ese campo,
+// Webpay no sabe qué transacción abrir.
+function irAWebpay(url, token){
+  const f = document.createElement('form');
+  f.method = 'POST';
+  f.action = url;
+  const i = document.createElement('input');
+  i.type = 'hidden'; i.name = 'token_ws'; i.value = token;
+  f.appendChild(i);
+  document.body.appendChild(f);
+  f.submit();
+}
+
+// ── Pago con tarjeta (Webpay o Flow, según configure el servidor) ──
 async function pagarConTarjeta(n,d,r,t,email,entrega){
   const btn = document.getElementById('chk-btn');
   const original = btn.textContent;
   btn.disabled = true;
   btn.textContent = '⏳ Conectando con el pago seguro…';
   try{
-    const resp = await fetch(`${BACKEND_URL}/api/pago/crear`,{
+    // /api/pago/iniciar apunta a la pasarela activa; el checkout no
+    // necesita saber cuál es.
+    const resp = await fetch(`${BACKEND_URL}/api/pago/iniciar`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -2388,13 +2405,15 @@ async function pagarConTarjeta(n,d,r,t,email,entrega){
     const data = await resp.json();
     if(!data.ok) throw new Error(data.error||'No se pudo iniciar el pago');
     // Guardar el pedido para el mensaje de WhatsApp y para restaurar el
-    // carrito si el pago falla (la página se recarga al volver de Flow)
+    // carrito si el pago falla (la página se recarga al volver de la pasarela)
     localStorage.setItem('pedidoFlow', JSON.stringify({
       orden:data.commerceOrder, total:data.total, subtotal:data.subtotal, despacho:data.despacho, entrega,
       cliente:{n,d,r,t},
       items:carrito.map(it=>({id:it.id,n:it.n,p:it.p,cantidad:it.cantidad})),
     }));
-    window.location.href = data.redirect;
+    if(data.token && data.url) irAWebpay(data.url, data.token);   // Webpay
+    else if(data.redirect)     window.location.href = data.redirect; // Flow
+    else throw new Error('El servidor no devolvió los datos del pago');
   }catch(e){
     btn.disabled = false;
     btn.textContent = original;
@@ -2420,7 +2439,8 @@ function enviarPedido(){
   if(esEnvio && !document.getElementById('chk-condiciones').checked){alert('Debes aceptar las condiciones de la entrega para continuar.');return;}
 
   if(m==='Tarjeta'){
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Para pagar con tarjeta necesitamos tu email (ahí llega el comprobante de pago).');return;}
+    // Webpay no exige email; si lo escriben, se valida el formato.
+    if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('El email no tiene un formato válido. Corrígelo o déjalo en blanco.');return;}
     if(esEnvio && despachoCalc?.bloqueado){alert('Tu dirección está fuera del radio de despacho (10 km). Elige "Retiro en local" o escríbenos por WhatsApp.');return;}
     pagarConTarjeta(n,d,r,t,email,entrega);
     return;
@@ -2551,7 +2571,7 @@ function mostrarBannerPago(titulo, texto, waHref, color){
   window.scrollTo({top:0});
 }
 
-// Reconstruye el carrito tras un pago fallido (la página se recargó al volver de Flow)
+// Reconstruye el carrito tras un pago fallido (la página se recargó al volver de la pasarela)
 function restaurarCarritoPendiente(){
   if(!itemsARestaurar || !DB.length) return;
   const items = itemsARestaurar; itemsARestaurar = null;
@@ -2590,7 +2610,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     },{passive:true});
   }
   irInicio();
-  procesarRetornoPago(); // ¿venimos de vuelta del pago Flow?
+  procesarRetornoPago(); // ¿venimos de vuelta de la pasarela de pago?
   // 🔑 Carga productos desde Bsale (o respaldo si no hay backend)
   cargarProductos().then(()=>restaurarCarritoPendiente());
   pintarCarrito();

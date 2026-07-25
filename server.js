@@ -56,6 +56,71 @@ async function flowGetStatus(token) {
   return r.json();
 }
 
+// ── TRANSBANK WEBPAY PLUS (REST API v1.2) ─────────
+// Pasarela activa: 'webpay' o 'flow'. El código de ambas convive;
+// esta variable decide cuál usa el checkout.
+const PASARELA = (process.env.PASARELA || 'webpay').toLowerCase();
+
+// Credenciales de INTEGRACIÓN (públicas, publicadas por Transbank para
+// pruebas). En producción se sobreescriben por variables de entorno.
+const TBK_PROD  = process.env.TBK_ENV === 'production';
+const TBK_HOST  = TBK_PROD ? 'https://webpay3g.transbank.cl'
+                           : 'https://webpay3gint.transbank.cl';
+const TBK_BASE  = `${TBK_HOST}/rswebpaytransaction/api/webpay/v1.2/transactions`;
+const TBK_HEADERS = {
+  'Tbk-Api-Key-Id':     process.env.TBK_COMMERCE_CODE  || '597055555532',
+  'Tbk-Api-Key-Secret': process.env.TBK_API_KEY_SECRET ||
+    '579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C',
+  'Content-Type': 'application/json',
+};
+
+const TBK_RESPONSE_CODE = {
+  0: 'Aprobada', '-1': 'Rechazo de transacción', '-2': 'Debe reintentarse',
+  '-3': 'Error en transacción', '-4': 'Rechazada por el emisor',
+  '-5': 'Rechazo por error de tasa', '-6': 'Excede cupo máximo mensual',
+  '-7': 'Excede límite diario por transacción', '-8': 'Rubro no autorizado',
+};
+const TBK_PAYMENT_TYPE = {
+  VD: 'Débito', VN: 'Crédito sin cuotas', VC: 'Crédito en cuotas',
+  SI: '3 cuotas sin interés', S2: '2 cuotas sin interés',
+  NC: 'N cuotas sin interés', VP: 'Prepago',
+};
+
+// Pedidos Webpay en memoria (igual que Flow: en Render free tier el
+// proceso puede reiniciarse, por eso también se loguea todo).
+const pedidosWebpay = new Map(); // buyOrder -> pedido
+const tokensWebpay  = new Map(); // token    -> buyOrder
+
+async function tbk(method, path, body) {
+  const r = await fetch(TBK_BASE + path, {
+    method,
+    headers: TBK_HEADERS,
+    body: body === undefined ? undefined : JSON.stringify(body),
+    timeout: 20000,
+  });
+  const txt = await r.text();
+  let data = {};
+  if (txt) { try { data = JSON.parse(txt); } catch (_) { data = { raw: txt }; } }
+  if (!r.ok) {
+    const e = new Error(data.error_message || `Transbank HTTP ${r.status}`);
+    e.status = r.status; e.body = data;
+    throw e;
+  }
+  return data;
+}
+const tbkCrear  = (payload) => tbk('POST', '', payload);
+const tbkCommit = (token)   => tbk('PUT',  `/${encodeURIComponent(token)}`);
+const tbkStatus = (token)   => tbk('GET',  `/${encodeURIComponent(token)}`);
+const tbkRefund = (token, monto) => tbk('POST', `/${encodeURIComponent(token)}/refunds`, { amount: Math.round(monto) });
+
+function marcarWebpay(buyOrder, estado, resp) {
+  const p = pedidosWebpay.get(buyOrder);
+  if (!p) return;
+  p.estado = estado;
+  if (resp) p.respuesta = resp;
+  p.actualizado = new Date().toISOString();
+}
+
 // ── DESPACHO POR DISTANCIA (tramos por km) ────────
 // Origen: local de Av. Ramón Picarte 779, Valdivia.
 // Tramos "kmMax:precio" separados por coma; el último kmMax es el radio
@@ -329,68 +394,92 @@ app.get('/api/reload', async (req, res) => {
 //  servidor con los precios del Google Sheets — los
 //  precios enviados por el navegador se ignoran.
 // ════════════════════════════════════════════════
-app.post('/api/pago/crear', async (req, res) => {
+// ════════════════════════════════════════════════
+//  PREPARAR PEDIDO — compartido por Flow y Webpay
+//  Valida los datos del cliente, resuelve cada ítem
+//  contra el catálogo real y calcula el total SIEMPRE
+//  en el servidor (los precios que envíe el navegador
+//  se ignoran). Devuelve { error } o { ok, ...datos }.
+// ════════════════════════════════════════════════
+async function prepararPedido(body, { emailObligatorio = true } = {}) {
+  const err = (status, payload) => ({ error: { status, payload: { ok: false, ...payload } } });
+
+  const { cliente, items } = body || {};
+  const entrega = body?.entrega === 'retiro' ? 'retiro' : 'envio';
+
+  if (!cliente?.nombre?.trim() || !cliente?.telefono?.trim()) {
+    return err(400, { error: 'Faltan datos del cliente' });
+  }
+  if (entrega === 'envio' && !cliente?.direccion?.trim()) {
+    return err(400, { error: 'Falta la dirección para el envío a domicilio' });
+  }
+  const email = (cliente.email || '').trim();
+  const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (emailObligatorio && !emailValido) {
+    return err(400, { error: 'Email inválido (lo necesitamos para el comprobante)' });
+  }
+  if (email && !emailValido) {
+    return err(400, { error: 'El email no tiene un formato válido' });
+  }
+  if (!Array.isArray(items) || !items.length || items.length > 200) {
+    return err(400, { error: 'Carrito vacío o inválido' });
+  }
+
+  // Resolver cada ítem contra el catálogo del servidor (precio real)
+  const catalogo = await cargarProductos();
+  const porId = new Map(catalogo.map(p => [p.id, p]));
+  const lineas = [];
+  for (const it of items) {
+    const cant = parseInt(it.cantidad);
+    if (!cant || cant < 1 || cant > 999) {
+      return err(400, { error: 'Cantidad inválida en el carrito' });
+    }
+    // Los ids se asignan por orden de fila del Sheet: si la planilla cambió
+    // entre que el cliente cargó la página y pagó, el id puede apuntar a otra
+    // fila. Se verifica por nombre y se recurre a búsqueda exacta si no calza.
+    let prod = porId.get(parseInt(it.id));
+    if (!prod || (it.n && prod.n !== it.n)) {
+      prod = it.n ? catalogo.find(p => p.n === it.n) : null;
+    }
+    if (!prod) {
+      return err(409, { error: 'El catálogo cambió mientras comprabas. Recarga la página e intenta de nuevo.' });
+    }
+    lineas.push({ id: prod.id, n: prod.n, p: prod.p, cantidad: cant });
+  }
+
+  const subtotal = lineas.reduce((s, l) => s + l.p * l.cantidad, 0);
+
+  // Despacho: $0 en retiro en local; según distancia real en envío
+  let desp = { metodo: 'retiro', km: null, costo: 0 };
+  if (entrega === 'envio') {
+    desp = await calcularDespacho(cliente.direccion);
+    if (!desp.ok) {
+      return err(422, {
+        fueraDeCobertura: true, km: desp.km,
+        error: `Tu dirección está a ~${desp.km} km de nuestro local — despachamos hasta ${KM_MAX} km. Elige retiro en local o escríbenos por WhatsApp.`,
+      });
+    }
+  }
+  const despacho = desp.costo;
+  const total    = subtotal + despacho;
+  if (total < 350) return err(400, { error: 'El monto mínimo para pagar con tarjeta es $350' });
+
+  // buy_order de Webpay admite máximo 26 caracteres: este formato usa 22.
+  const commerceOrder = `LB-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`;
+
+  return { ok: true, cliente, entrega, email, lineas, subtotal, despacho, km: desp.km, metodoDespacho: desp.metodo, total, commerceOrder };
+}
+
+async function crearPagoFlow(req, res) {
   try {
     if (!FLOW_API_KEY || !FLOW_SECRET_KEY) {
       return res.status(503).json({ ok: false, error: 'Pagos con tarjeta no disponibles por ahora. Puedes pagar por transferencia.' });
     }
 
-    const { cliente, items } = req.body;
-    const entrega = req.body.entrega === 'retiro' ? 'retiro' : 'envio';
-    if (!cliente?.nombre?.trim() || !cliente?.telefono?.trim()) {
-      return res.status(400).json({ ok: false, error: 'Faltan datos del cliente' });
-    }
-    if (entrega === 'envio' && !cliente?.direccion?.trim()) {
-      return res.status(400).json({ ok: false, error: 'Falta la dirección para el envío a domicilio' });
-    }
-    const email = (cliente.email || '').trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ ok: false, error: 'Email inválido (Flow lo necesita para el comprobante)' });
-    }
-    if (!Array.isArray(items) || !items.length || items.length > 200) {
-      return res.status(400).json({ ok: false, error: 'Carrito vacío o inválido' });
-    }
-
-    // Resolver cada ítem contra el catálogo del servidor (precio real)
-    const catalogo = await cargarProductos();
-    const porId = new Map(catalogo.map(p => [p.id, p]));
-    const lineas = [];
-    for (const it of items) {
-      const cant = parseInt(it.cantidad);
-      if (!cant || cant < 1 || cant > 999) {
-        return res.status(400).json({ ok: false, error: 'Cantidad inválida en el carrito' });
-      }
-      // Los ids se asignan por orden de fila del Sheet: si la planilla cambió
-      // entre que el cliente cargó la página y pagó, el id puede apuntar a otra
-      // fila. Se verifica por nombre y se recurre a búsqueda exacta si no calza.
-      let prod = porId.get(parseInt(it.id));
-      if (!prod || (it.n && prod.n !== it.n)) {
-        prod = it.n ? catalogo.find(p => p.n === it.n) : null;
-      }
-      if (!prod) {
-        return res.status(409).json({ ok: false, error: 'El catálogo cambió mientras comprabas. Recarga la página e intenta de nuevo.' });
-      }
-      lineas.push({ id: prod.id, n: prod.n, p: prod.p, cantidad: cant });
-    }
-
-    const subtotal = lineas.reduce((s, l) => s + l.p * l.cantidad, 0);
-
-    // Despacho: $0 en retiro en local; según distancia real en envío
-    let desp = { metodo: 'retiro', km: null, costo: 0 };
-    if (entrega === 'envio') {
-      desp = await calcularDespacho(cliente.direccion);
-      if (!desp.ok) {
-        return res.status(422).json({
-          ok: false, fueraDeCobertura: true, km: desp.km,
-          error: `Tu dirección está a ~${desp.km} km de nuestro local — despachamos hasta ${KM_MAX} km. Elige retiro en local o escríbenos por WhatsApp.`,
-        });
-      }
-    }
-    const despacho = desp.costo;
-    const total    = subtotal + despacho;
-    if (total < 350) return res.status(400).json({ ok: false, error: 'El monto mínimo para pagar con tarjeta es $350' });
-
-    const commerceOrder = `LB-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`;
+    const prep = await prepararPedido(req.body, { emailObligatorio: true });
+    if (prep.error) return res.status(prep.error.status).json(prep.error.payload);
+    const { cliente, entrega, email, lineas, subtotal, despacho, total, commerceOrder } = prep;
+    const desp = { km: prep.km, metodo: prep.metodoDespacho, costo: despacho };
 
     // Respaldo compacto del pedido que viaja en Flow (sobrevive reinicios del server)
     const optional = JSON.stringify({
@@ -444,7 +533,7 @@ app.post('/api/pago/crear', async (req, res) => {
     console.error('❌ /api/pago/crear:', err.message);
     res.status(500).json({ ok: false, error: 'Error interno creando el pago' });
   }
-});
+}
 
 // ════════════════════════════════════════════════
 //  RUTA 6b — POST /api/despacho/calcular
@@ -468,6 +557,201 @@ app.post('/api/despacho/calcular', async (req, res) => {
     res.status(500).json({ ok: false, error: 'No se pudo calcular el despacho' });
   }
 });
+
+// ════════════════════════════════════════════════
+//  WEBPAY — POST /api/pago/webpay/crear
+//  Crea la transacción en Transbank. Devuelve token y
+//  url: el front DEBE enviar un form POST con el campo
+//  token_ws (no sirve una redirección normal).
+// ════════════════════════════════════════════════
+async function crearPagoWebpay(req, res) {
+  try {
+    // Webpay no pide email; se acepta opcional para el comprobante interno.
+    const prep = await prepararPedido(req.body, { emailObligatorio: false });
+    if (prep.error) return res.status(prep.error.status).json(prep.error.payload);
+    const { cliente, entrega, email, lineas, subtotal, despacho, total, commerceOrder } = prep;
+
+    const r = await tbkCrear({
+      buy_order:  commerceOrder,               // máx 26 caracteres
+      session_id: commerceOrder,               // máx 61
+      amount:     Math.round(total),           // CLP entero, sin decimales
+      return_url: `${PUBLIC_URL}/api/pago/webpay/retorno`,
+    });
+    if (!r.token || !r.url) {
+      console.error('❌ Webpay create sin token/url:', JSON.stringify(r));
+      return res.status(502).json({ ok: false, error: 'Webpay no aceptó la transacción. Intenta de nuevo.' });
+    }
+
+    pedidosWebpay.set(commerceOrder, {
+      buyOrder: commerceOrder, token: r.token, estado: 'pendiente',
+      cliente: { nombre: cliente.nombre, telefono: cliente.telefono, direccion: cliente.direccion || 'RETIRO EN LOCAL', referencia: cliente.referencia || '', email },
+      entrega, lineas, subtotal, despacho, km: prep.km, total,
+      creado: Date.now(),
+    });
+    tokensWebpay.set(r.token, commerceOrder);
+    if (pedidosWebpay.size > 500) {
+      const viejo = pedidosWebpay.keys().next().value;
+      const p = pedidosWebpay.get(viejo);
+      if (p) tokensWebpay.delete(p.token);
+      pedidosWebpay.delete(viejo);
+    }
+
+    const detalleDesp = entrega === 'retiro' ? 'retiro en local'
+      : `despacho $${despacho.toLocaleString('es-CL')}${prep.km ? ` a ${prep.km} km` : ' tarifa estándar'}`;
+    console.log(`💳 Transacción Webpay creada: ${commerceOrder} — $${total.toLocaleString('es-CL')} (${lineas.length} productos, ${detalleDesp})`);
+
+    // El front arma el form POST con estos dos valores.
+    res.json({ ok: true, pasarela: 'webpay', token: r.token, url: r.url,
+               commerceOrder, entrega, subtotal, despacho, km: prep.km, total });
+
+  } catch (err) {
+    console.error('❌ /api/pago/webpay/crear:', err.status || '', err.message);
+    res.status(502).json({ ok: false, error: 'No se pudo iniciar el pago con tarjeta. Intenta de nuevo o paga por transferencia.' });
+  }
+}
+
+// ── Rutas de creación de pago ─────────────────────
+// Cada pasarela mantiene su ruta propia, y /api/pago/iniciar apunta a la
+// que esté activa según PASARELA. Así el checkout no necesita saber cuál
+// se está usando: si mañana volvemos a Flow, no se toca el frontend.
+app.post('/api/pago/crear',        crearPagoFlow);    // Flow (se conserva)
+app.post('/api/pago/webpay/crear', crearPagoWebpay);  // Transbank Webpay Plus
+app.post('/api/pago/iniciar', (req, res) =>
+  PASARELA === 'flow' ? crearPagoFlow(req, res) : crearPagoWebpay(req, res));
+
+// ════════════════════════════════════════════════
+//  WEBPAY — GET+POST /api/pago/webpay/retorno
+//  Transbank devuelve el navegador del cliente aquí.
+//  Hay 4 escenarios y el ORDEN de evaluación importa:
+//  si se evalúa token_ws primero, el escenario 4 se
+//  confunde con un pago normal y el commit falla.
+// ════════════════════════════════════════════════
+function leerParamsTbk(req) {
+  const s = { ...(req.query || {}), ...(req.body || {}) };
+  return {
+    token_ws:         s.token_ws         || null,
+    TBK_TOKEN:        s.TBK_TOKEN        || null,
+    TBK_ORDEN_COMPRA: s.TBK_ORDEN_COMPRA || null,
+    TBK_ID_SESION:    s.TBK_ID_SESION    || s.TBK_ID_SESSION || null, // la doc usa ambas grafías
+  };
+}
+const alFront = (estado, orden) =>
+  `${FRONTEND_REDIRECT}/?pago=${estado}` + (orden ? `&orden=${encodeURIComponent(orden)}` : '');
+
+async function manejarRetornoWebpay(req, res) {
+  const { token_ws, TBK_TOKEN, TBK_ORDEN_COMPRA } = leerParamsTbk(req);
+  try {
+    // ESC. 4 — error en el formulario: llegan AMBOS tokens. Va primero.
+    if (token_ws && TBK_TOKEN) {
+      console.log(`⚠️ Webpay: error de formulario — orden ${TBK_ORDEN_COMPRA}`);
+      marcarWebpay(TBK_ORDEN_COMPRA, 'fallida');
+      return res.redirect(302, alFront('error', TBK_ORDEN_COMPRA));
+    }
+    // ESC. 3 — el cliente apretó "Anular compra". NUNCA hacer commit acá.
+    if (TBK_TOKEN && !token_ws) {
+      console.log(`⚠️ Webpay: pago anulado por el cliente — orden ${TBK_ORDEN_COMPRA}`);
+      marcarWebpay(TBK_ORDEN_COMPRA, 'cancelada');
+      return res.redirect(302, alFront('rechazado', TBK_ORDEN_COMPRA));
+    }
+    // ESC. 2 — timeout del formulario: no llega ningún token.
+    if (!token_ws && TBK_ORDEN_COMPRA) {
+      console.log(`⚠️ Webpay: timeout del formulario — orden ${TBK_ORDEN_COMPRA}`);
+      marcarWebpay(TBK_ORDEN_COMPRA, 'expirada');
+      return res.redirect(302, alFront('pendiente', TBK_ORDEN_COMPRA));
+    }
+    if (!token_ws) return res.redirect(302, alFront('error'));
+
+    // ESC. 1 — flujo normal
+    const buyOrder = tokensWebpay.get(token_ws);
+    const ped      = buyOrder ? pedidosWebpay.get(buyOrder) : null;
+
+    // Idempotencia: el commit es de UN SOLO USO. Si el cliente recarga (F5),
+    // el segundo PUT da 422 y mostraríamos "rechazado" a alguien que sí pagó.
+    if (ped && ped.estado !== 'pendiente') {
+      return res.redirect(302, alFront(ped.estado === 'pagada' ? 'exitoso' : 'rechazado', buyOrder));
+    }
+
+    let r;
+    try {
+      r = await tbkCommit(token_ws);          // ← esto es lo que captura el dinero
+    } catch (err) {
+      // 422 = token ya consumido; se consulta el endpoint idempotente antes de
+      // dar el pago por perdido.
+      console.error(`⚠️ Webpay commit falló (${err.status}): ${err.message} — consultando estado`);
+      try { r = await tbkStatus(token_ws); }
+      catch (e2) {
+        console.error('❌ Webpay status también falló:', e2.message);
+        return res.redirect(302, alFront('error', buyOrder));
+      }
+    }
+
+    // Regla oficial: AMBAS condiciones. No se valida `vci` (la doc lo prohíbe).
+    const aprobada = r.response_code === 0 && r.status === 'AUTHORIZED';
+    // Defensa propia: el monto y la orden deben calzar con lo que registramos.
+    const montoOk  = !ped || Math.round(ped.total) === r.amount;
+    const ordenOk  = !ped || ped.buyOrder === r.buy_order;
+
+    if (aprobada && montoOk && ordenOk) {
+      marcarWebpay(r.buy_order, 'pagada', r);
+      console.log(`✅ PAGO WEBPAY CONFIRMADO — ${r.buy_order} — $${Number(r.amount).toLocaleString('es-CL')} — auth ${r.authorization_code} — ${TBK_PAYMENT_TYPE[r.payment_type_code] || r.payment_type_code} — ****${r.card_detail?.card_number || '????'}`);
+      if (ped) {
+        console.log(`   Cliente: ${ped.cliente.nombre} | ${ped.cliente.telefono}${ped.cliente.email ? ' | ' + ped.cliente.email : ''}`);
+        console.log(`   Entrega: ${ped.entrega === 'retiro' ? 'RETIRO EN LOCAL' : ped.cliente.direccion + ' — ' + ped.cliente.referencia}`);
+        ped.lineas.forEach(l => console.log(`   • ${l.cantidad}x ${l.n} — $${(l.p * l.cantidad).toLocaleString('es-CL')}`));
+        console.log(`   Subtotal $${ped.subtotal.toLocaleString('es-CL')} + Despacho $${ped.despacho.toLocaleString('es-CL')}`);
+      }
+      return res.redirect(302, alFront('exitoso', r.buy_order));
+    }
+
+    if (aprobada && (!montoOk || !ordenOk)) {
+      // Cobró pero no calza con nuestra orden: devolver el dinero de inmediato.
+      console.error(`🚨 Webpay DESCALCE — esperado $${ped?.total} orden ${ped?.buyOrder} / recibido $${r.amount} orden ${r.buy_order}`);
+      try { await tbkRefund(token_ws, r.amount); } catch (e) { console.error('❌ refund falló:', e.message); }
+      marcarWebpay(r.buy_order, 'fallida', r);
+      return res.redirect(302, alFront('error', r.buy_order));
+    }
+
+    console.log(`⚠️ Pago Webpay RECHAZADO — ${r.buy_order} — código ${r.response_code} (${TBK_RESPONSE_CODE[r.response_code] || '?'}) — estado ${r.status}`);
+    marcarWebpay(r.buy_order, 'rechazada', r);
+    return res.redirect(302, alFront('rechazado', r.buy_order));
+
+  } catch (err) {
+    console.error('❌ /api/pago/webpay/retorno:', err.message);
+    return res.redirect(302, alFront('error'));
+  }
+}
+app.post('/api/pago/webpay/retorno', manejarRetornoWebpay);
+app.get ('/api/pago/webpay/retorno', manejarRetornoWebpay);
+
+// ── RECONCILIACIÓN ────────────────────────────────
+// Webpay NO tiene webhook: si el navegador del cliente muere después de
+// pagar, el servidor nunca se entera. Este barrido consulta el estado real
+// de las órdenes que quedaron pendientes.
+async function reconciliarWebpay() {
+  const ahora = Date.now();
+  for (const [buyOrder, p] of pedidosWebpay) {
+    if (p.estado !== 'pendiente') continue;
+    const edad = ahora - p.creado;
+    if (edad < 15 * 60 * 1000) continue;               // margen para el flujo normal
+    if (edad > 7 * 24 * 3600 * 1000) { marcarWebpay(buyOrder, 'expirada'); continue; }
+    try {
+      const s = await tbkStatus(p.token);
+      if (s.response_code === 0 && s.status === 'AUTHORIZED') {
+        marcarWebpay(buyOrder, 'pagada', s);
+        console.log(`✅ WEBPAY RECONCILIADO — ${buyOrder} quedó pagada sin que el cliente volviera — $${Number(s.amount).toLocaleString('es-CL')}`);
+        console.log(`   Cliente: ${p.cliente.nombre} | ${p.cliente.telefono} | ${p.entrega === 'retiro' ? 'RETIRO EN LOCAL' : p.cliente.direccion}`);
+      } else if (s.status === 'INITIALIZED') {
+        if (edad > 60 * 60 * 1000) marcarWebpay(buyOrder, 'expirada');
+      } else {
+        marcarWebpay(buyOrder, 'rechazada', s);
+      }
+    } catch (err) {
+      if (err.status === 404) marcarWebpay(buyOrder, 'fallida');
+      else console.error(`⚠️ reconciliación ${buyOrder}:`, err.message);
+    }
+  }
+}
+setInterval(reconciliarWebpay, 10 * 60 * 1000);
 
 // ════════════════════════════════════════════════
 //  RUTA 7 — POST /api/pago/confirmacion
@@ -544,6 +828,8 @@ app.get('/api/ping', (req, res) => {
     ok:      true,
     status:  'Servidor La Barata activo 🟢',
     version: '7.0.0 — Google Sheets',
+    pasarela: PASARELA,
+    ambiente: PASARELA === 'webpay' ? (TBK_PROD ? 'produccion' : 'integracion') : (FLOW_API_URL.includes('sandbox') ? 'sandbox' : 'produccion'),
     time:    new Date().toISOString(),
   });
 });
