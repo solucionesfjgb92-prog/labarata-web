@@ -836,22 +836,31 @@ async function crearPagoFlow(req, res) {
     const { cliente, entrega, email, lineas, subtotal, despacho, total, commerceOrder } = prep;
     const desp = { km: prep.km, metodo: prep.metodoDespacho, costo: despacho };
 
-    // Respaldo compacto del pedido que viaja en Flow (sobrevive reinicios del server)
-    const optional = JSON.stringify({
-      nom:  cliente.nombre.trim().slice(0, 60),
-      tel:  cliente.telefono.trim().slice(0, 20),
-      dir:  entrega === 'retiro' ? 'RETIRO EN LOCAL' : `${cliente.direccion.trim()} / ${(cliente.referencia || '').trim()}`.slice(0, 120),
-      det:  lineas.map(l => `${l.cantidad}x ${l.n}`).join(', ').slice(0, 400),
-      sub:  subtotal,
-      desp: despacho,
-      km:   desp.km,
-      ent:  entrega,
-    });
+    // OJO: Flow muestra este bloque al cliente en su pantalla de pago, con las
+    // claves tal cual como etiquetas. Por eso van con nombre completo y los
+    // montos ya formateados — antes iban abreviadas (nom, tel, det, sub) y el
+    // cliente veía algo que parecía la salida de un programa, no una tienda.
+    // Cumple además de respaldo del pedido: si el server se reinicia (plan
+    // gratuito de Render) el detalle vuelve desde Flow en la confirmación.
+    // Los campos vacíos se omiten: una etiqueta sin valor se ve descuidada.
+    const esRetiro = entrega === 'retiro';
+    const referencia = (cliente.referencia || '').trim();
+    const optional = JSON.stringify(Object.fromEntries(Object.entries({
+      'Cliente':   cliente.nombre.trim().slice(0, 60),
+      'Teléfono':  cliente.telefono.trim().slice(0, 20),
+      'Productos': lineas.map(l => `${l.cantidad}x ${l.n} = ${clp(l.p * l.cantidad)}`).join(' · ').slice(0, 500),
+      'Entrega':   esRetiro
+        ? 'Retiro en local — Av. Ramón Picarte 779, Valdivia'
+        : `Despacho a ${cliente.direccion.trim()}${referencia ? ` (${referencia})` : ''}`.slice(0, 120),
+      'Subtotal':  clp(subtotal),
+      'Despacho':  esRetiro ? 'Gratis' : clp(despacho),
+      'Total':     clp(total),
+    }).filter(([, v]) => v !== '' && v != null)));
 
     const params = {
       apiKey:          FLOW_API_KEY,
       commerceOrder,
-      subject:         `Pedido La Barata ${commerceOrder}`,
+      subject:         `Pedido N° ${commerceOrder}`,
       currency:        'CLP',
       amount:          total,
       email,
@@ -1015,11 +1024,14 @@ const alFront = (estado, orden, vale) =>
 const comprobantes = new Map(); // id -> { datos, expira }
 const COMPROBANTE_TTL = 60 * 60 * 1000; // 1 hora
 
-function guardarComprobante(r, ped) {
+// `extra` deja que cada pasarela sobreescriba lo suyo: Flow no entrega código
+// de autorización ni los últimos 4 dígitos, pero sí el medio de pago usado.
+function guardarComprobante(r, ped, extra = {}) {
   const id = crypto.randomBytes(16).toString('hex');
   comprobantes.set(id, {
     expira: Date.now() + COMPROBANTE_TTL,
     datos: {
+      ...extra,
       comercio:      'Distribuidora La Barata — Sociedad Comercial FAF SpA',
       orden:         r.buy_order,
       monto:         r.amount,
@@ -1040,6 +1052,7 @@ function guardarComprobante(r, ped) {
       cliente:       ped ? { nombre: ped.cliente.nombre, telefono: ped.cliente.telefono,
                              direccion: ped.entrega === 'retiro' ? null : ped.cliente.direccion,
                              referencia: ped.entrega === 'retiro' ? null : ped.cliente.referencia } : null,
+      ...extra,
     },
   });
   // Limpieza de comprobantes vencidos
@@ -1189,6 +1202,56 @@ setInterval(reconciliarWebpay, 10 * 60 * 1000);
 //  200 rápido (<15s). El estado SIEMPRE se valida con
 //  getStatus — nunca por la sola llegada del POST.
 // ════════════════════════════════════════════════
+// En el plan gratuito de Render el proceso se reinicia por inactividad y
+// pedidosFlow queda vacío. Cuando llega la confirmación de un pago cuyo pedido
+// ya no está en memoria, se reconstruye desde el respaldo que viajó en Flow:
+// sin esto el cliente paga y no recibe la confirmación escrita que exige la
+// ley. Los montos se recuperan del texto porque es el mismo formato que
+// escribimos nosotros al crear el cobro.
+async function reconstruirPedidoDeFlow(pago) {
+  let o;
+  try { o = typeof pago.optional === 'string' ? JSON.parse(pago.optional) : pago.optional; }
+  catch (e) { return null; }
+  if (!o || !o['Productos']) return null;
+
+  const aNumero = (s) => parseInt(String(s || '').replace(/[^\d]/g, ''), 10) || 0;
+
+  // La categoría no viaja en el respaldo (se le mostraría al cliente en la
+  // pantalla de Flow), así que se busca en el catálogo para no perder el aviso
+  // de los productos sin derecho a retracto.
+  let porNombre = new Map();
+  try {
+    const catalogo = await cargarProductos();
+    porNombre = new Map(catalogo.map(p => [p.n.toUpperCase(), p.c]));
+  } catch (e) { /* sin catálogo se envía igual, solo sin la marca de perecible */ }
+
+  const lineas = String(o['Productos']).split(' · ').map(txt => {
+    const m = txt.match(/^(\d+)x\s+(.+?)\s+=\s+\$([\d.]+)$/);
+    if (!m) return null;
+    const cantidad = parseInt(m[1], 10);
+    const nombre   = m[2].trim();
+    const total    = aNumero(m[3]);
+    return { n: nombre, cantidad, p: Math.round(total / (cantidad || 1)),
+             c: porNombre.get(nombre.toUpperCase()) || '' };
+  }).filter(Boolean);
+  if (!lineas.length) return null;
+
+  const esRetiro = /Retiro en local/i.test(o['Entrega'] || '');
+  return {
+    orden:    pago.commerceOrder,
+    cliente:  { nombre: o['Cliente'] || '', telefono: o['Teléfono'] || '',
+                email: pago.payer || '',
+                direccion: esRetiro ? '' : String(o['Entrega'] || '').replace(/^Despacho a\s+/, ''),
+                referencia: '' },
+    entrega:  esRetiro ? 'retiro' : 'envio',
+    lineas,
+    subtotal: aNumero(o['Subtotal']),
+    despacho: esRetiro ? 0 : aNumero(o['Despacho']),
+    total:    aNumero(o['Total']) || Number(pago.amount) || 0,
+    km:       null,
+  };
+}
+
 app.post('/api/pago/confirmacion', async (req, res) => {
   const token = req.body?.token;
   if (!token) return res.sendStatus(400);
@@ -1205,14 +1268,23 @@ app.post('/api/pago/confirmacion', async (req, res) => {
         console.log(`   Dirección: ${ped.cliente.direccion} — ${ped.cliente.referencia}`);
         ped.lineas.forEach(l => console.log(`   • ${l.cantidad}x ${l.n} — $${(l.p * l.cantidad).toLocaleString('es-CL')}`));
         console.log(`   Subtotal $${ped.subtotal.toLocaleString('es-CL')} + Despacho $${ped.despacho.toLocaleString('es-CL')}`);
-      } else if (pago.optional) {
-        // El server se reinició: recuperar el respaldo que viajó en Flow
-        try {
-          const o = typeof pago.optional === 'string' ? JSON.parse(pago.optional) : pago.optional;
-          console.log(`   (recuperado de Flow) Cliente: ${o.nom} | ${o.tel}`);
-          console.log(`   (recuperado de Flow) Dirección: ${o.dir}`);
-          console.log(`   (recuperado de Flow) Detalle: ${o.det}`);
-        } catch (e) { console.log('   ⚠️ optional no parseable:', pago.optional); }
+        // Confirmación escrita (art. 12 A Ley 19.496). Faltaba: el correo salía
+        // en transferencia y en Webpay, pero no en Flow, así que quien pagaba
+        // con tarjeta por Flow se quedaba sin comprobante escrito.
+        enviarConfirmacion({ ...ped, orden: pago.commerceOrder },
+                           { medio: `Tarjeta${pago.paymentData?.media ? ` (${pago.paymentData.media})` : ''}` });
+      } else {
+        // El server se reinició y perdió el pedido: se rearma con el respaldo
+        // que viajó en Flow para no dejar al cliente sin confirmación escrita.
+        const rearmado = await reconstruirPedidoDeFlow(pago);
+        if (rearmado) {
+          console.log(`   (recuperado de Flow) Cliente: ${rearmado.cliente.nombre} | ${rearmado.cliente.telefono} | ${rearmado.cliente.email}`);
+          rearmado.lineas.forEach(l => console.log(`   • ${l.cantidad}x ${l.n} — $${(l.p * l.cantidad).toLocaleString('es-CL')}`));
+          enviarConfirmacion(rearmado,
+                             { medio: `Tarjeta${pago.paymentData?.media ? ` (${pago.paymentData.media})` : ''}` });
+        } else {
+          console.warn(`   ⚠️ Pedido ${pago.commerceOrder} no está en memoria y el respaldo de Flow no se pudo leer — SIN correo de confirmación:`, pago.optional);
+        }
       }
     } else if (pago.status === 3 || pago.status === 4) {
       console.log(`⚠️ Pago ${pago.status === 3 ? 'RECHAZADO' : 'ANULADO'} — ${pago.commerceOrder} (flowOrder ${pago.flowOrder})`);
@@ -1236,11 +1308,27 @@ async function manejarRetornoFlow(req, res) {
   let destino = `${FRONTEND_REDIRECT}/?pago=error`;
   if (token) {
     try {
-      const pago  = await flowGetStatus(token);
-      const orden = encodeURIComponent(pago.commerceOrder || '');
-      if      (pago.status === 2) destino = `${FRONTEND_REDIRECT}/?pago=exitoso&orden=${orden}`;
-      else if (pago.status === 1) destino = `${FRONTEND_REDIRECT}/?pago=pendiente&orden=${orden}`;
-      else                        destino = `${FRONTEND_REDIRECT}/?pago=rechazado&orden=${orden}`;
+      const pago = await flowGetStatus(token);
+      if (pago.status === 2) {
+        // Mismo comprobante con logo que ya mostraba Webpay: el cliente que
+        // paga por Flow terminaba en la página pelada, sin ningún respaldo
+        // visible de su compra.
+        const ped  = pedidosFlow.get(pago.commerceOrder);
+        const vale = guardarComprobante({
+          buy_order:        pago.commerceOrder,
+          amount:           pago.amount,
+          transaction_date: pago.paymentData?.date || new Date().toISOString(),
+        }, ped, {
+          // Flow no entrega código de autorización ni los últimos 4 dígitos;
+          // su número de orden es el respaldo que sí puede exhibir el cliente.
+          autorizacion: pago.flowOrder ? `Flow N° ${pago.flowOrder}` : null,
+          tipoPago:     pago.paymentData?.media || 'Tarjeta',
+          ultimos4:     null,
+        });
+        destino = alFront('exitoso', pago.commerceOrder, vale);
+      } else {
+        destino = alFront(pago.status === 1 ? 'pendiente' : 'rechazado', pago.commerceOrder);
+      }
     } catch (err) {
       console.error('❌ /api/pago/retorno:', err.message);
     }
