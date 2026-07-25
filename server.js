@@ -145,9 +145,11 @@ const BREVO_API_KEY  = process.env.BREVO_API_KEY || '';
 // Configurable solo para poder apuntar a un servidor falso en las pruebas.
 const BREVO_API_URL  = process.env.BREVO_API_URL || 'https://api.brevo.com/v3';
 const CORREO_COMERCIO = process.env.CORREO_COMERCIO || 'distribuidoralabaratavaldivia@gmail.com';
-// Cuando el dominio esté autenticado en Brevo (SPF/DKIM), conviene cambiarlo
-// a pedidos@distribuidoralabarata.cl: alinea DMARC y mejora la entrega.
-const REMITENTE = process.env.CORREO_REMITENTE || CORREO_COMERCIO;
+// El dominio está autenticado en Brevo (SPF + DKIM + DMARC verificados el
+// 2026-07-25), así que el correo sale desde el dominio propio: alinea DMARC,
+// mejora la entrega y no muestra el remitente reescrito de Brevo. Las
+// respuestas van igual al Gmail, porque el dominio no tiene MX.
+const REMITENTE = process.env.CORREO_REMITENTE || 'pedidos@distribuidoralabarata.cl';
 
 const SMTP_USER = process.env.SMTP_USER || '';
 const SMTP_PASS = process.env.SMTP_PASS || '';
