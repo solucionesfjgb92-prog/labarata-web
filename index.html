@@ -2553,14 +2553,18 @@ function enviarPedido(){
       method:  'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        cliente: {nombre:n, telefono:t, direccion:esEnvio?d:'RETIRO EN LOCAL', referencia:esEnvio?r:''},
+        cliente: {nombre:n, telefono:t, email, direccion:esEnvio?d:'RETIRO EN LOCAL', referencia:esEnvio?r:''},
         pago:    m,
         entrega,
+        // Para que la confirmación por correo muestre el total correcto
+        despacho: esEnvio && despachoCalc && !despachoCalc.bloqueado ? despachoCalc.costo : 0,
+        km:       esEnvio && despachoCalc ? despachoCalc.km : null,
         items:   carrito.map(it=>({
           variantId:      it.variantId || it.id,
           cantidad:       it.cantidad,
           precioUnitario: it.p,
           nombre:         it.n,
+          categoria:      it.c || it.categoria || '',
         })),
       }),
     })

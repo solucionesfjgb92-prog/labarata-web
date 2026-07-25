@@ -8,6 +8,7 @@ const express = require('express');
 const cors    = require('cors');
 const fetch   = require('node-fetch');
 const crypto  = require('crypto');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app  = express();
@@ -119,6 +120,158 @@ function marcarWebpay(buyOrder, estado, resp) {
   p.estado = estado;
   if (resp) p.respuesta = resp;
   p.actualizado = new Date().toISOString();
+}
+
+// ── CORREO DE CONFIRMACIÓN DE COMPRA ──────────────
+// Requisito legal (art. 12 A Ley 19.496): si el comercio NO envía la
+// confirmación escrita del contrato, el plazo de retracto del cliente se
+// extiende de 10 a 90 días. Debe incluir el detalle del pedido, el costo
+// de despacho, el total, los datos del proveedor y acceso a los términos.
+const SMTP_USER = process.env.SMTP_USER || '';
+const SMTP_PASS = process.env.SMTP_PASS || '';
+const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
+const SMTP_PORT = parseInt(process.env.SMTP_PORT) || 465;
+const CORREO_ACTIVO = !!(SMTP_USER && SMTP_PASS);
+
+let transporter = null;
+if (CORREO_ACTIVO) {
+  transporter = nodemailer.createTransport({
+    host: SMTP_HOST, port: SMTP_PORT, secure: SMTP_PORT === 465,
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
+  });
+}
+
+const escHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
+  ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const clp = (n) => '$' + Number(n || 0).toLocaleString('es-CL');
+
+// Mismo criterio que el frontend: solo perecibles reales quedan excluidos
+// del derecho a retracto, y hay que informarlo en la confirmación.
+const CATS_PERECIBLES  = ['congelados', 'carnes'];
+const PALABRAS_FRIO    = ['CREMA', 'QUESO', 'QUESILLO', 'YOGH', 'YOGURT', 'MANTEQUILLA', 'MARGARINA', 'HELADO'];
+function esPerecible(linea) {
+  const cat = (linea.c || linea.categoria || '').toLowerCase();
+  if (CATS_PERECIBLES.includes(cat)) return true;
+  if (cat === 'lacteos') {
+    const n = (linea.n || '').toUpperCase();
+    return PALABRAS_FRIO.some(k => n.includes(k));
+  }
+  return false;
+}
+
+function armarCorreo(ped, pago) {
+  const esRetiro = ped.entrega === 'retiro';
+  const filas = ped.lineas.map(l => `
+    <tr>
+      <td style="padding:8px 0;border-bottom:1px solid #eee;font-size:14px;color:#374151;">
+        ${escHtml(l.n)}${esPerecible(l) ? '<br><span style="font-size:11px;color:#b45309;">⚠️ Sin derecho a retracto (producto perecible)</span>' : ''}
+      </td>
+      <td style="padding:8px 0;border-bottom:1px solid #eee;font-size:14px;color:#6b7280;text-align:center;white-space:nowrap;">${l.cantidad} × ${clp(l.p)}</td>
+      <td style="padding:8px 0;border-bottom:1px solid #eee;font-size:14px;color:#111827;text-align:right;font-weight:700;white-space:nowrap;">${clp(l.p * l.cantidad)}</td>
+    </tr>`).join('');
+
+  const hayPerecibles = ped.lineas.some(esPerecible);
+
+  const html = `<!doctype html><html><body style="margin:0;padding:0;background:#f6f7f9;font-family:Arial,Helvetica,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:20px;">
+    <div style="background:#16a34a;color:#fff;padding:20px;border-radius:12px 12px 0 0;">
+      <h1 style="margin:0;font-size:20px;">✅ ¡Gracias por tu compra!</h1>
+      <p style="margin:6px 0 0;font-size:14px;opacity:.9;">Distribuidora La Barata · Valdivia</p>
+    </div>
+    <div style="background:#fff;padding:20px;border:1px solid #e5e7eb;border-top:0;">
+      <p style="font-size:15px;color:#374151;margin:0 0 16px;">Hola <strong>${escHtml(ped.cliente.nombre)}</strong>, recibimos tu pedido. Este correo es tu confirmación de compra — guárdalo.</p>
+
+      <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
+        <tr><td style="font-size:13px;color:#6b7280;padding:4px 0;">N° de pedido</td><td style="font-size:13px;color:#111827;text-align:right;font-weight:700;">${escHtml(ped.buyOrder || ped.orden || '—')}</td></tr>
+        <tr><td style="font-size:13px;color:#6b7280;padding:4px 0;">Fecha</td><td style="font-size:13px;color:#111827;text-align:right;">${new Date().toLocaleString('es-CL')}</td></tr>
+        ${pago ? `<tr><td style="font-size:13px;color:#6b7280;padding:4px 0;">Forma de pago</td><td style="font-size:13px;color:#111827;text-align:right;">${escHtml(pago.medio)}${pago.autorizacion ? ` · Autorización ${escHtml(pago.autorizacion)}` : ''}</td></tr>` : ''}
+      </table>
+
+      <h2 style="font-size:15px;color:#111827;margin:18px 0 6px;">Tu pedido</h2>
+      <table style="width:100%;border-collapse:collapse;">${filas}</table>
+      <table style="width:100%;border-collapse:collapse;margin-top:10px;">
+        <tr><td style="font-size:14px;color:#6b7280;padding:3px 0;">Subtotal productos</td><td style="font-size:14px;text-align:right;color:#111827;">${clp(ped.subtotal)}</td></tr>
+        <tr><td style="font-size:14px;color:#6b7280;padding:3px 0;">${esRetiro ? 'Retiro en local' : 'Despacho a domicilio' + (ped.km ? ` (${ped.km} km)` : '')}</td><td style="font-size:14px;text-align:right;color:#111827;">${ped.despacho === 0 ? 'Gratis' : clp(ped.despacho)}</td></tr>
+        <tr><td style="font-size:17px;font-weight:800;color:#111827;padding:8px 0;border-top:2px solid #16a34a;">TOTAL</td><td style="font-size:17px;font-weight:800;color:#16a34a;text-align:right;border-top:2px solid #16a34a;">${clp(ped.total)}</td></tr>
+      </table>
+
+      <h2 style="font-size:15px;color:#111827;margin:18px 0 6px;">${esRetiro ? 'Retiro' : 'Entrega'}</h2>
+      <p style="font-size:14px;color:#374151;margin:0 0 4px;">
+        ${esRetiro
+          ? '🏬 Retiras en <strong>Av. Ramón Picarte 779, Valdivia</strong>.'
+          : `📍 ${escHtml(ped.cliente.direccion)}${ped.cliente.referencia ? ' — ' + escHtml(ped.cliente.referencia) : ''}`}
+      </p>
+      <p style="font-size:13px;color:#6b7280;margin:0 0 4px;">📞 ${escHtml(ped.cliente.telefono)}</p>
+      <p style="font-size:13px;color:#6b7280;margin:0;">
+        ${esRetiro
+          ? 'Te llamaremos para coordinar el horario de retiro. Atención: Lun–Vie 08:30–19:00 · Sáb y feriados 09:00–17:00.'
+          : 'La fecha de entrega se coordina previamente por teléfono. Si no te encontramos en el domicilio, el pedido queda disponible para retiro en nuestra tienda. Despachos Lun–Vie 08:30–19:00 · Sáb y feriados 09:00–17:00.'}
+      </p>
+
+      ${hayPerecibles ? `<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px;margin:16px 0;">
+        <p style="margin:0;font-size:13px;color:#78350f;"><strong>⚠️ Sobre el derecho a retracto:</strong> tu pedido incluye productos perecibles o que requieren frío, que están excluidos del derecho a retracto (Decreto 52/2024). <strong>Esto no afecta tu garantía legal:</strong> si algo llega vencido o en mal estado, tienes derecho a cambio o a la devolución de tu dinero.</p>
+      </div>` : ''}
+
+      <div style="background:#f8fafc;border-radius:8px;padding:14px;margin:16px 0;">
+        <p style="margin:0 0 8px;font-size:13px;color:#374151;"><strong>Tus derechos como consumidor</strong></p>
+        <p style="margin:0 0 6px;font-size:12px;color:#6b7280;">Tienes <strong>derecho a retracto</strong> dentro de 10 días desde que recibes el producto (salvo perecibles) y <strong>garantía legal</strong> si algo llega malo, vencido o equivocado, pudiendo elegir entre cambio, devolución del dinero o reparación.</p>
+        <p style="margin:0;font-size:12px;color:#6b7280;">Revisa las condiciones completas en <a href="${FRONTEND_REDIRECT}" style="color:#16a34a;">nuestro sitio</a>, sección <em>Cambios, devoluciones y reembolsos</em> y <em>Términos y condiciones</em>.</p>
+      </div>
+
+      <div style="border-top:1px solid #e5e7eb;padding-top:14px;margin-top:16px;">
+        <p style="margin:0;font-size:12px;color:#6b7280;line-height:1.6;">
+          <strong style="color:#374151;">Distribuidora La Barata</strong><br>
+          SOCIEDAD COMERCIAL FAF SPA · RUT 77.557.632-4<br>
+          Av. Ramón Picarte 779, Valdivia, Región de Los Ríos<br>
+          compraslabarata@gmail.com · WhatsApp +56 9 4435 0559
+        </p>
+      </div>
+    </div>
+  </div></body></html>`;
+
+  const texto = [
+    `¡Gracias por tu compra en Distribuidora La Barata!`,
+    ``,
+    `Pedido: ${ped.buyOrder || ped.orden || '—'}`,
+    `Fecha: ${new Date().toLocaleString('es-CL')}`,
+    ...(pago ? [`Pago: ${pago.medio}${pago.autorizacion ? ' · Autorización ' + pago.autorizacion : ''}`] : []),
+    ``,
+    ...ped.lineas.map(l => `  ${l.cantidad} x ${l.n} — ${clp(l.p * l.cantidad)}`),
+    ``,
+    `Subtotal: ${clp(ped.subtotal)}`,
+    `${esRetiro ? 'Retiro en local' : 'Despacho'}: ${ped.despacho === 0 ? 'Gratis' : clp(ped.despacho)}`,
+    `TOTAL: ${clp(ped.total)}`,
+    ``,
+    esRetiro ? 'Retiro en Av. Ramón Picarte 779, Valdivia.' : `Entrega en: ${ped.cliente.direccion}`,
+    ``,
+    `Tienes derecho a retracto (10 días, salvo perecibles) y garantía legal.`,
+    `Condiciones completas en ${FRONTEND_REDIRECT}`,
+    ``,
+    `SOCIEDAD COMERCIAL FAF SPA · RUT 77.557.632-4`,
+    `Av. Ramón Picarte 779, Valdivia · +56 9 4435 0559`,
+  ].join('\n');
+
+  return { html, texto };
+}
+
+// No bloquea la respuesta al cliente: si el correo falla, la venta sigue.
+function enviarConfirmacion(ped, pago) {
+  const destino = (ped.cliente?.email || '').trim();
+  if (!destino) return;
+  if (!CORREO_ACTIVO) {
+    console.warn(`⚠️ Correo de confirmación NO enviado (SMTP sin configurar) — pedido ${ped.buyOrder || ped.orden}`);
+    return;
+  }
+  const { html, texto } = armarCorreo(ped, pago);
+  transporter.sendMail({
+    from: `"Distribuidora La Barata" <${SMTP_USER}>`,
+    to: destino,
+    bcc: SMTP_USER, // copia para el comercio
+    subject: `Confirmación de tu pedido ${ped.buyOrder || ped.orden || ''} — La Barata`,
+    text: texto, html,
+  })
+  .then(() => console.log(`📧 Confirmación enviada a ${destino} — pedido ${ped.buyOrder || ped.orden}`))
+  .catch(err => console.error(`❌ No se pudo enviar la confirmación a ${destino}:`, err.message));
 }
 
 // ── DESPACHO POR DISTANCIA (tramos por km) ────────
@@ -365,6 +518,23 @@ app.post('/api/pedido', async (req, res) => {
     console.log(`   Pago: ${pago} | Subtotal productos: $${total.toLocaleString('es-CL')}`);
     items.forEach(it => console.log(`   • ${it.cantidad}x ${it.nombre}`));
 
+    // Confirmación escrita también para transferencia y efectivo, si el
+    // cliente dejó su email (art. 12 A Ley 19.496).
+    if (cliente.email) {
+      const esRetiro = entrega === 'retiro';
+      enviarConfirmacion({
+        orden: `LB-${Date.now()}`,
+        cliente: { nombre: cliente.nombre, telefono: cliente.telefono, email: cliente.email,
+                   direccion: cliente.direccion, referencia: cliente.referencia },
+        entrega: esRetiro ? 'retiro' : 'envio',
+        lineas: items.map(it => ({ n: it.nombre, p: it.precioUnitario, cantidad: it.cantidad, c: it.categoria || '' })),
+        subtotal: total,
+        despacho: esRetiro ? 0 : (req.body.despacho ?? null),
+        km: req.body.km ?? null,
+        total: total + (esRetiro ? 0 : (req.body.despacho || 0)),
+      }, { medio: pago });
+    }
+
     res.json({ ok: true, message: 'Pedido registrado', total });
 
   } catch (err) {
@@ -444,7 +614,9 @@ async function prepararPedido(body, { emailObligatorio = true } = {}) {
     if (!prod) {
       return err(409, { error: 'El catálogo cambió mientras comprabas. Recarga la página e intenta de nuevo.' });
     }
-    lineas.push({ id: prod.id, n: prod.n, p: prod.p, cantidad: cant });
+    // Se guarda la categoría para poder marcar los perecibles (excluidos
+    // del derecho a retracto) en la confirmación por correo.
+    lineas.push({ id: prod.id, n: prod.n, p: prod.p, cantidad: cant, c: prod.c || prod.categoria || '' });
   }
 
   const subtotal = lineas.reduce((s, l) => s + l.p * l.cantidad, 0);
@@ -756,6 +928,12 @@ async function manejarRetornoWebpay(req, res) {
         ped.lineas.forEach(l => console.log(`   • ${l.cantidad}x ${l.n} — $${(l.p * l.cantidad).toLocaleString('es-CL')}`));
         console.log(`   Subtotal $${ped.subtotal.toLocaleString('es-CL')} + Despacho $${ped.despacho.toLocaleString('es-CL')}`);
       }
+      // Confirmación escrita (art. 12 A Ley 19.496). No se espera la
+      // respuesta: Transbank exige responder rápido y la venta ya está hecha.
+      if (ped) enviarConfirmacion(ped, {
+        medio: `Tarjeta ${TBK_PAYMENT_TYPE[r.payment_type_code] || ''}`.trim() + (r.card_detail?.card_number ? ` ****${r.card_detail.card_number}` : ''),
+        autorizacion: r.authorization_code,
+      });
       const vale = guardarComprobante(r, ped);
       return res.redirect(302, alFront('exitoso', r.buy_order, vale));
     }
