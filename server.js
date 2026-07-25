@@ -424,9 +424,44 @@ async function calcularDespacho(direccion) {
 
 // ── Cache en memoria (5 minutos) ──────────────────
 let cache = { data: null, ts: 0 };
+// Productos retenidos por precio fuera de rango. Se guardan para poder
+// consultarlos desde /api/diagnostico/catalogo sin entrar a los logs.
+let ultimosSospechosos = [];
 const CACHE_MS = 5 * 60 * 1000; // 5 minutos
 
 // ── Parser CSV simple ─────────────────────────────
+// Productos que no se venden por la web, por decisión del comercio.
+// La línea automotriz y los sacos de alimento de mascota se entregan sólo en
+// el local por volumen; los Huggies salieron a pedido del comercio.
+// Ojo con "CAVA": es una marca que hace tanto productos de auto como de aseo
+// doméstico, así que se nombra producto por producto en vez de excluir la
+// marca entera — el limpiavidrios, el lustramuebles y la pasta desmanchadora
+// SÍ se venden.
+// Lo correcto a futuro es marcar estas filas como activo=NO en la planilla y
+// borrar esta lista: dos interruptores para lo mismo terminan confundiendo.
+const EXCLUIDOS_WEB = [
+  /NATIMAX/i,
+  /MASTER ?CAT|MASTERDOG|EKOSCAN|EKOSCAT/i,
+  /HUGGIES/i,
+  /\bCAVA\b/i,
+];
+// Excepciones a la regla de CAVA: productos de aseo del hogar, no de auto.
+const EXCEPCIONES_WEB = /LIMPIA ?VIDRIO|LUSTRA ?MUEBLE|DESMANCHADORA/i;
+
+function excluidoDeLaWeb(nombre) {
+  if (EXCEPCIONES_WEB.test(nombre)) return false;
+  return EXCLUIDOS_WEB.some(re => re.test(nombre));
+}
+
+// Red de seguridad contra precios mal tipeados en la planilla. Han aparecido
+// filas con el código pegado en la columna de precio: un turrón de 80 g a
+// $863.302 y un shampoo a $2.014.371, además de una línea interna de
+// logística colada como producto a $287.767. El artículo legítimo más caro
+// del catálogo es un saco de papas de 25 kg a $87.500, así que el tope deja
+// un margen amplio y sólo ataja errores evidentes.
+// No se descarta en silencio: cada uno se nombra en el log al cargar.
+const PRECIO_MAXIMO = parseInt(process.env.PRECIO_MAXIMO) || 150000;
+
 function parsearCSV(texto) {
   const lineas = texto.split('\n').filter(l => l.trim());
   if (lineas.length < 2) return [];
@@ -462,6 +497,8 @@ async function cargarProductos() {
   const filas = parsearCSV(texto);
 
   let id = 1;
+  let excluidos = 0;
+  const sospechosos = [];
   const productos = [];
 
   for (const f of filas) {
@@ -488,9 +525,17 @@ async function cargarProductos() {
     const tipo     = (f.tipo_bsale || '').toUpperCase().trim();
     const sub      = (f.subcategoria || '').trim();
 
-    // Excluir filas internas/logísticas sin valor para clientes
-    const TIPOS_EXCLUIDOS = ['AUTOMOVIL', 'SIN TIPO'];
-    if (TIPOS_EXCLUIDOS.includes(tipo)) continue;
+    // Antes se filtraba por tipo_bsale = AUTOMOVIL o SIN TIPO. Se sacó: esos
+    // valores estaban mal puestos en la planilla y escondían 51 productos
+    // vendibles (pañales, huevos por caja, tallarines, comida de mascota de
+    // hasta $50.000) sin que se notara — poner activo=SI no bastaba y no
+    // había forma de darse cuenta. Ahora manda la columna "activo".
+    //
+    // Lo que el comercio decidió no vender por la web (2026-07-25): la línea
+    // automotriz y el alimento de mascotas, que se despachan sólo en el local
+    // por volumen, más los pañales Huggies.
+    if (excluidoDeLaWeb(nombre)) { excluidos++; continue; }
+    if (precio > PRECIO_MAXIMO) { sospechosos.push(`${nombre} ($${Math.round(precio).toLocaleString('es-CL')})`); continue; }
 
     productos.push({
       id:        id++,
@@ -510,7 +555,13 @@ async function cargarProductos() {
   }
 
   cache = { data: productos, ts: ahora };
-  console.log(`📦 Google Sheets: ${productos.length} productos activos con precio`);
+  console.log(`📦 Google Sheets: ${productos.length} productos activos con precio` +
+              ` (${excluidos} excluidos de la web: automotriz, mascotas, Huggies)`);
+  ultimosSospechosos = sospechosos;
+  if (sospechosos.length) {
+    console.warn(`⚠️ ${sospechosos.length} producto(s) NO publicados por superar $${PRECIO_MAXIMO.toLocaleString('es-CL')} — corregir el precio en la planilla:`);
+    sospechosos.forEach(s => console.warn(`     · ${s}`));
+  }
   return productos;
 }
 
@@ -654,6 +705,49 @@ app.get('/api/reload', async (req, res) => {
 //  en el servidor (los precios que envíe el navegador
 //  se ignoran). Devuelve { error } o { ok, ...datos }.
 // ════════════════════════════════════════════════
+// ── ¿El dominio del correo puede recibir mensajes? ────
+// Dos motivos para comprobarlo antes de cobrar:
+//   1. Flow valida el correo del pagador y, si el dominio no tiene MX, no
+//      responde con error: deja la conexión colgada 20 s (medido). El cliente
+//      vería el checkout congelado y se iría.
+//   2. La confirmación de compra es obligación legal (art. 12 A Ley 19.496):
+//      un correo mal escrito la pierde en silencio.
+// Pilla los errores de tipeo típicos: @gmial.com, @hotmial.com, @gmail.con.
+const cacheMx = new Map(); // dominio -> { valor, hasta }
+const MX_TTL  = 6 * 60 * 60 * 1000;
+
+async function dominioRecibeCorreo(email) {
+  const dominio = (email.split('@')[1] || '').toLowerCase();
+  if (!dominio) return { recibe: false, dominio };
+
+  const guardado = cacheMx.get(dominio);
+  if (guardado && guardado.hasta > Date.now()) return guardado.valor;
+
+  let valor;
+  try {
+    const mx = await Promise.race([
+      dns.promises.resolveMx(dominio),
+      new Promise((_, rechazar) => setTimeout(() => rechazar(new Error('timeout')), 4000)),
+    ]);
+    valor = { recibe: mx.length > 0, dominio };
+  } catch (err) {
+    // ENOTFOUND y ENODATA son negativas definitivas: ese dominio no recibe
+    // correo. Cualquier otra cosa (timeout, DNS caído) es problema nuestro y
+    // no puede costarle una venta al cliente, así que se deja pasar sin
+    // cachear: se prefiere un correo perdido antes que una compra perdida.
+    if (err.code === 'ENOTFOUND' || err.code === 'ENODATA') {
+      valor = { recibe: false, dominio };
+    } else {
+      console.warn(`⚠️ No se pudo verificar el MX de ${dominio}: ${err.message} — se deja pasar`);
+      return { recibe: true, dominio, sinVerificar: true };
+    }
+  }
+
+  cacheMx.set(dominio, { valor, hasta: Date.now() + MX_TTL });
+  if (cacheMx.size > 500) cacheMx.delete(cacheMx.keys().next().value);
+  return valor;
+}
+
 async function prepararPedido(body, { emailObligatorio = true } = {}) {
   const err = (status, payload) => ({ error: { status, payload: { ok: false, ...payload } } });
 
@@ -673,6 +767,12 @@ async function prepararPedido(body, { emailObligatorio = true } = {}) {
   }
   if (email && !emailValido) {
     return err(400, { error: 'El email no tiene un formato válido' });
+  }
+  if (emailValido) {
+    const mx = await dominioRecibeCorreo(email);
+    if (!mx.recibe) {
+      return err(400, { error: `El correo no existe: "${mx.dominio}" no recibe mensajes. Revisa que esté bien escrito.` });
+    }
   }
   if (!Array.isArray(items) || !items.length || items.length > 200) {
     return err(400, { error: 'Carrito vacío o inválido' });
@@ -1292,6 +1392,24 @@ app.get('/api/diagnostico/flow', async (req, res) => {
     }});
   } catch (err) {
     res.json({ ...info, paymentCreate: { ok: false, ms: Date.now() - t0, error: err.message } });
+  }
+});
+
+// Diagnóstico del catálogo: qué se está publicando y qué quedó retenido.
+// Evita tener que bucear en los logs de Render para saber por qué un
+// producto no aparece en el sitio.
+app.get('/api/diagnostico/catalogo', async (req, res) => {
+  try {
+    const productos = await cargarProductos();
+    res.json({
+      publicados: productos.length,
+      precioMaximo: PRECIO_MAXIMO,
+      retenidosPorPrecio: ultimosSospechosos,
+      excluidosDeLaWeb: 'línea automotriz, alimento de mascotas y pañales Huggies (se venden solo en el local)',
+      nota: 'Un producto no aparece si: activo ≠ SI, no tiene precio, está en la lista de excluidos, o su precio supera el máximo.',
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
