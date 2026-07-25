@@ -1223,6 +1223,78 @@ app.get('/api/diagnostico/correo', async (req, res) => {
   }
 });
 
+// Diagnóstico de Flow. Soporte respondió (ticket 167156) que el error 1620
+// "userEmail is not valid" viene de que validan el correo del pagador:
+// formato, que el dominio tenga MX y que la casilla exista. Esto lo comprueba
+// en vez de creerlo: revisa el MX del dominio y, con ?probar=1, hace una
+// llamada real a payment/create. Sin ?probar=1 no tiene efectos: solo informa.
+// Nunca expone las llaves.
+app.get('/api/diagnostico/flow', async (req, res) => {
+  const email = (req.query.email || '').trim();
+  const info = {
+    configurado: !!(FLOW_API_KEY && FLOW_SECRET_KEY),
+    ambiente: FLOW_API_URL.includes('sandbox') ? 'sandbox' : 'produccion',
+    apiUrl: FLOW_API_URL,
+    largoApiKey: FLOW_API_KEY.length,
+    largoSecretKey: FLOW_SECRET_KEY.length,
+    pasarelaActiva: PASARELA,
+    emailProbado: email || null,
+  };
+
+  if (!info.configurado) {
+    return res.json({ ...info, error: 'faltan FLOW_API_KEY o FLOW_SECRET_KEY' });
+  }
+  if (!email) {
+    return res.json({ ...info, ayuda: 'agrega ?email=alguien@dominio.cl y ?probar=1 para llamar a payment/create' });
+  }
+
+  // La validación que declara Flow: el dominio del correo debe tener MX.
+  const dominio = email.split('@')[1] || '';
+  try {
+    const mx = await dns.promises.resolveMx(dominio);
+    info.mx = { ok: mx.length > 0, dominio, servidores: mx.map(m => m.exchange) };
+  } catch (err) {
+    info.mx = { ok: false, dominio, error: `sin MX [${err.code}] — Flow rechazaría este correo` };
+  }
+
+  if (req.query.probar !== '1') {
+    return res.json({ ...info, nota: 'agrega &probar=1 para llamar de verdad a payment/create' });
+  }
+
+  // Llamada real, con el monto mínimo y una orden marcada como diagnóstico.
+  // Crea un cobro pendiente que nadie paga; no mueve dinero.
+  const params = {
+    apiKey:          FLOW_API_KEY,
+    commerceOrder:   `DIAG-${Date.now()}`,
+    subject:         'Diagnostico de integracion',
+    currency:        'CLP',
+    amount:          350,
+    email,
+    paymentMethod:   9,
+    urlConfirmation: `${PUBLIC_URL}/api/pago/confirmacion`,
+    urlReturn:       `${PUBLIC_URL}/api/pago/retorno`,
+  };
+  params.s = firmarFlow(params);
+
+  const t0 = Date.now();
+  try {
+    const r = await fetch(`${FLOW_API_URL}/payment/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(params).toString(),
+      timeout: 20000,
+    });
+    const data = await r.json().catch(() => ({}));
+    res.json({ ...info, paymentCreate: {
+      ok: r.ok && !!data.url, ms: Date.now() - t0, status: r.status,
+      codigoError: data.code, mensaje: data.message,
+      urlDePago: data.url ? data.url + '?token=' + data.token : null,
+    }});
+  } catch (err) {
+    res.json({ ...info, paymentCreate: { ok: false, ms: Date.now() - t0, error: err.message } });
+  }
+});
+
 app.get('/api/ping', (req, res) => {
   res.json({
     ok:      true,
