@@ -223,7 +223,7 @@ function armarCorreo(ped, pago) {
           <strong style="color:#374151;">Distribuidora La Barata</strong><br>
           SOCIEDAD COMERCIAL FAF SPA · RUT 77.557.632-4<br>
           Av. Ramón Picarte 779, Valdivia, Región de Los Ríos<br>
-          compraslabarata@gmail.com · WhatsApp +56 9 4435 0559
+          distribuidoralabaratavaldivia@gmail.com · WhatsApp +56 9 4435 0559
         </p>
       </div>
     </div>
@@ -310,7 +310,7 @@ async function geocodificar(direccion) {
     : `${direccion}, Valdivia, Región de Los Ríos, Chile`;
   const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=cl&q=${encodeURIComponent(q)}`;
   const r = await fetch(url, {
-    headers: { 'User-Agent': 'LaBarata-Valdivia/1.0 (compraslabarata@gmail.com)' },
+    headers: { 'User-Agent': 'LaBarata-Valdivia/1.0 (distribuidoralabaratavaldivia@gmail.com)' },
     timeout: 8000,
   });
   if (!r.ok) throw new Error(`Nominatim HTTP ${r.status}`);
