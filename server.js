@@ -635,8 +635,61 @@ function leerParamsTbk(req) {
     TBK_ID_SESION:    s.TBK_ID_SESION    || s.TBK_ID_SESSION || null, // la doc usa ambas grafías
   };
 }
-const alFront = (estado, orden) =>
-  `${FRONTEND_REDIRECT}/?pago=${estado}` + (orden ? `&orden=${encodeURIComponent(orden)}` : '');
+const alFront = (estado, orden, vale) =>
+  `${FRONTEND_REDIRECT}/?pago=${estado}`
+  + (orden ? `&orden=${encodeURIComponent(orden)}` : '')
+  + (vale  ? `&v=${vale}` : '');
+
+// ── COMPROBANTE DE PAGO ───────────────────────────
+// Transbank EXIGE que el comercio muestre un comprobante al cliente
+// (con Webpay Plus REST ya no existe el voucher de Transbank). Los datos
+// se guardan bajo un id aleatorio y el front los pide para renderizarlos:
+// así no viajan en la URL ni quedan en el historial del navegador.
+const comprobantes = new Map(); // id -> { datos, expira }
+const COMPROBANTE_TTL = 60 * 60 * 1000; // 1 hora
+
+function guardarComprobante(r, ped) {
+  const id = crypto.randomBytes(16).toString('hex');
+  comprobantes.set(id, {
+    expira: Date.now() + COMPROBANTE_TTL,
+    datos: {
+      comercio:      'Distribuidora La Barata — Sociedad Comercial FAF SpA',
+      orden:         r.buy_order,
+      monto:         r.amount,
+      moneda:        'CLP',
+      autorizacion:  r.authorization_code || null,
+      fecha:         r.transaction_date || new Date().toISOString(),
+      tipoPago:      TBK_PAYMENT_TYPE[r.payment_type_code] || r.payment_type_code || null,
+      tipoPagoCodigo: r.payment_type_code || null,
+      cuotas:        r.installments_number || 0,
+      montoCuota:    r.installments_amount || 0,
+      ultimos4:      r.card_detail?.card_number || null,
+      // Descripción de los bienes: exigida por Transbank en el comprobante
+      productos:     ped ? ped.lineas.map(l => ({ n: l.n, cantidad: l.cantidad, precio: l.p, subtotal: l.p * l.cantidad })) : [],
+      subtotal:      ped ? ped.subtotal : null,
+      despacho:      ped ? ped.despacho : null,
+      entrega:       ped ? ped.entrega  : null,
+      km:            ped ? ped.km       : null,
+      cliente:       ped ? { nombre: ped.cliente.nombre, telefono: ped.cliente.telefono,
+                             direccion: ped.entrega === 'retiro' ? null : ped.cliente.direccion,
+                             referencia: ped.entrega === 'retiro' ? null : ped.cliente.referencia } : null,
+    },
+  });
+  // Limpieza de comprobantes vencidos
+  if (comprobantes.size > 300) {
+    const ahora = Date.now();
+    for (const [k, v] of comprobantes) if (v.expira < ahora) comprobantes.delete(k);
+  }
+  return id;
+}
+
+app.get('/api/pago/comprobante/:id', (req, res) => {
+  const c = comprobantes.get(req.params.id);
+  if (!c || c.expira < Date.now()) {
+    return res.status(404).json({ ok: false, error: 'Comprobante no disponible' });
+  }
+  res.json({ ok: true, comprobante: c.datos });
+});
 
 async function manejarRetornoWebpay(req, res) {
   const { token_ws, TBK_TOKEN, TBK_ORDEN_COMPRA } = leerParamsTbk(req);
@@ -668,7 +721,10 @@ async function manejarRetornoWebpay(req, res) {
     // Idempotencia: el commit es de UN SOLO USO. Si el cliente recarga (F5),
     // el segundo PUT da 422 y mostraríamos "rechazado" a alguien que sí pagó.
     if (ped && ped.estado !== 'pendiente') {
-      return res.redirect(302, alFront(ped.estado === 'pagada' ? 'exitoso' : 'rechazado', buyOrder));
+      // Si ya estaba pagada, se vuelve a emitir el comprobante para que el
+      // cliente lo tenga aunque haya recargado la página.
+      const vale = ped.estado === 'pagada' && ped.respuesta ? guardarComprobante(ped.respuesta, ped) : null;
+      return res.redirect(302, alFront(ped.estado === 'pagada' ? 'exitoso' : 'rechazado', buyOrder, vale));
     }
 
     let r;
@@ -700,7 +756,8 @@ async function manejarRetornoWebpay(req, res) {
         ped.lineas.forEach(l => console.log(`   • ${l.cantidad}x ${l.n} — $${(l.p * l.cantidad).toLocaleString('es-CL')}`));
         console.log(`   Subtotal $${ped.subtotal.toLocaleString('es-CL')} + Despacho $${ped.despacho.toLocaleString('es-CL')}`);
       }
-      return res.redirect(302, alFront('exitoso', r.buy_order));
+      const vale = guardarComprobante(r, ped);
+      return res.redirect(302, alFront('exitoso', r.buy_order, vale));
     }
 
     if (aprobada && (!montoOk || !ordenOk)) {

@@ -106,6 +106,16 @@ html{scroll-behavior:smooth;}
 /* ── ACCESIBILIDAD: foco visible con teclado ── */
 :focus-visible{outline:2px solid #16a34a;outline-offset:2px;border-radius:4px;}
 
+/* ── IMPRESIÓN DEL COMPROBANTE ── */
+/* Al imprimir se oculta todo el sitio y queda solo el comprobante. */
+@media print{
+  body > *{display:none!important;}
+  #overlay-comprobante{display:block!important;position:static!important;background:none!important;padding:0!important;overflow:visible!important;}
+  #overlay-comprobante *{visibility:visible;}
+  #hoja-comprobante{box-shadow:none!important;max-width:100%!important;margin:0!important;}
+  #overlay-comprobante button{display:none!important;}
+}
+
 /* ── REVEAL ON SCROLL (aparición suave de secciones) ── */
 .reveal{opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;}
 .reveal.vis{opacity:1;transform:none;}
@@ -2505,16 +2515,98 @@ function enviarPedido(){
   refrescarVistas();
 }
 
-// ── RETORNO DESDE FLOW ────────────────────────────────
+// ── RETORNO DESDE LA PASARELA ─────────────────────────
 // El backend redirige aquí con ?pago=exitoso|pendiente|rechazado|error
 let itemsARestaurar = null;
 
+// ── COMPROBANTE DE PAGO ───────────────────────────────
+// Transbank exige que el comercio muestre un comprobante con: número de
+// orden, nombre del comercio, monto y moneda, código de autorización,
+// fecha, tipo de pago, cuotas, últimos 4 dígitos y detalle de productos.
+async function mostrarComprobante(valeId){
+  let c = null;
+  try{
+    const r = await fetch(`${BACKEND_URL}/api/pago/comprobante/${encodeURIComponent(valeId)}`);
+    const d = await r.json();
+    if(d.ok) c = d.comprobante;
+  }catch(e){ /* si falla, el cliente igual ve el banner de éxito */ }
+  if(!c) return;
+
+  const fecha = new Date(c.fecha);
+  const fechaTxt = isNaN(fecha) ? '—' : fecha.toLocaleString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const money = n => '$' + Number(n||0).toLocaleString('es-CL');
+  const fila = (k,v) => `<div class="flex justify-between gap-3 py-1 border-b border-gray-100 last:border-0"><span class="text-gray-500">${k}</span><span class="font-bold text-gray-800 text-right">${esc(v)}</span></div>`;
+
+  const prods = (c.productos||[]).map(p =>
+    `<div class="flex justify-between gap-2 text-xs py-0.5"><span>${p.cantidad}× ${esc(p.n)}</span><span class="font-semibold whitespace-nowrap">${money(p.subtotal)}</span></div>`).join('');
+
+  const ov = document.createElement('div');
+  ov.id = 'overlay-comprobante';
+  ov.className = 'fixed inset-0 z-[800] flex items-start justify-center p-4 overflow-y-auto';
+  ov.style.background = 'rgba(0,0,0,.6)';
+  ov.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full my-6" id="hoja-comprobante">
+      <div class="bg-verde text-white px-5 py-4 rounded-t-2xl flex justify-between items-center gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <img src="./LOGO_LA_BARATA.jpg" alt="Distribuidora La Barata"
+               class="h-12 w-12 rounded-xl object-cover bg-white flex-shrink-0 shadow-sm">
+          <div class="min-w-0">
+            <p class="font-black text-base leading-tight">✅ Pago exitoso</p>
+            <p class="text-white/80 text-xs mt-0.5">Comprobante de tu compra</p>
+          </div>
+        </div>
+        <button onclick="cerrarComprobante()" class="text-white/70 hover:text-white text-2xl leading-none w-8 h-8 flex items-center justify-center flex-shrink-0" aria-label="Cerrar">×</button>
+      </div>
+      <div class="p-5 space-y-3 text-xs">
+        <p class="font-bold text-gray-800 text-sm leading-snug">${esc(c.comercio)}</p>
+        <p class="text-gray-500 text-[11px] -mt-2">RUT 77.557.632-4 · Av. Ramón Picarte 779, Valdivia · +56 9 4435 0559</p>
+        <div class="space-y-0">
+          ${fila('N° de orden', c.orden)}
+          ${fila('Fecha', fechaTxt)}
+          ${fila('Monto pagado', money(c.monto) + ' ' + c.moneda)}
+          ${c.autorizacion ? fila('Código de autorización', c.autorizacion) : ''}
+          ${c.tipoPago ? fila('Tipo de pago', c.tipoPago) : ''}
+          ${fila('Cuotas', c.cuotas > 0 ? `${c.cuotas} de ${money(c.montoCuota)}` : 'Sin cuotas')}
+          ${c.ultimos4 ? fila('Tarjeta', '•••• •••• •••• ' + c.ultimos4) : ''}
+        </div>
+        ${prods ? `<div class="bg-gray-50 rounded-xl p-3 border border-gray-200">
+          <p class="font-bold text-gray-700 uppercase tracking-wide mb-1.5 text-[10px]">Detalle de la compra</p>
+          ${prods}
+          <div class="border-t mt-2 pt-1.5 space-y-0.5">
+            ${c.subtotal!=null ? `<div class="flex justify-between"><span class="text-gray-500">Subtotal</span><span class="font-semibold">${money(c.subtotal)}</span></div>` : ''}
+            ${c.despacho!=null ? `<div class="flex justify-between"><span class="text-gray-500">${c.entrega==='retiro'?'Retiro en local':'Despacho'+(c.km?` (${c.km} km)`:'')}</span><span class="font-semibold">${c.despacho===0?'Gratis':money(c.despacho)}</span></div>` : ''}
+            <div class="flex justify-between text-sm pt-1"><span class="font-black text-gray-800">Total</span><span class="font-black text-verde">${money(c.monto)}</span></div>
+          </div>
+        </div>` : ''}
+        ${c.cliente ? `<div class="text-gray-500 leading-relaxed">
+          <p><strong class="text-gray-700">${esc(c.cliente.nombre)}</strong> · ${esc(c.cliente.telefono)}</p>
+          <p>${c.entrega==='retiro' ? '🏬 Retiro en local — Av. Ramón Picarte 779, Valdivia' : '📍 ' + esc(c.cliente.direccion||'') + (c.cliente.referencia? ' — ' + esc(c.cliente.referencia) : '')}</p>
+        </div>` : ''}
+        <div class="flex gap-2 pt-1">
+          <button onclick="window.print()" class="flex-1 border-2 border-gray-200 hover:border-verde text-gray-700 font-bold py-2.5 rounded-xl transition-colors">🖨️ Imprimir</button>
+          <button onclick="cerrarComprobante()" class="flex-1 bg-verde hover:bg-green-700 text-white font-bold py-2.5 rounded-xl transition-colors">Listo</button>
+        </div>
+        <p class="text-center text-gray-400 text-[10px] leading-relaxed">Guarda este comprobante. Te contactaremos por WhatsApp para coordinar la entrega.</p>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', e => { if(e.target === ov) cerrarComprobante(); });
+}
+function cerrarComprobante(){
+  document.getElementById('overlay-comprobante')?.remove();
+}
+
 function procesarRetornoPago(){
-  const estado = new URLSearchParams(location.search).get('pago');
+  const params = new URLSearchParams(location.search);
+  const estado = params.get('pago');
   if(!estado) return;
+  const valeId = params.get('v');
   history.replaceState(null,'',location.pathname); // limpiar la URL
   let ped = null;
   try{ ped = JSON.parse(localStorage.getItem('pedidoFlow')); }catch(e){}
+
+  // Transbank exige mostrar un comprobante de pago al cliente.
+  if(estado === 'exitoso' && valeId) mostrarComprobante(valeId);
 
   if(estado === 'exitoso'){
     localStorage.removeItem('pedidoFlow');
