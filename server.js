@@ -441,14 +441,38 @@ const CACHE_MS = 5 * 60 * 1000; // 5 minutos
 // borrar esta lista: dos interruptores para lo mismo terminan confundiendo.
 const EXCLUIDOS_WEB = [
   /NATIMAX/i,
-  /MASTER ?CAT|MASTERDOG|EKOSCAN|EKOSCAT/i,
   /HUGGIES/i,
   /\bCAVA\b/i,
   /SOPROLE/i,
   /BONANZA/i,
   // Los sacos se despachan solo en el local por peso y volumen.
   /\bSACOS?\b/i,
+  // Alimento de mascota, completo. Va por NOMBRE y no por la subcategoría de
+  // la planilla, que está descuadrada: ahí las mascarillas, la mermelada, el
+  // atún y una sombra de ojos figuran como "Alimento Perro" o "Alimento Gato",
+  // mientras que el alimento de gato real figura en "Embutidos y Fiambres".
+  // "PEDEGREE" está mal escrito en la planilla, por eso la E opcional.
+  /MASTER ?CAT|MASTERDOG|EKOSCAN|EKOSCAT|TRIGONO|PED[EI]GREE|WHISKAS|CAT ?CHOW|RAZA GATO/i,
 ];
+
+// Packs de reventa: cajas y formatos mayoristas que no se venden por la web.
+// Se nombran uno por uno a propósito — la palabra "PACK" sola se lleva 50
+// productos, entre ellos los multipacks normales de leche, yoghurt, pañales y
+// pasta de dientes, que son de los que mejor se venden por internet.
+const PACKS_MAYORISTAS = [
+  'PACK COMPOTA PF X3',
+  'PACK KETCHUP EL AS 800GR X 3',
+  'PACK MOSTAZA EL AS 800GR X 3',
+  'PACK MAYONESA EL AS 800GR X 3',
+  'PACK TOALLITAS ANTIBACTERIAL X10paquetes',
+  'PACK X10 CUADERNO ESPIRAL 100HOJAS',
+  'PACK X10 CUADERNO LISO 80 HOJAS',
+  'PACK FULLMINT MENTA 336GR 12UNID',
+  'PACK FULLMINT MIEL 336GR 12UNID',
+  'PACK OMO MATIC 2.7 X3',
+  'SABANILLA HIGIENICLIN 90X60 PACK X3 10unidades',
+  'SABANILLA HIGIENICLIN 90X60 PACK X3 6unidades',
+].map(n => n.toUpperCase());
 // Excepciones, en el orden en que importan:
 //  · CAVA es una marca que hace productos de auto y de aseo del hogar; estos
 //    tres son de casa y sí se venden.
@@ -458,6 +482,7 @@ const EXCLUIDOS_WEB = [
 const EXCEPCIONES_WEB = /LIMPIA ?VIDRIO|LUSTRA ?MUEBLE|DESMANCHADORA|HARINA/i;
 
 function excluidoDeLaWeb(nombre) {
+  if (PACKS_MAYORISTAS.includes(nombre.trim().toUpperCase())) return true;
   if (EXCEPCIONES_WEB.test(nombre)) return false;
   return EXCLUIDOS_WEB.some(re => re.test(nombre));
 }
