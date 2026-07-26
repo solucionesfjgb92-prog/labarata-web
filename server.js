@@ -497,10 +497,14 @@ function excluidoDeLaWeb(nombre) {
 // No se descarta en silencio: cada uno se nombra en el log al cargar.
 const PRECIO_MAXIMO = parseInt(process.env.PRECIO_MAXIMO) || 150000;
 
-// Publicar solo los productos con un número de stock asignado. Permite armar
-// el catálogo de a poco. Con esto en false (por defecto) la celda vacía
-// significa "sin control de stock" y el producto se vende igual.
-const STOCK_OBLIGATORIO = process.env.STOCK_OBLIGATORIO === 'true';
+// Solo se publica lo que tiene un número de stock asignado en la planilla.
+// Decisión del comercio: así arma el catálogo de a poco, revisando nombre,
+// categoría y precio de cada producto antes de que salga a la venta — con la
+// planilla en el estado en que está, es más seguro publicar de a uno que
+// publicar todo y corregir después.
+// Para volver al modo anterior (celda vacía = se vende igual):
+// STOCK_OBLIGATORIO=false en Render.
+const STOCK_OBLIGATORIO = process.env.STOCK_OBLIGATORIO !== 'false';
 
 function parsearCSV(texto) {
   const lineas = texto.split('\n').filter(l => l.trim());
