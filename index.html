@@ -1828,8 +1828,10 @@ function esPerecible(p){
 
 function crearCard(p, mini) {
   const en        = carrito.find(i => i.id === p.id);
-  const sinStock  = p.stock !== undefined && p.stock <= 0;
-  const pocoStock = p.stock !== undefined && p.stock > 0 && p.stock <= 5;
+  // stock null = sin control (se vende sin tope). Un número es el máximo que
+  // el comercio autorizó a vender por la web.
+  const sinStock  = p.stock !== null && p.stock !== undefined && p.stock <= 0;
+  const pocoStock = typeof p.stock === 'number' && p.stock > 0 && p.stock <= 5;
   const d = document.createElement('div');
   d.className = 'prod-card bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden relative flex flex-col';
   if (sinStock) d.className += ' opacity-70';
@@ -1858,7 +1860,6 @@ function crearCard(p, mini) {
       <h3 class="text-xs sm:text-sm font-semibold text-gray-700 leading-snug flex-1 mb-1.5 sm:mb-2" style="min-height:2.2rem">${esc(p.n)}</h3>
       <div class="flex items-center justify-between mb-1.5 sm:mb-2">
         <p class="text-gray-900 font-black text-base sm:text-lg" style="font-variant-numeric:tabular-nums">$${p.p.toLocaleString('es-CL')}</p>
-        ${p.stock !== undefined && !sinStock && p.stock > 5 && !COMPRAS_DESACTIVADAS ? `<span class="text-[9px] text-gray-400 font-semibold">${p.stock} disp.</span>` : ''}
       </div>
       ${avisoRetracto}
       ${COMPRAS_DESACTIVADAS
@@ -1887,7 +1888,7 @@ function pintarHomeTop(){
   const g=document.getElementById('home-top');
   if(!g)return;
   g.innerHTML='';
-  DB.filter(p=>p.stock>0).slice(0,12).forEach(p=>g.appendChild(crearCard(p,true)));
+  DB.filter(p=>p.stock===null||p.stock===undefined||p.stock>0).slice(0,12).forEach(p=>g.appendChild(crearCard(p,true)));
 }
 
 // ── NUESTROS PROVEEDORES ──
@@ -1941,18 +1942,33 @@ function toggleCarrito(){
   }
   document.getElementById('panel-carrito').classList.toggle('hidden');
 }
+// Máximo que se puede llevar de un producto. null = el comercio no lleva
+// control de ese producto, así que no hay tope.
+function maxPorProducto(p){
+  return (p && typeof p.stock === 'number') ? p.stock : Infinity;
+}
+// Devuelve true si se pudo subir la cantidad; avisa si ya llegó al tope.
+function subirCantidad(id){
+  const p = DB.find(x=>x.id===id) || carrito.find(x=>x.id===id);
+  const e = carrito.find(x=>x.id===id);
+  const max = maxPorProducto(p);
+  if(e && e.cantidad >= max){
+    mostrarToast(`Solo quedan ${max} ${max===1?'unidad':'unidades'} de ${p.n}`, 3500);
+    return false;
+  }
+  if(e) e.cantidad++; else carrito.push({...p,cantidad:1});
+  return true;
+}
 function agregar(id){
   if(COMPRAS_DESACTIVADAS){alert('El sitio está en mantención. Las compras están temporalmente desactivadas — escríbenos por WhatsApp para hacer tu pedido.');return;}
-  const p=DB.find(x=>x.id===id);
-  const e=carrito.find(x=>x.id===id);
-  if(e) e.cantidad++; else carrito.push({...p,cantidad:1});
+  if(!subirCantidad(id)) return;
   pintarCarrito();
   document.getElementById('panel-carrito').classList.remove('hidden');
   refrescarVistas();
 }
 function sumar(id){
-  const e=carrito.find(x=>x.id===id);
-  if(e){e.cantidad++;pintarCarrito();refrescarVistas();}
+  if(!subirCantidad(id)) return;
+  pintarCarrito();refrescarVistas();
 }
 function restar(id){
   const e=carrito.find(x=>x.id===id);

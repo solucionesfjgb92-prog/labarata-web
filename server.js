@@ -497,6 +497,11 @@ function excluidoDeLaWeb(nombre) {
 // No se descarta en silencio: cada uno se nombra en el log al cargar.
 const PRECIO_MAXIMO = parseInt(process.env.PRECIO_MAXIMO) || 150000;
 
+// Publicar solo los productos con un número de stock asignado. Permite armar
+// el catálogo de a poco. Con esto en false (por defecto) la celda vacía
+// significa "sin control de stock" y el producto se vende igual.
+const STOCK_OBLIGATORIO = process.env.STOCK_OBLIGATORIO === 'true';
+
 function parsearCSV(texto) {
   const lineas = texto.split('\n').filter(l => l.trim());
   if (lineas.length < 2) return [];
@@ -533,6 +538,7 @@ async function cargarProductos() {
 
   let id = 1;
   let excluidos = 0;
+  let sinStock   = 0;
   const sospechosos = [];
   const productos = [];
 
@@ -547,12 +553,23 @@ async function cargarProductos() {
     if (!nombre)         continue;
     if (precio <= 0)     continue;
 
-    // Stock: celda vacía = sin control de stock (siempre disponible).
-    // Un 0 explícito SÍ significa agotado — por eso no se usa "|| 999",
-    // que convertía el 0 en 999 y mostraba disponible un producto agotado.
+    // Stock, tres estados y ninguno ambiguo:
+    //   · celda vacía → null, sin control: se vende sin tope
+    //   · 0           → agotado
+    //   · número      → tope de venta por la web
+    // Antes la celda vacía se convertía en 999, que era indistinguible de un
+    // stock real de 999 y hacía que el sitio mostrara "999 disp." en todos
+    // los productos.
     const stockRaw = (f.stock || '').replace(/[.\s]/g, '').replace(',', '.');
     const stockNum = parseInt(stockRaw, 10);
-    const stock    = Number.isFinite(stockNum) ? stockNum : 999;
+    const stock    = Number.isFinite(stockNum) ? stockNum : null;
+
+    // Con STOCK_OBLIGATORIO=true solo se publica lo que tiene un número mayor
+    // que cero. Sirve para ir armando el catálogo de a poco, revisando nombre,
+    // categoría y precio de cada producto antes de que salga a la venta.
+    // OJO: al encenderlo la tienda queda vacía hasta que se carguen números.
+    if (STOCK_OBLIGATORIO && !(stock > 0)) { sinStock++; continue; }
+    if (stock === 0) { sinStock++; continue; }
     const cat      = (f.categoria || 'despensa').toLowerCase().trim();
     const img      = (f.imagen_url || '').trim();
     const barcode  = (f.barcode   || '').trim();
@@ -592,6 +609,7 @@ async function cargarProductos() {
   cache = { data: productos, ts: ahora };
   console.log(`📦 Google Sheets: ${productos.length} productos activos con precio` +
               ` (${excluidos} excluidos de la web por marca, sacos o venta solo en local)`);
+  if (sinStock) console.log(`   ${sinStock} sin stock disponible` + (STOCK_OBLIGATORIO ? ' o sin número asignado' : ''));
   ultimosSospechosos = sospechosos;
   if (sospechosos.length) {
     console.warn(`⚠️ ${sospechosos.length} producto(s) NO publicados por superar $${PRECIO_MAXIMO.toLocaleString('es-CL')} — corregir el precio en la planilla:`);
@@ -831,6 +849,18 @@ async function prepararPedido(body, { emailObligatorio = true } = {}) {
     }
     if (!prod) {
       return err(409, { error: 'El catálogo cambió mientras comprabas. Recarga la página e intenta de nuevo.' });
+    }
+    // El tope de stock se verifica acá y no solo en el navegador: el carrito
+    // vive en el cliente y se puede alterar. Es la última barrera antes de
+    // cobrarle a alguien algo que no se le puede entregar.
+    // stock null = el comercio no lleva control de ese producto, no hay tope.
+    if (typeof prod.stock === 'number') {
+      if (prod.stock <= 0) {
+        return err(409, { error: `"${prod.n}" se agotó mientras comprabas. Sácalo del carrito para continuar.` });
+      }
+      if (cant > prod.stock) {
+        return err(409, { error: `Solo quedan ${prod.stock} ${prod.stock === 1 ? 'unidad' : 'unidades'} de "${prod.n}". Ajusta la cantidad para continuar.` });
+      }
     }
     // Se guarda la categoría para poder marcar los perecibles (excluidos
     // del derecho a retracto) en la confirmación por correo.
