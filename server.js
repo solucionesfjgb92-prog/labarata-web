@@ -444,9 +444,18 @@ const EXCLUIDOS_WEB = [
   /MASTER ?CAT|MASTERDOG|EKOSCAN|EKOSCAT/i,
   /HUGGIES/i,
   /\bCAVA\b/i,
+  /SOPROLE/i,
+  /BONANZA/i,
+  // Los sacos se despachan solo en el local por peso y volumen.
+  /\bSACOS?\b/i,
 ];
-// Excepciones a la regla de CAVA: productos de aseo del hogar, no de auto.
-const EXCEPCIONES_WEB = /LIMPIA ?VIDRIO|LUSTRA ?MUEBLE|DESMANCHADORA/i;
+// Excepciones, en el orden en que importan:
+//  · CAVA es una marca que hace productos de auto y de aseo del hogar; estos
+//    tres son de casa y sí se venden.
+//  · Las harinas quedan fuera de la regla de los sacos por decisión del
+//    comercio. Hoy ninguna se llama "saco", pero si mañana se agrega una,
+//    esta excepción evita que desaparezca sin que nadie se dé cuenta.
+const EXCEPCIONES_WEB = /LIMPIA ?VIDRIO|LUSTRA ?MUEBLE|DESMANCHADORA|HARINA/i;
 
 function excluidoDeLaWeb(nombre) {
   if (EXCEPCIONES_WEB.test(nombre)) return false;
@@ -556,7 +565,7 @@ async function cargarProductos() {
 
   cache = { data: productos, ts: ahora };
   console.log(`📦 Google Sheets: ${productos.length} productos activos con precio` +
-              ` (${excluidos} excluidos de la web: automotriz, mascotas, Huggies)`);
+              ` (${excluidos} excluidos de la web por marca, sacos o venta solo en local)`);
   ultimosSospechosos = sospechosos;
   if (sospechosos.length) {
     console.warn(`⚠️ ${sospechosos.length} producto(s) NO publicados por superar $${PRECIO_MAXIMO.toLocaleString('es-CL')} — corregir el precio en la planilla:`);
