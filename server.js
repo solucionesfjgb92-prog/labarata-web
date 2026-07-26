@@ -445,6 +445,7 @@ const EXCLUIDOS_WEB = [
   /\bCAVA\b/i,
   /SOPROLE/i,
   /BONANZA/i,
+  /BAKELS/i,
   // Los sacos se despachan solo en el local por peso y volumen.
   /\bSACOS?\b/i,
   // Alimento de mascota, completo. Va por NOMBRE y no por la subcategoría de
