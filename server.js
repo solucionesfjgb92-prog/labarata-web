@@ -506,6 +506,7 @@ let ultimosSospechosos = [];
 // desde /api/diagnostico/catalogo sin entrar a los logs de Render.
 let ultimosNormalesInvalidos = [];
 let ultimasOfertasVencidas = [];
+let ultimosPreciosIncoherentes = { avisos: [], omitidosSinStock: 0 };
 const CACHE_MS = 5 * 60 * 1000; // 5 minutos
 
 // ── Parser CSV simple ─────────────────────────────
@@ -625,6 +626,98 @@ function finDelDiaChile(fechaISO) {
   return Date.parse(fechaISO + 'T00:00:00Z') + 27 * 3600 * 1000;
 }
 
+// ════════════════════════════════════════════════
+//  AUDITORÍA DE PRECIOS POR FORMATO
+// ════════════════════════════════════════════════
+// Red de seguridad para el error que el tope de PRECIO_MAXIMO no ve: dos celdas
+// de precio pegadas al revés. Pasó con la mantequilla Alerce (125 g a $2.000 y
+// 250 g a $1.390, o sea $16.000 el kilo contra $5.560) y con toda la línea de
+// yoghurt (los de 125 g entre $790 y $2.000, los de litro a $200).
+//
+// Compara el precio por kilo o litro entre los formatos de un mismo producto.
+// SOLO AVISA, no esconde nada: el formato se lee del nombre, que es texto
+// escrito a mano, así que un falso positivo es perfectamente posible y ocultar
+// un producto vendible por eso sería peor que el problema que se quiere evitar.
+//
+// Mira también las filas que todavía no están publicadas, que es donde
+// conviene encontrar el error: antes de cargarles stock.
+
+// Lee el formato del nombre: "1LT", "125GR", "3KG", "900ML", "X6".
+// Devuelve null si no se entiende, y entonces esa fila no se audita.
+function formatoDe(nombre) {
+  const n = nombre.toUpperCase();
+  let cant = null, token = null;
+  const intentos = [
+    [/(\d+(?:[.,]\d+)?)\s*(?:LTS|LTR|LT|L)(?![A-Z])/, 1],
+    [/(\d+(?:[.,]\d+)?)\s*(?:KGS|KG|K)(?![A-Z])/,      1],
+    [/(\d+(?:[.,]\d+)?)\s*(?:GRS|GR|G)(?![A-Z])/,      0.001],
+    [/(\d+(?:[.,]\d+)?)\s*(?:ML|CC)(?![A-Z])/,         0.001],
+  ];
+  for (const [re, factor] of intentos) {
+    const m = n.match(re);
+    if (m) { cant = parseFloat(m[1].replace(',', '.')) * factor; token = m[0]; break; }
+  }
+  if (!cant || cant <= 0) return null;
+
+  const pack = n.match(/X\s?(\d+)/);
+  const unidades = pack ? parseInt(pack[1], 10) : 1;
+
+  // La familia es el nombre sin el formato ni el pack: así "MANTEQUILLA ALERCE
+  // 125 GRS" y "MANTEQUILLA ALERCE 250 GRS" caen en el mismo grupo.
+  let familia = n.replace(token, ' ');
+  if (pack) familia = familia.replace(pack[0], ' ');
+  familia = familia.replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (familia.length < 6) return null;   // nombre demasiado pobre para agrupar
+
+  return { total: cant * unidades, familia };
+}
+
+function auditarPreciosPorFormato(filas) {
+  const familias = new Map();
+  for (const f of filas) {
+    const fm = formatoDe(f.nombre);
+    if (!fm) continue;
+    if (!familias.has(fm.familia)) familias.set(fm.familia, []);
+    familias.get(fm.familia).push({
+      n: f.nombre, precio: f.precio, total: fm.total, unitario: f.precio / fm.total,
+      enVenta: !!f.enVenta,
+    });
+  }
+
+  const avisos = [];
+  const dormidos = [];   // avisos de filas sin stock: se cuentan, no se listan
+  const $ = v => '$' + Math.round(v).toLocaleString('es-CL');
+
+  for (const [, items] of familias) {
+    if (items.length < 2) continue;
+
+    // Señal más fuerte: el envase grande cuesta MENOS en pesos que el chico.
+    // Eso casi nunca es un precio real, es un par de celdas invertidas.
+    for (const a of items) {
+      for (const b of items) {
+        if (a.total > b.total && a.precio < b.precio) {
+          const dest = (a.enVenta ? avisos : dormidos);
+          if (!a.enVenta && !b.enVenta) { dormidos.push(1); continue; }
+          dest.push(`PROBABLEMENTE INVERTIDOS: "${a.n}" (${$(a.precio)})${a.enVenta ? ' [EN VENTA]' : ''} es más grande y más barato que "${b.n}" (${$(b.precio)})${b.enVenta ? ' [EN VENTA]' : ''}`);
+        }
+      }
+    }
+
+    // Señal más suave: mucha diferencia en el precio por kilo o litro.
+    const orden = [...items].sort((x, y) => x.unitario - y.unitario);
+    const bajo = orden[0], alto = orden[orden.length - 1];
+    const razon = alto.unitario / bajo.unitario;
+    if (razon >= 2.5) {
+      if (!alto.enVenta && !bajo.enVenta) { dormidos.push(1); }
+      else avisos.push(`REVISAR: "${alto.n}" a ${$(alto.unitario)} por kg/L${alto.enVenta ? ' [EN VENTA]' : ''} contra "${bajo.n}" a ${$(bajo.unitario)}${bajo.enVenta ? ' [EN VENTA]' : ''} — ${razon.toFixed(1)} veces de diferencia`);
+    }
+  }
+  // Se listan solo los que tocan a un producto a la venta: el comercio corrige
+  // el precio cuando le carga stock, así que avisar del resto es ruido. Los
+  // omitidos se cuentan para no esconderlos del todo.
+  return { avisos, omitidosSinStock: dormidos.length };
+}
+
 function parsearCSV(texto) {
   const lineas = texto.split('\n').filter(l => l.trim());
   if (lineas.length < 2) return [];
@@ -665,6 +758,9 @@ async function cargarProductos() {
   const sospechosos = [];
   const normalesInvalidos = [];   // precio_normal que no es mayor que el de venta
   const vencidas = [];            // ofertas apagadas por vigencia_hasta
+  // Para la auditoría de precios por formato: se juntan también las filas que
+  // todavía no se publican, porque ahí es donde conviene pillar el error.
+  const paraAuditoria = [];
   const productos = [];
 
   for (const f of filas) {
@@ -688,6 +784,11 @@ async function cargarProductos() {
     const stockRaw = (f.stock || '').replace(/[.\s]/g, '').replace(',', '.');
     const stockNum = parseInt(stockRaw, 10);
     const stock    = Number.isFinite(stockNum) ? stockNum : null;
+
+    // Se audita el precio de TODA fila activa con precio, publicada o no, y se
+    // anota si está en venta: un precio invertido en un producto ya publicado
+    // es urgente, en uno sin stock se puede corregir con calma.
+    paraAuditoria.push({ nombre, precio, enVenta: stock > 0 });
 
     // Con STOCK_OBLIGATORIO=true solo se publica lo que tiene un número mayor
     // que cero. Sirve para ir armando el catálogo de a poco, revisando nombre,
@@ -801,6 +902,15 @@ async function cargarProductos() {
   if (normalesInvalidos.length) {
     console.warn(`⚠️ ${normalesInvalidos.length} precio_normal ignorado(s) por no ser mayor que el precio de venta — sin tachado:`);
     normalesInvalidos.forEach(x => console.warn(`     · ${x}`));
+  }
+  ultimosPreciosIncoherentes = auditarPreciosPorFormato(paraAuditoria);
+  const nInc = ultimosPreciosIncoherentes.avisos.length;
+  if (nInc) {
+    console.warn(`⚠️ ${nInc} aviso(s) de precios incoherentes entre formatos, en productos A LA VENTA:`);
+    ultimosPreciosIncoherentes.avisos.forEach(a => console.warn(`     · ${a}`));
+  }
+  if (ultimosPreciosIncoherentes.omitidosSinStock) {
+    console.log(`   (${ultimosPreciosIncoherentes.omitidosSinStock} aviso(s) más en filas sin stock — se revisan al publicarlas)`);
   }
   ultimasOfertasVencidas = vencidas;
   if (vencidas.length) {
@@ -1797,6 +1907,9 @@ app.get('/api/diagnostico/catalogo', async (req, res) => {
         (p.precioNormal ? ` antes $${p.precioNormal.toLocaleString('es-CL')}, -${p.descuento}%` : '') +
         (p.vigenciaHasta ? `, hasta ${p.vigenciaHasta}` : '') + ')'),
       ofertasVencidas: ultimasOfertasVencidas,
+      // Precios que no cuadran entre formatos del mismo producto. Incluye filas
+      // sin publicar: la idea es corregirlas antes de cargarles stock.
+      preciosIncoherentes: ultimosPreciosIncoherentes,
       precioNormalIgnorado: ultimosNormalesInvalidos,
       notaOfertas: 'Al vencer vigencia_hasta se apaga la oferta (badge, tachado y sección), pero el PRECIO no cambia: sigue mandando la columna "precio".',
       precioMaximo: PRECIO_MAXIMO,
