@@ -2922,6 +2922,10 @@ let bnr=0;let TOT=0;let itv;
 // de producto, y el que apunta a una categoría sin nada publicado no se
 // dibuja — misma regla que el menú, así que vuelve solo cuando haya stock.
 //
+// Las imágenes van sin loading="lazy" a propósito: los slides que no se ven
+// están corridos a la derecha por translateX, el navegador no los considera
+// visibles y al rotar el panel aparecía vacío. Son cuatro y el carrusel gira
+// solo cada 4,5 s, así que se necesitan todas de todos modos.
 // Las imágenes son grupos de tarjetas blancas con las fotos del comercio
 // (./banner-*.webp). No se pone ningún precio en el banner a propósito: el
 // precio vive en la ficha del producto y sale de la planilla, así no puede
@@ -3012,8 +3016,8 @@ function pintarBanners(){
         ${s.ofertas  ? `<div class="slide-oferta"><img src="${dest.img}" alt=""></div>
                         <div class="slide-precio"><span>Oferta</span><b>$${dest.p.toLocaleString('es-CL')}</b></div>`
          : s.despacho ? SVG_DESPACHO
-                      : `<img src="${s.img}" alt=""
-                             ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>`}
+                      : `<img src="${s.img}" alt="" decoding="async"
+                             ${i === 0 ? 'fetchpriority="high"' : ''}>`}
       </div>
     </div>`).join('');
 
