@@ -2887,6 +2887,14 @@ let bnr=0;let TOT=0;let itv;
 // precio vive en la ficha del producto y sale de la planilla, así no puede
 // quedar un cartel prometiendo un valor distinto al que se cobra.
 const SLIDES = [
+  // Esta lámina se arma con los productos marcados en la columna "oferta" de
+  // la planilla. Si no hay ninguno marcado, no se dibuja. El precio sale del
+  // mismo catálogo que la ficha y el carrito, así que no puede quedar un
+  // cartel prometiendo un valor distinto al que se cobra.
+  { ofertas:true, kicker:'Ofertas de la semana', titulo:'OFERTAS<br>SALVADORAS',
+    grad:'linear-gradient(135deg,#b91c1c,#ef4444)',
+    btn:'bg-amarillo text-gray-900', cta:'Ver ofertas →', destino:['ofertas','Ofertas'] },
+
   { cat:'lacteos', kicker:'Lo mejor del campo', titulo:'LÁCTEOS<br>FRESCOS',
     img:'./banner-lacteos.webp', grad:'linear-gradient(135deg,#065f46,#10b981)',
     btn:'bg-white text-emerald-700', cta:'Ver lácteos →', destino:['lacteos','Lácteos'] },
@@ -2934,9 +2942,20 @@ function pintarBanners(){
   // Un slide de categoría solo entra si esa categoría tiene productos. Con el
   // catálogo a medio cargar no se descarta nada, igual que en el menú.
   const completo = DB.length && DB.length >= totalBsale;
+  const ofertas  = DB.filter(p => p.oferta);
   const vivos = SLIDES.filter(s =>
-    s.despacho || !completo || DB.some(p => p.c === s.cat));
+    s.ofertas  ? ofertas.length > 0 :          // sin nada marcado en la planilla, no va
+    s.despacho ? true :
+    !completo  || DB.some(p => p.c === s.cat));
   if (!vivos.length) return;
+
+  // Hasta tres productos en oferta, con su precio real del catálogo.
+  const tarjetasOferta = ofertas.slice(0, 3).map(p => `
+    <div style="background:#fff;border-radius:20px;padding:10px 10px 6px;box-shadow:0 10px 22px rgba(0,0,0,.28);text-align:center;width:112px">
+      <img src="${p.img}" alt="" style="width:100%;height:78px;object-fit:contain" loading="lazy">
+      <p style="font-size:9px;line-height:1.15;color:#374151;font-weight:600;margin:4px 0 2px;height:22px;overflow:hidden">${p.n}</p>
+      <p style="font-size:13px;font-weight:900;color:#b91c1c">$${p.p.toLocaleString('es-CL')}</p>
+    </div>`).join('');
 
   TOT = vivos.length;
   const ancho = 100 / TOT;
@@ -2950,9 +2969,10 @@ function pintarBanners(){
         <button onclick="verCat('${s.destino[0]}','${s.destino[1]}')" class="${s.btn} font-bold px-4 py-2 sm:px-6 sm:py-2.5 rounded-full text-xs sm:text-sm hover:brightness-95 transition-all">${s.cta}</button>
       </div>
       <div class="ml-auto flex-shrink-0 flex items-center justify-end" style="max-width:52%">
-        ${s.despacho ? SVG_DESPACHO
-                     : `<img src="${s.img}" alt="" class="banner-img"
-                            ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>`}
+        ${s.ofertas  ? `<div style="display:flex;gap:8px;align-items:center">${tarjetasOferta}</div>`
+         : s.despacho ? SVG_DESPACHO
+                      : `<img src="${s.img}" alt="" class="banner-img"
+                             ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>`}
       </div>
     </div>`).join('');
 

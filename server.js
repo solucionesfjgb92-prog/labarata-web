@@ -329,6 +329,81 @@ function armarCorreo(ped, pago) {
   return { html, texto };
 }
 
+// ════════════════════════════════════════════════
+//  REGISTRO DE PEDIDOS EN PLANILLA
+// ════════════════════════════════════════════════
+// El comercio quiere el pedido en una planilla además del correo, para tener
+// historial. Se hace contra un Web App de Google Apps Script (doPost que
+// agrega una fila), no con la API de Sheets: así no hay que meter credenciales
+// de servicio en Render, igual que el catálogo, que ya se lee por URL
+// publicada. Además sale por HTTPS/443, que es lo único que el plan gratuito
+// de Render deja salir (los puertos de correo están bloqueados).
+//
+// PEDIDOS_SHEET_URL  = la URL /exec del Web App
+// PEDIDOS_SHEET_TOKEN = clave compartida; el script rechaza lo que no la traiga
+// Si no están configuradas, no se registra nada y la venta sigue igual.
+const PEDIDOS_SHEET_URL   = process.env.PEDIDOS_SHEET_URL   || '';
+const PEDIDOS_SHEET_TOKEN = process.env.PEDIDOS_SHEET_TOKEN || '';
+let ultimoRegistroPlanilla = null;
+
+// Nunca revienta hacia afuera: si la planilla falla, el cliente ya compró y el
+// correo ya salió. Se deja constancia en el log y en /api/diagnostico/pedidos.
+async function anotarEnPlanilla(ped, pago) {
+  const orden = ped.buyOrder || ped.orden || '';
+  if (!PEDIDOS_SHEET_URL) {
+    ultimoRegistroPlanilla = { ok: false, orden, error: 'falta PEDIDOS_SHEET_URL', ts: new Date().toISOString() };
+    return;
+  }
+  const lineas = Array.isArray(ped.lineas) ? ped.lineas : [];
+  const fila = {
+    token:      PEDIDOS_SHEET_TOKEN,
+    fecha:      new Date().toISOString(),
+    orden,
+    medio:      pago?.medio || '',
+    entrega:    ped.entrega === 'retiro' ? 'Retiro en local' : 'Despacho a domicilio',
+    nombre:     ped.cliente?.nombre    || '',
+    telefono:   ped.cliente?.telefono  || '',
+    email:      ped.cliente?.email     || '',
+    direccion:  ped.cliente?.direccion || '',
+    referencia: ped.cliente?.referencia|| '',
+    km:         ped.km ?? '',
+    subtotal:   ped.subtotal ?? '',
+    despacho:   ped.despacho ?? '',
+    total:      ped.total ?? '',
+    unidades:   lineas.reduce((s, l) => s + (Number(l.cantidad) || 0), 0),
+    // Una sola celda con el detalle: la planilla es para leer el pedido de un
+    // vistazo, no para analizarlo línea por línea.
+    detalle:    lineas.map(l => `${l.cantidad}x ${l.n} ($${l.p})`).join(' | '),
+  };
+
+  try {
+    const r = await fetch(PEDIDOS_SHEET_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fila),
+      signal: AbortSignal.timeout(10000),
+    });
+    const texto = (await r.text()).slice(0, 200);
+    const ok = r.ok && !/error/i.test(texto);
+    ultimoRegistroPlanilla = { ok, orden, status: r.status, respuesta: texto, ts: new Date().toISOString() };
+    if (ok) console.log(`📄 Pedido ${orden} anotado en la planilla de registro`);
+    else    console.warn(`⚠️ La planilla de pedidos respondió ${r.status}: ${texto}`);
+  } catch (err) {
+    ultimoRegistroPlanilla = { ok: false, orden, error: err.message, ts: new Date().toISOString() };
+    console.warn(`⚠️ No se pudo anotar el pedido ${orden} en la planilla: ${err.message}`);
+  }
+}
+
+// Embudo único de todo pedido confirmado — tarjeta (Flow o Webpay),
+// transferencia y efectivo pasan por acá. Deja el registro para el comercio y
+// manda el comprobante al cliente. El registro va primero y no depende del
+// correo: si el cliente no dejó email, el pedido igual tiene que quedar
+// anotado.
+function registrarPedido(ped, pago) {
+  anotarEnPlanilla(ped, pago);
+  enviarConfirmacion(ped, pago);
+}
+
 // No bloquea la respuesta al cliente: si el correo falla, la venta sigue.
 function enviarConfirmacion(ped, pago) {
   const destino = (ped.cliente?.email || '').trim();
@@ -581,6 +656,22 @@ async function cargarProductos() {
     const tipo     = (f.tipo_bsale || '').toUpperCase().trim();
     const sub      = (f.subcategoria || '').trim();
 
+    // Columna "oferta" (K en la planilla). Marca qué productos salen
+    // destacados en el home, en la lámina de ofertas del carrusel y en la
+    // categoría "Ofertas" del menú. Antes esto viajaba fijo en false, así que
+    // la sección de ofertas del sitio nunca tuvo nada y quedaba escondida.
+    //
+    // No hay columna de precio anterior, así que el sitio no muestra ningún
+    // precio tachado: la oferta se anuncia con el precio real de la planilla y
+    // es el mismo que cobra el carrito. Si algún día se agrega
+    // "precio_normal", ahí sí se puede mostrar el descuento.
+    //
+    // Se acepta SI, SÍ, S, X, TRUE y 1 porque la planilla se llena a mano y ya
+    // pasó con "activo" que aparecieran variantes. Si la columna no existe
+    // todavía, esto queda en false y el sitio funciona igual que antes.
+    const oferta = ['SI', 'SÍ', 'S', 'X', 'TRUE', '1']
+      .includes((f.oferta || '').toUpperCase().trim());
+
     // Antes se filtraba por tipo_bsale = AUTOMOVIL o SIN TIPO. Se sacó: esos
     // valores estaban mal puestos en la planilla y escondían 51 productos
     // vendibles (pañales, huevos por caja, tallarines, comida de mascota de
@@ -606,7 +697,7 @@ async function cargarProductos() {
       sub,
       barCode:   barcode,
       code:      sku,
-      oferta:    false,
+      oferta,
     });
   }
 
@@ -713,7 +804,7 @@ app.post('/api/pedido', async (req, res) => {
     // cliente dejó su email (art. 12 A Ley 19.496).
     if (cliente.email) {
       const esRetiro = entrega === 'retiro';
-      enviarConfirmacion({
+      registrarPedido({
         orden: `LB-${Date.now()}`,
         cliente: { nombre: cliente.nombre, telefono: cliente.telefono, email: cliente.email,
                    direccion: cliente.direccion, referencia: cliente.referencia },
@@ -1207,7 +1298,7 @@ async function manejarRetornoWebpay(req, res) {
       }
       // Confirmación escrita (art. 12 A Ley 19.496). No se espera la
       // respuesta: Transbank exige responder rápido y la venta ya está hecha.
-      if (ped) enviarConfirmacion(ped, {
+      if (ped) registrarPedido(ped, {
         medio: `Tarjeta ${TBK_PAYMENT_TYPE[r.payment_type_code] || ''}`.trim() + (r.card_detail?.card_number ? ` ****${r.card_detail.card_number}` : ''),
         autorizacion: r.authorization_code,
       });
@@ -1340,7 +1431,7 @@ app.post('/api/pago/confirmacion', async (req, res) => {
         // Confirmación escrita (art. 12 A Ley 19.496). Faltaba: el correo salía
         // en transferencia y en Webpay, pero no en Flow, así que quien pagaba
         // con tarjeta por Flow se quedaba sin comprobante escrito.
-        enviarConfirmacion({ ...ped, orden: pago.commerceOrder },
+        registrarPedido({ ...ped, orden: pago.commerceOrder },
                            { medio: `Tarjeta${pago.paymentData?.media ? ` (${pago.paymentData.media})` : ''}` });
       } else {
         // El server se reinició y perdió el pedido: se rearma con el respaldo
@@ -1349,7 +1440,7 @@ app.post('/api/pago/confirmacion', async (req, res) => {
         if (rearmado) {
           console.log(`   (recuperado de Flow) Cliente: ${rearmado.cliente.nombre} | ${rearmado.cliente.telefono} | ${rearmado.cliente.email}`);
           rearmado.lineas.forEach(l => console.log(`   • ${l.cantidad}x ${l.n} — $${(l.p * l.cantidad).toLocaleString('es-CL')}`));
-          enviarConfirmacion(rearmado,
+          registrarPedido(rearmado,
                              { medio: `Tarjeta${pago.paymentData?.media ? ` (${pago.paymentData.media})` : ''}` });
         } else {
           console.warn(`   ⚠️ Pedido ${pago.commerceOrder} no está en memoria y el respaldo de Flow no se pudo leer — SIN correo de confirmación:`, pago.optional);
@@ -1567,11 +1658,44 @@ app.get('/api/diagnostico/flow', async (req, res) => {
 // Diagnóstico del catálogo: qué se está publicando y qué quedó retenido.
 // Evita tener que bucear en los logs de Render para saber por qué un
 // producto no aparece en el sitio.
+// Igual que los de correo y Flow: saber si el registro está enchufado y cómo
+// terminó el último intento, sin tener que entrar a los logs de Render.
+// ?probar=1 escribe una fila de prueba, marcada como tal.
+app.get('/api/diagnostico/pedidos', async (req, res) => {
+  const info = {
+    configurado: !!PEDIDOS_SHEET_URL,
+    urlPresente: !!PEDIDOS_SHEET_URL,
+    tokenPresente: !!PEDIDOS_SHEET_TOKEN,
+    esWebAppDeAppsScript: /script\.google\.com\/.*\/exec$/.test(PEDIDOS_SHEET_URL),
+    ultimoRegistro: ultimoRegistroPlanilla,
+  };
+  if (!PEDIDOS_SHEET_URL) {
+    return res.json({ ...info, error: 'falta PEDIDOS_SHEET_URL en Render',
+                      ayuda: 'pegar la URL /exec del Web App de Apps Script' });
+  }
+  if (!req.query.probar) {
+    return res.json({ ...info, ayuda: 'agrega ?probar=1 para escribir una fila de prueba' });
+  }
+  await anotarEnPlanilla({
+    orden: `PRUEBA-${Date.now()}`,
+    entrega: 'retiro',
+    cliente: { nombre: 'PRUEBA — borrar esta fila', telefono: '-', email: '', direccion: '-', referencia: '-' },
+    lineas: [{ n: 'Fila de prueba del diagnóstico', p: 0, cantidad: 1 }],
+    subtotal: 0, despacho: 0, total: 0, km: null,
+  }, { medio: 'prueba' });
+  res.json({ ...info, ultimoRegistro: ultimoRegistroPlanilla });
+});
+
 app.get('/api/diagnostico/catalogo', async (req, res) => {
   try {
     const productos = await cargarProductos();
     res.json({
       publicados: productos.length,
+      // Para saber de un vistazo si la columna "oferta" (K) está haciendo algo.
+      // Si sale 0, o no hay ninguna fila marcada o la columna no se llama
+      // exactamente "oferta" en la primera fila de la planilla.
+      enOferta: productos.filter(p => p.oferta).length,
+      productosEnOferta: productos.filter(p => p.oferta).map(p => `${p.n} ($${p.p.toLocaleString('es-CL')})`),
       precioMaximo: PRECIO_MAXIMO,
       retenidosPorPrecio: ultimosSospechosos,
       excluidosDeLaWeb: 'línea automotriz, alimento de mascotas y pañales Huggies (se venden solo en el local)',
