@@ -196,6 +196,8 @@ html{scroll-behavior:smooth;}
 
 /* ── BANNER ── */
 #banner-track{display:flex;transition:transform .5s ease;}
+.banner-img{max-height:232px;width:auto;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(0,0,0,.28));}
+@media(max-width:640px){.banner-img{max-height:124px;}}
 
 /* ── SKELETON LOADING ── */
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
@@ -792,41 +794,11 @@ html{scroll-behavior:smooth;}
   <!-- BANNER CAROUSEL -->
   <div class="wrap w-full px-3 sm:px-6 pt-3 sm:pt-5">
     <div id="banner-container" class="relative overflow-hidden rounded-2xl shadow-xl group" style="height:260px">
-      <div id="banner-track" style="width:400%">
-        <div class="slide-inner" style="width:25%;float:left;height:260px;background:linear-gradient(135deg,#16a34a,#22c55e,#4ade80);display:flex;align-items:center;padding:30px 40px">
-          <div class="text-white flex-1"><p class="text-[10px] sm:text-sm font-semibold uppercase tracking-widest opacity-80 mb-1">Semana del ahorro</p>
-          <h2 class="text-3xl sm:text-5xl font-black leading-none mb-2 sm:mb-4">¡OFERTAS<br>SALVADORAS!</h2>
-          <button onclick="verCat('ofertas','Ofertas')" class="bg-amarillo text-gray-900 font-bold px-4 py-2 sm:px-6 sm:py-2.5 rounded-full text-xs sm:text-sm hover:bg-yellow-300 transition-colors">Ver Ofertas →</button></div>
-          <div class="deco-emoji text-7xl sm:text-[120px] ml-auto opacity-25">🛒</div>
-        </div>
-        <div class="slide-inner" style="width:25%;float:left;height:260px;background:linear-gradient(135deg,#f97316,#facc15);display:flex;align-items:center;padding:30px 40px">
-          <div class="text-white flex-1"><p class="text-[10px] sm:text-sm font-semibold uppercase tracking-widest opacity-80 mb-1">Para ellos</p>
-          <h2 class="text-3xl sm:text-5xl font-black leading-none mb-2 sm:mb-4">MASCOTAS<br>FELICES 🐕</h2>
-          <button onclick="verCat('mascotas','Mascotas')" class="bg-white text-orange-600 font-bold px-4 py-2 sm:px-6 sm:py-2.5 rounded-full text-xs sm:text-sm">Ver productos →</button></div>
-          <div class="deco-emoji text-7xl sm:text-[120px] ml-auto opacity-25">🐾</div>
-        </div>
-        <div class="slide-inner" style="width:25%;float:left;height:260px;background:linear-gradient(135deg,#374151,#6b7280);display:flex;align-items:center;padding:30px 40px">
-          <div class="text-white flex-1"><p class="text-[10px] sm:text-sm font-semibold uppercase tracking-widest opacity-80 mb-1">Cobertura Valdivia</p>
-          <h2 class="text-3xl sm:text-5xl font-black leading-none mb-2 sm:mb-4">🚚 DESPACHO<br>DIRECTO</h2>
-          <button onclick="verCat('despensa','Despensa')" class="bg-amarillo text-gray-900 font-bold px-4 py-2 sm:px-6 sm:py-2.5 rounded-full text-xs sm:text-sm">Ver productos →</button></div>
-          <div class="deco-emoji text-7xl sm:text-[120px] ml-auto opacity-25">📦</div>
-        </div>
-        <div class="slide-inner" style="width:25%;float:left;height:260px;background:linear-gradient(135deg,#065f46,#10b981);display:flex;align-items:center;padding:30px 40px">
-          <div class="text-white flex-1"><p class="text-[10px] sm:text-sm font-semibold uppercase tracking-widest opacity-80 mb-1">Lo mejor del campo</p>
-          <h2 class="text-3xl sm:text-5xl font-black leading-none mb-2 sm:mb-4">LÁCTEOS<br>FRESCOS 🥛</h2>
-          <button onclick="verCat('lacteos','Lácteos')" class="bg-white text-emerald-700 font-bold px-4 py-2 sm:px-6 sm:py-2.5 rounded-full text-xs sm:text-sm">Ver productos →</button></div>
-          <div class="deco-emoji text-7xl sm:text-[120px] ml-auto opacity-25">🧀</div>
-        </div>
-      </div>
+      <div id="banner-track" style="width:100%"></div>
       <div style="clear:both"></div>
       <button onclick="moveBanner(-1)" class="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 w-9 h-9 sm:w-11 sm:h-11 rounded-full text-xl font-bold shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">‹</button>
       <button onclick="moveBanner(1)"  class="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 w-9 h-9 sm:w-11 sm:h-11 rounded-full text-xl font-bold shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">›</button>
-      <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-        <button id="bd0" onclick="goBanner(0)" class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white shadow transition-all" style="transform:scale(1.3)"></button>
-        <button id="bd1" onclick="goBanner(1)" class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white/50 shadow transition-all"></button>
-        <button id="bd2" onclick="goBanner(2)" class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white/50 shadow transition-all"></button>
-        <button id="bd3" onclick="goBanner(3)" class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white/50 shadow transition-all"></button>
-      </div>
+      <div id="banner-dots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5"></div>
     </div>
   </div>
 
@@ -1559,6 +1531,7 @@ async function cargarProductos(forzar = false) {
     pintarHomeTop();
     pintarMarcas();
     depurarMenus();
+    pintarBanners();
     return;
   }
 
@@ -1608,6 +1581,7 @@ async function cargarProductos(forzar = false) {
     pintarHomeTop();
     pintarMarcas();
     depurarMenus();
+    pintarBanners();
   }
 }
 
@@ -1643,6 +1617,7 @@ async function cargarMasProductos(offset) {
       pintarHomeTop();
       pintarMarcas();
       depurarMenus();
+    pintarBanners();
     }
   } catch (e) { /* silencioso */ }
 }
@@ -2898,10 +2873,99 @@ function restaurarCarritoPendiente(){
 }
 
 // ── BANNER ──
-let bnr=0;const TOT=4;let itv;
+let bnr=0;let TOT=0;let itv;
+
+// ── CARRUSEL DEL HOME ───────────────────────────────────────────────────
+// Antes eran cuatro slides escritos a mano, con un emoji gigante de adorno y
+// uno de ellos apuntando a Mascotas, que no se vende por la web: llevaba a una
+// vista con cero productos. Ahora se arman desde esta lista, con fotos reales
+// de producto, y el que apunta a una categoría sin nada publicado no se
+// dibuja — misma regla que el menú, así que vuelve solo cuando haya stock.
+//
+// Las imágenes son grupos de tarjetas blancas con las fotos del comercio
+// (./banner-*.webp). No se pone ningún precio en el banner a propósito: el
+// precio vive en la ficha del producto y sale de la planilla, así no puede
+// quedar un cartel prometiendo un valor distinto al que se cobra.
+const SLIDES = [
+  { cat:'lacteos', kicker:'Lo mejor del campo', titulo:'LÁCTEOS<br>FRESCOS',
+    img:'./banner-lacteos.webp', grad:'linear-gradient(135deg,#065f46,#10b981)',
+    btn:'bg-white text-emerald-700', cta:'Ver lácteos →', destino:['lacteos','Lácteos'] },
+
+  { despacho:true, kicker:'Toda Valdivia', titulo:'DESPACHO<br>A DOMICILIO',
+    grad:'linear-gradient(135deg,#15803d,#166534)',
+    btn:'bg-amarillo text-gray-900', cta:'Ver productos →', destino:['todos','Todos los productos'] },
+
+  { cat:'despensa', kicker:'Para la semana', titulo:'DESPENSA<br>COMPLETA',
+    img:'./banner-despensa.webp', grad:'linear-gradient(135deg,#16a34a,#22c55e)',
+    btn:'bg-amarillo text-gray-900', cta:'Ver despensa →', destino:['despensa','Despensa'] },
+
+  { cat:'aseo', kicker:'Rinde más', titulo:'LIMPIEZA<br>Y ASEO',
+    img:'./banner-aseo.webp', grad:'linear-gradient(135deg,#0e7490,#06b6d4)',
+    btn:'bg-white text-cyan-700', cta:'Ver limpieza →', destino:['aseo','Limpieza y Aseo'] },
+
+  { cat:'panaderia', kicker:'Para pasteleras y panaderías', titulo:'INSUMOS DE<br>PASTELERÍA',
+    img:'./banner-pasteleria.webp', grad:'linear-gradient(135deg,#92400e,#d97706)',
+    btn:'bg-white text-amber-800', cta:'Ver insumos →', destino:['panaderia','Panadería'] },
+];
+
+// Furgón dibujado, no fotografiado: no hay ninguna foto de despacho en la
+// carpeta del comercio y no corresponde poner una de archivo haciéndola pasar
+// por el reparto propio. Cuando haya una foto real del furgón, reemplaza esto.
+const SVG_DESPACHO = `
+<svg viewBox="0 0 260 150" class="banner-img" role="img" aria-label="Despacho a domicilio">
+  <g fill="none" stroke="rgba(255,255,255,.35)" stroke-width="7" stroke-linecap="round">
+    <path d="M8 44h34M8 68h20M8 92h30"/>
+  </g>
+  <path d="M62 30h96a8 8 0 0 1 8 8v66H62z" fill="#fff"/>
+  <path d="M166 52h34l24 30v22h-58z" fill="#fff" opacity=".92"/>
+  <path d="M172 58h22l16 20h-38z" fill="#0e7490" opacity=".35"/>
+  <rect x="56" y="104" width="172" height="10" rx="5" fill="#facc15"/>
+  <circle cx="98" cy="122" r="17" fill="#fff"/><circle cx="98" cy="122" r="7" fill="#15803d"/>
+  <circle cx="196" cy="122" r="17" fill="#fff"/><circle cx="196" cy="122" r="7" fill="#15803d"/>
+  <path d="M92 52h44v30H92z" fill="#15803d" opacity=".22"/>
+  <path d="M104 66h20M114 56v20" stroke="#15803d" stroke-width="5" stroke-linecap="round" opacity=".5"/>
+</svg>`;
+
+function pintarBanners(){
+  const track = document.getElementById('banner-track');
+  const dots  = document.getElementById('banner-dots');
+  if (!track || !dots) return;
+
+  // Un slide de categoría solo entra si esa categoría tiene productos. Con el
+  // catálogo a medio cargar no se descarta nada, igual que en el menú.
+  const completo = DB.length && DB.length >= totalBsale;
+  const vivos = SLIDES.filter(s =>
+    s.despacho || !completo || DB.some(p => p.c === s.cat));
+  if (!vivos.length) return;
+
+  TOT = vivos.length;
+  const ancho = 100 / TOT;
+  track.style.width = (100 * TOT) + '%';
+
+  track.innerHTML = vivos.map((s, i) => `
+    <div class="slide-inner" style="width:${ancho}%;float:left;height:260px;background:${s.grad};display:flex;align-items:center;padding:30px 40px;gap:12px">
+      <div class="text-white flex-1 min-w-0">
+        <p class="text-[10px] sm:text-sm font-semibold uppercase tracking-widest opacity-80 mb-1">${s.kicker}</p>
+        <h2 class="text-2xl sm:text-5xl font-black leading-none mb-2 sm:mb-4">${s.titulo}</h2>
+        <button onclick="verCat('${s.destino[0]}','${s.destino[1]}')" class="${s.btn} font-bold px-4 py-2 sm:px-6 sm:py-2.5 rounded-full text-xs sm:text-sm hover:brightness-95 transition-all">${s.cta}</button>
+      </div>
+      <div class="ml-auto flex-shrink-0 flex items-center justify-end" style="max-width:52%">
+        ${s.despacho ? SVG_DESPACHO
+                     : `<img src="${s.img}" alt="" class="banner-img"
+                            ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>`}
+      </div>
+    </div>`).join('');
+
+  dots.innerHTML = vivos.map((_, i) =>
+    `<button id="bd${i}" onclick="goBanner(${i})" class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white shadow transition-all"></button>`).join('');
+
+  if (bnr >= TOT) bnr = 0;
+  updBanner();
+}
 let touchStartX=0;
 function updBanner(){
-  document.getElementById('banner-track').style.transform=`translateX(-${bnr*25}%)`;
+  const paso=TOT?100/TOT:100;
+  document.getElementById('banner-track').style.transform=`translateX(-${bnr*paso}%)`;
   for(let i=0;i<TOT;i++){
     const dd=document.getElementById('bd'+i);
     if(!dd)continue;
@@ -2925,6 +2989,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     },{passive:true});
   }
   irInicio();
+  pintarBanners();       // dibuja el carrusel al tiro; se repinta al terminar
+                         // de cargar el catálogo, cuando ya se sabe qué
+                         // categorías tienen productos
   procesarRetornoPago(); // ¿venimos de vuelta de la pasarela de pago?
   // 🔑 Carga productos desde Bsale (o respaldo si no hay backend)
   cargarProductos().then(()=>restaurarCarritoPendiente());
