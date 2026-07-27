@@ -3083,8 +3083,11 @@ const ILUSTRACIONES = {
   aseo: `
     <circle cx="150" cy="108" r="92" fill="${B}.07)"/>
     <circle cx="112" cy="66" r="23" fill="${B}.92)"/>
-    <path d="M80 182v-46c0-18 14-32 32-32s32 14 32 32v46z" fill="${B}.92)"/>
-    <path d="M96 130h32v52H96z" fill="${B}.45)"/>
+    <!-- Los hombros tienen que MORDER la cabeza. La cabeza termina en y=89
+         (cy 66 + r 23); si el cuerpo arranca más abajo queda flotando, que es
+         justo como se veía antes: un huevo con una pelota encima. -->
+    <path d="M80 182v-66c0-18 14-32 32-32s32 14 32 32v66z" fill="${B}.92)"/>
+    <path d="M96 124h32v58H96z" fill="${B}.45)"/>
     <path d="M142 126l38-16" stroke="${B}.92)" stroke-width="15" stroke-linecap="round" fill="none"/>
     <rect x="176" y="84" width="34" height="48" rx="8" fill="${B}.92)"/>
     <rect x="182" y="100" width="22" height="16" rx="3" fill="${AM}" opacity=".85"/>
