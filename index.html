@@ -3158,7 +3158,7 @@ function pintarBanners(){
       </div>
       <div class="slide-esc">
         ${s.foto     ? `<img src="${s.foto}" alt="" class="slide-foto" decoding="async">
-                        <span class="slide-foto-fade" style="background:linear-gradient(to right,${s.solido},transparent 46%)"></span>`
+                        <span class="slide-foto-fade" style="background:linear-gradient(to right,${s.solido},${s.solido} 2%,transparent 17%)"></span>`
          : s.ofertas  ? `<div class="slide-oferta"><img src="${dest.img}" alt=""></div>
                         <div class="slide-precio">
                           <span>${dest.descuento >= 1 ? `${dest.descuento}% dcto.` : 'Oferta'}</span>
