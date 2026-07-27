@@ -474,7 +474,11 @@ html{scroll-behavior:smooth;}
             <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Limpieza Hogar</h4>
               <ul class="space-y-1.5 text-xs text-gray-600">
                 <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Limpieza Hogar','Limpieza Hogar')">Limpieza Hogar</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Limpiadores','Limpiadores y Gel')">Limpiadores y Gel</li>
+                <!-- La planilla escribe esta subcategoría de dos formas:
+                     "Limpiadores" (73 filas) y "Limpiadores y Gel" (20, entre
+                     ellas casi todo el aseo publicado hoy). El link pedía solo
+                     la primera y las otras 20 quedaban inalcanzables. -->
+                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo',['Limpiadores','Limpiadores y Gel'],'Limpiadores y Gel')">Limpiadores y Gel</li>
                 <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Insecticidas','Insecticidas')">Insecticidas</li>
                 <li class="font-bold text-verde cursor-pointer" onclick="verCat('aseo','Limpieza y Aseo')">Ver todo →</li>
               </ul>
@@ -827,7 +831,7 @@ html{scroll-behavior:smooth;}
   </div>
 
   <!-- GRID 3 BANNERS PROMOCIONALES -->
-  <div class="wrap reveal w-full px-3 sm:px-4 py-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+  <div id="promo-grid" class="wrap reveal w-full px-3 sm:px-4 py-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
 
     <div onclick="verCat('despensa','Despensa')" class="relative overflow-hidden rounded-2xl cursor-pointer group" style="background:linear-gradient(135deg,#16a34a,#15803d);min-height:130px;">
       <div class="p-5 flex flex-col justify-between h-full" style="min-height:130px;">
@@ -1554,6 +1558,7 @@ async function cargarProductos(forzar = false) {
     pintarHomeOfertas();
     pintarHomeTop();
     pintarMarcas();
+    depurarMenus();
     return;
   }
 
@@ -1602,6 +1607,7 @@ async function cargarProductos(forzar = false) {
     pintarHomeOfertas();
     pintarHomeTop();
     pintarMarcas();
+    depurarMenus();
   }
 }
 
@@ -1636,6 +1642,7 @@ async function cargarMasProductos(offset) {
       pintarHomeOfertas();
       pintarHomeTop();
       pintarMarcas();
+      depurarMenus();
     }
   } catch (e) { /* silencioso */ }
 }
@@ -1723,6 +1730,12 @@ function activarSub(id,btn){
 }
 function verCat(cat,titulo){cerrarMega();irCatalogo(cat,titulo);}
 
+// La columna "subcategoria" de la planilla se escribe a mano y la misma
+// subcategoría aparece con distintas mayúsculas ("Leche en polvo" en las filas,
+// "Leche en Polvo" en el menú). Comparando exacto el link quedaba sin
+// resultados, así que se compara sin tildes ni mayúsculas.
+const normSub = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
 // ── VISTAS ──
 function irInicio(){
   document.getElementById('vista-inicio').classList.remove('hidden');
@@ -1748,8 +1761,8 @@ function irCatalogo(cat, titulo, tipo='', sub=''){
 
   // Filtrar por subcategoria (campo sub) — más específico
   if (sub) {
-    const subs = Array.isArray(sub) ? sub : [sub];
-    lista = lista.filter(p => subs.includes(p.sub));
+    const subs = (Array.isArray(sub) ? sub : [sub]).map(normSub);
+    lista = lista.filter(p => subs.includes(normSub(p.sub)));
   }
   // Filtrar por tipo_bsale — si no hay sub
   else if (tipo) {
@@ -1768,6 +1781,115 @@ function verSubCat(cat, sub, titulo) {
   cerrarMega();
   cerrarDrawer();
   irCatalogo(cat, titulo, '', sub);
+}
+
+// ── MENÚ SEGÚN LO QUE HAY EN VENTA ──────────────────
+// El mega menú, la barra de arriba y el drawer están escritos a mano con todas
+// las categorías del negocio, pero la web publica solo lo que tiene stock
+// asignado en la planilla. Sin esto, "Bebidas y Jugos", "Congelados" o
+// "Panadería" llevan a una vista que dice "0 productos".
+//
+// No hay una lista de categorías que mantener en paralelo: la categoría y la
+// subcategoría se leen del propio onclick de cada botón, se cuentan contra DB
+// y se esconde lo que da cero. Es de doble sentido — cuando el comercio le
+// pone stock a un producto de bebidas, la categoría vuelve a aparecer sola en
+// la siguiente carga de la página (el backend cachea el Sheet 5 minutos).
+//
+// Solo corre con el catálogo completo: con la primera página de 50 productos
+// esconderÍa categorías que sí tienen. Si la carga de fondo falla, no se
+// esconde nada — es preferible un menú de más que uno que borra categorías
+// reales.
+function depurarMenus() {
+  if (!DB.length || DB.length < totalBsale) return;
+
+  const cuentaCat = cat =>
+    cat === 'ofertas' ? DB.filter(p => p.oferta).length :
+    cat === 'todos'   ? DB.length :
+                        DB.filter(p => p.c === cat).length;
+  // Cuenta contra la MISMA comparación que usa irCatalogo: si acá se contara
+  // exacto y allá normalizado (o al revés), el menú esconderÍa links que sí
+  // traen productos.
+  const cuentaSub = (cat, subs) =>
+    DB.filter(p => p.c === cat && subs.some(s => normSub(s) === normSub(p.sub))).length;
+  const mostrar = (el, hay) => { if (el) el.style.display = hay ? '' : 'none'; };
+  const visible = el => el && el.style.display !== 'none';
+
+  // 1. Todo lo clickeable que lleve a una categoría o subcategoría: mega menú,
+  //    barra de arriba, drawer, banners promocionales y "Ver todo →".
+  document.querySelectorAll('[onclick*="verCat("], [onclick*="verSubCat("]').forEach(el => {
+    const oc  = el.getAttribute('onclick') || '';
+    // El segundo argumento puede ser un texto o un arreglo de subcategorías
+    // (la planilla escribe algunas de dos formas distintas).
+    const sub = oc.match(/verSubCat\(\s*'([^']*)'\s*,\s*(\[[^\]]*\]|'[^']*')/);
+    if (sub) {
+      const subs = (sub[2].match(/'([^']*)'/g) || []).map(t => t.slice(1, -1));
+      mostrar(el, cuentaSub(sub[1], subs) > 0);
+      return;
+    }
+    const cat = oc.match(/verCat\(\s*'([^']*)'/);
+    if (cat) mostrar(el, cuentaCat(cat[1]) > 0);
+  });
+
+  // 2. Acordeones del drawer móvil: la categoría va en el id del panel
+  //    (dsub-bebidas), no en un verCat, así que se saca de ahí.
+  document.querySelectorAll('[onclick*="toggleDrawerSub("]').forEach(btn => {
+    const m = (btn.getAttribute('onclick') || '').match(/dsub-([a-z]+)/i);
+    if (!m) return;
+    const hay = cuentaCat(m[1]) > 0;
+    mostrar(btn, hay);
+    mostrar(document.getElementById('dsub-' + m[1]), hay);
+  });
+
+  // 3. Columnas del mega menú que quedaron sin ninguna subcategoría viva. El
+  //    "Ver todo →" no cuenta: solo, deja una columna con un título y un link.
+  document.querySelectorAll('.sub-panel').forEach(panel => {
+    const cols = [...panel.children];
+    cols.forEach(col => {
+      mostrar(col.querySelector('h4'), true); // deshacer un rescate anterior
+      const vivos = [...col.querySelectorAll('li')].filter(
+        li => visible(li) && /verSubCat\(/.test(li.getAttribute('onclick') || ''));
+      mostrar(col, vivos.length > 0);
+    });
+    // Categoría con productos pero sin ninguna subcategoría que calce (pasa
+    // cuando la planilla trae un nombre de subcategoría nuevo): se rescata la
+    // columna del "Ver todo →" para que el panel no quede en blanco.
+    if (!cols.some(visible)) {
+      const verTodo = panel.querySelector('li[onclick*="verCat("]');
+      if (verTodo) {
+        const col = verTodo.closest('.sub-panel > div');
+        mostrar(verTodo, true);
+        mostrar(col, true);
+        // Sin esto queda el título de un grupo ("Lavado") sobre un solo
+        // "Ver todo →", que se lee como si faltara algo.
+        mostrar(col.querySelector('h4'), false);
+      }
+    }
+  });
+
+  // 4. Si la categoría que abre el mega quedó escondida, activar la primera
+  //    visible: si no, el menú abre mostrando el panel de una categoría vacía.
+  const botones = [...document.querySelectorAll('#mega-cats-list button')];
+  const activo  = botones.find(b => b.classList.contains('active'));
+  if (!visible(activo)) {
+    const primero = botones.find(visible);
+    const m = primero && (primero.getAttribute('onmouseenter') || '').match(/'([^']+)'/);
+    if (m) activarSub(m[1], primero);
+  }
+
+  // 5. La franja "Ofertas destacadas" del home: hoy ningún producto viene
+  //    marcado como oferta, así que el título quedaba sobre una grilla vacía.
+  const ofertas = document.getElementById('home-ofertas');
+  if (ofertas) mostrar(ofertas.closest('.wrap'), cuentaCat('ofertas') > 0);
+
+  // 6. Los tres banners promocionales son una grilla de 3 columnas fijas: si
+  //    se esconde uno hay que apretar la grilla o queda un hueco.
+  const promos = document.getElementById('promo-grid');
+  if (promos) {
+    const vivos = [...promos.children].filter(visible).length;
+    promos.classList.remove('sm:grid-cols-3', 'sm:grid-cols-2');
+    if (vivos >= 3) promos.classList.add('sm:grid-cols-3');
+    else if (vivos === 2) promos.classList.add('sm:grid-cols-2');
+  }
 }
 function buscarProducto(q){
   const t=q.trim().toLowerCase();
