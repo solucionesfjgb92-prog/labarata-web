@@ -205,6 +205,13 @@ html{scroll-behavior:smooth;}
 .slide-txt{flex:0 0 46%;display:flex;flex-direction:column;justify-content:center;
   padding:26px 20px 26px 34px;position:relative;z-index:2;
   box-shadow:14px 0 26px rgba(0,0,0,.16);}
+/* La ilustración va pegada al borde derecho del bloque de color, detrás del
+   texto. Se recorta con el bloque (overflow del slide) y en móvil se esconde:
+   ahí el bloque ocupa casi todo el ancho y competiría con el título. */
+.slide-ilustra{position:absolute;right:-26px;bottom:-14px;height:104%;width:auto;
+  opacity:.9;pointer-events:none;z-index:0;}
+.slide-txt > :not(.slide-ilustra){position:relative;z-index:1;}
+@media(max-width:820px){.slide-ilustra{display:none;}}
 .slide-kicker{font-size:10px;font-weight:700;letter-spacing:.18em;
   text-transform:uppercase;opacity:.82;margin-bottom:7px;}
 .slide-h2{font-size:41px;font-weight:900;line-height:.9;letter-spacing:-.025em;}
@@ -1137,13 +1144,10 @@ html{scroll-behavior:smooth;}
       <h4 class="font-black text-sm mb-3">Medios de pago</h4>
       <div class="flex gap-2 flex-wrap mb-5">
         <div class="bg-white text-gray-800 font-black text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-          <span>💳</span> Tarjetas (Webpay)
+          <span>💳</span> Tarjetas de crédito y débito
         </div>
         <div class="bg-white text-gray-800 font-black text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
           <span>🏦</span> Transferencia
-        </div>
-        <div class="bg-white text-gray-800 font-black text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-          <span>💵</span> Efectivo
         </div>
       </div>
 
@@ -1358,7 +1362,7 @@ html{scroll-behavior:smooth;}
           <span class="text-2xl">💳</span>
           <div>
             <p class="font-black text-gray-800 text-sm">Tarjeta de crédito o débito</p>
-            <p class="text-xs text-gray-500">Webpay de Transbank — pago seguro con crédito, débito o prepago</p>
+            <p class="text-xs text-gray-500">Pago seguro con crédito, débito o prepago</p>
           </div>
           <input id="radio-tarjeta" type="radio" name="pago" value="Tarjeta" checked onchange="actualizarCheckout()" class="ml-auto w-4 h-4 accent-verde flex-shrink-0">
         </label>
@@ -1370,19 +1374,8 @@ html{scroll-behavior:smooth;}
           </div>
           <input id="radio-transferencia" type="radio" name="pago" value="Transferencia" onchange="actualizarCheckout()" class="ml-auto w-4 h-4 accent-verde flex-shrink-0">
         </label>
-        <label class="bg-emerald-50 border-2 border-emerald-300 rounded-xl p-3 sm:p-4 flex items-center gap-3 cursor-pointer">
-          <span class="text-2xl">💵</span>
-          <div>
-            <p class="font-black text-gray-800 text-sm">Efectivo</p>
-            <p class="text-xs text-gray-500">Pagas al recibir tu pedido o al retirarlo en el local</p>
-          </div>
-          <input type="radio" name="pago" value="Efectivo" onchange="actualizarCheckout()" class="ml-auto w-4 h-4 accent-verde flex-shrink-0">
-        </label>
         <div id="caja-tarjeta" class="bg-green-50 border-2 border-green-200 rounded-xl p-3 sm:p-4 text-xs">
-          <p class="text-green-800 font-semibold">🔒 Serás redirigido a Webpay de Transbank para pagar el total de forma segura — sin cobros extra al recibir.</p>
-        </div>
-        <div id="caja-efectivo" class="hidden bg-emerald-50 border-2 border-emerald-200 rounded-xl p-3 sm:p-4 text-xs">
-          <p class="text-emerald-800 font-semibold">💵 Pagas en efectivo al momento de la entrega o del retiro. Si puedes, ten el monto justo — ¡se agradece!</p>
+          <p class="text-green-800 font-semibold">🔒 Serás redirigido al pago seguro de nuestra pasarela para pagar el total con tarjeta — sin cobros extra al recibir.</p>
         </div>
         <div id="caja-banco" class="hidden bg-blue-50 border-2 border-blue-200 rounded-xl p-3 sm:p-4 text-xs">
           <p class="font-black text-blue-900 mb-1 text-xs uppercase">Datos Banco Santander</p>
@@ -1407,14 +1400,14 @@ html{scroll-behavior:smooth;}
       <div id="bloque-condiciones" class="bg-amber-50 border border-amber-200 rounded-xl p-3 sm:p-4">
         <label class="flex items-start gap-2.5 cursor-pointer">
           <input id="chk-condiciones" type="checkbox" class="mt-0.5 w-5 h-5 accent-verde flex-shrink-0">
-          <span class="text-xs text-amber-900">Acepto la <button type="button" onclick="abrirCondicionesEntrega()" class="font-bold underline text-amber-900">política de despacho</button>: la fecha de entrega se coordinará vía telefónica y, si no me encuentro en el domicilio al momento de la entrega, el paquete quedará disponible para retiro en la tienda física. *</span>
+          <span class="text-xs text-amber-900 leading-relaxed">Acepto la <button type="button" onclick="abrirCondicionesEntrega()" class="font-bold underline text-amber-900">política de despacho</button>. Entiendo que <strong>te llamamos antes para coordinar el día y la hora</strong>, y que <strong>si no hay nadie en la dirección cuando llegue el repartidor, el pedido se devuelve al local</strong> y debo retirarlo en Av. Ramón Picarte 779. *</span>
         </label>
       </div>
 
       <button id="chk-btn" onclick="enviarPedido()" class="w-full bg-verde hover:bg-green-700 text-white font-black py-3 sm:py-4 rounded-xl shadow-lg text-sm sm:text-base transition-all">
         💳 PAGAR CON TARJETA
       </button>
-      <p id="chk-caption" class="text-center text-xs text-gray-400">Serás redirigido al pago seguro de Webpay</p>
+      <p id="chk-caption" class="text-center text-xs text-gray-400">Serás redirigido al pago seguro con tarjeta</p>
     </div>
   </div>
 </div>
@@ -1426,11 +1419,18 @@ html{scroll-behavior:smooth;}
       <h3 class="font-black text-gray-800 text-base">🚚 Política de despacho</h3>
       <button onclick="cerrarCondicionesEntrega()" class="text-gray-300 hover:text-red-400 text-2xl leading-none w-9 h-9 flex items-center justify-center flex-shrink-0">×</button>
     </div>
-    <p class="text-sm text-gray-700 mb-3">La fecha de entrega será coordinada previamente vía telefónica. Si al momento de efectuar la entrega el destinatario no se encuentra en el domicilio, el paquete quedará disponible para su retiro en nuestra tienda física <strong>(Av. Ramón Picarte 779, Valdivia)</strong>.</p>
-    <ol class="space-y-3 text-sm text-gray-600 list-decimal pl-4">
-      <li><strong class="text-gray-800">Costo del despacho:</strong> se calcula según la distancia desde nuestro local a tu dirección (hasta 3 km $2.000 · 3–6 km $3.000 · 6–10 km $4.500). Sobre 10 km, coordinamos por WhatsApp.</li>
-      <li><strong class="text-gray-800">Horarios de despacho:</strong> Lun–Vie 08:30–19:00 · Sáb y feriados 09:00–17:00. Pedidos antes de las 16:00 se despachan el mismo día (Lun–Vie).</li>
+    <p class="text-sm text-gray-700 mb-3">Así funciona el despacho a domicilio en Valdivia:</p>
+    <ol class="space-y-3 text-sm text-gray-600 list-decimal pl-4 mb-3">
+      <li><strong class="text-gray-800">Te llamamos primero.</strong> Antes de salir a repartir te contactamos al teléfono que dejaste para acordar el día y la hora. Por eso es importante que el número esté bien escrito y disponible.</li>
+      <li><strong class="text-gray-800">Alguien tiene que recibir el pedido.</strong> Puede ser cualquier persona presente en la dirección; no necesita ser quien hizo la compra.</li>
+      <li><strong class="text-gray-800">Costo del despacho:</strong> se calcula según la distancia desde nuestro local hasta tu dirección — hasta 3 km $2.000 · 3 a 6 km $3.000 · 6 a 10 km $4.500. Sobre 10 km lo coordinamos por WhatsApp.</li>
+      <li><strong class="text-gray-800">Horarios:</strong> Lun a Vie 08:30–19:00 · Sáb y feriados 09:00–17:00. Los pedidos hechos antes de las 16:00 se despachan el mismo día de Lun a Vie.</li>
     </ol>
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-1">
+      <p class="text-sm text-amber-900 font-bold mb-1">⚠️ Si no hay nadie en la dirección</p>
+      <p class="text-sm text-amber-900 leading-relaxed">El repartidor no puede esperar ni dejar el pedido sin que alguien lo reciba, así que <strong>se devuelve al local</strong>. Te avisamos por WhatsApp y queda guardado para que lo retires en <strong>Av. Ramón Picarte 779, Valdivia</strong>, dentro del horario de atención. Si necesitas que lo intentemos de nuevo en tu domicilio, escríbenos por WhatsApp y lo coordinamos.</p>
+      <p class="text-xs text-amber-800 mt-2">Tus derechos como consumidor (garantía, cambios y devoluciones) se mantienen intactos: esto solo define cómo y dónde se hace la entrega.</p>
+    </div>
     <button onclick="cerrarCondicionesEntrega()" class="mt-4 w-full bg-verde hover:bg-green-700 text-white font-bold py-2.5 rounded-xl text-sm transition-colors">Entendido</button>
   </div>
 </div>
@@ -1452,10 +1452,10 @@ const WHATSAPP = "56944350559";
 const COMPRAS_DESACTIVADAS = false;
 
 // ── Pago con tarjeta ──
-// La pasarela la elige el servidor (Transbank Webpay Plus por ahora; el
+// La pasarela la elige el servidor con la variable PASARELA (hoy Flow; el
 // código de Flow se conserva y se reactiva con la variable PASARELA).
 // En false, la opción de tarjeta se oculta del checkout y el cliente paga
-// por transferencia o efectivo (el resto del flujo no cambia).
+// por transferencia (el resto del flujo no cambia).
 const PAGO_TARJETA_ACTIVO = true;
 
 // ── Escapa texto antes de insertarlo como HTML (evita XSS) ──
@@ -2351,7 +2351,7 @@ const PAGINAS = {
       </div>
 
       <p style="font-size:13px;color:#374151;margin-bottom:8px;"><strong>Casos cubiertos:</strong> producto vencido o en mal estado; que no sirve para su uso normal; distinto al que pediste; dañado; envase roto o cadena de frío interrumpida; contenido menor al indicado; producto faltante en tu pedido.</p>
-      <p style="font-size:13px;color:#374151;margin-bottom:8px;"><strong>Comprobante:</strong> te sirve la boleta electrónica, el correo de confirmación o el <strong>comprobante de pago de Webpay</strong>. No necesitas boleta en papel.</p>
+      <p style="font-size:13px;color:#374151;margin-bottom:8px;"><strong>Comprobante:</strong> te sirve la boleta electrónica, el correo de confirmación o el <strong>comprobante de pago de la pasarela</strong>. No necesitas boleta en papel.</p>
       <p style="font-size:13px;color:#374151;margin-bottom:8px;"><strong>Productos vencidos o en mal estado:</strong> por seguridad sanitaria <strong>no te pediremos que nos los devuelvas</strong>. Basta una foto, y no asumes ningún costo.</p>
       <p style="font-size:13px;color:#374151;margin-bottom:20px;"><strong>Ofertas:</strong> los productos en oferta o liquidación tienen exactamente la misma garantía que el resto.</p>
 
@@ -2379,7 +2379,7 @@ const PAGINAS = {
         <li style="padding:7px 0;border-bottom:1px solid #f1f5f9;"><strong>Garantía legal:</strong> dentro de <strong>10 días hábiles</strong> desde que aprobamos tu solicitud. Si faltó un producto en un pedido ya entregado, el reembolso proporcional se hace dentro de <strong>48 horas hábiles</strong>.</li>
         <li style="padding:7px 0;"><strong>Retracto:</strong> dentro de <strong>10 días hábiles</strong> desde que recibimos el producto de vuelta, y nunca más allá del máximo legal de 45 días.</li>
       </ul>
-      <p style="font-size:13px;color:#374151;margin-bottom:8px;"><strong>Medio:</strong> el reembolso se hace <strong>por el mismo medio de pago que usaste</strong>. Si pagaste con tarjeta por Webpay, mediante la anulación o reversa de la transacción; el abono depende de los plazos de tu banco.</p>
+      <p style="font-size:13px;color:#374151;margin-bottom:8px;"><strong>Medio:</strong> el reembolso se hace <strong>por el mismo medio de pago que usaste</strong>. Si pagaste con tarjeta, mediante la anulación o reversa de la transacción; el abono depende de los plazos de tu banco.</p>
       <p style="font-size:13px;color:#374151;margin-bottom:20px;"><strong>No usamos notas de crédito ni vales</strong> como forma obligatoria de devolución. Solo si tú lo prefieres.</p>
 
       <h3 style="font-size:16px;font-weight:800;color:#1a202c;margin-bottom:10px;">4. Si un producto no está disponible</h3>
@@ -2406,17 +2406,19 @@ const PAGINAS = {
       <p style="font-size:13px;color:#374151;margin-bottom:16px;">Los precios publicados en el sitio web incluyen IVA y están sujetos a cambios sin previo aviso. En caso de error en el precio publicado, La Barata se reserva el derecho de anular el pedido informando al cliente. El stock disponible se actualiza en tiempo real; si un producto se agota luego de realizar tu pedido, te contactaremos para ofrecer una alternativa.</p>
 
       <h3 style="font-size:15px;font-weight:800;color:#1a202c;margin-bottom:8px;">3. Pago</h3>
-      <p style="font-size:13px;color:#374151;margin-bottom:10px;">Aceptamos <strong>tarjetas de crédito y débito</strong> (pago seguro a través de Webpay Plus de Transbank), <strong>transferencia bancaria</strong> y <strong>efectivo</strong> al recibir el pedido o al retirarlo en el local.</p>
+      <p style="font-size:13px;color:#374151;margin-bottom:10px;">Aceptamos <strong>tarjetas de crédito y débito</strong> y <strong>transferencia bancaria</strong>.</p>
       <p style="font-size:13px;color:#374151;margin-bottom:10px;">Para pagar por transferencia: Banco Santander · Cta. Corriente N° 37522716 · Sociedad Comercial FAF SPA · RUT 77.557.632-4. El despacho se coordina una vez confirmada la transferencia.</p>
-      <p style="font-size:13px;color:#374151;margin-bottom:16px;">Los pagos con tarjeta de crédito y débito son procesados por <strong>Transbank S.A.</strong> a través de <strong>Sociedad Comercial Barata Valdivia Ltda., RUT 76.623.786-K</strong>. Los datos de tu tarjeta se ingresan directamente en el sitio de Transbank y en ningún momento son almacenados por Distribuidora La Barata.</p>
+      <p style="font-size:13px;color:#374151;margin-bottom:16px;">Los pagos con tarjeta son procesados por nuestra pasarela de pagos <strong>Flow</strong>, bajo <strong>Sociedad Comercial FAF SpA, RUT 77.557.632-4</strong>. Los datos de tu tarjeta se ingresan directamente en el sitio de la pasarela y en ningún momento son almacenados por Distribuidora La Barata.</p>
 
       <h3 style="font-size:15px;font-weight:800;color:#1a202c;margin-bottom:8px;">4. Despacho</h3>
-      <p style="font-size:13px;color:#374151;margin-bottom:16px;">El despacho se realiza dentro del radio urbano de Valdivia. Los tiempos de entrega son referenciales y pueden variar según la carga de pedidos del día. La Barata no se responsabiliza por retrasos causados por fuerza mayor.</p>
+      <p style="font-size:13px;color:#374151;margin-bottom:10px;">El despacho se realiza dentro del radio urbano de Valdivia. Antes de salir a repartir te llamamos al teléfono que dejaste para acordar el día y la hora, así que es importante que el número esté correcto y disponible.</p>
+      <p style="font-size:13px;color:#374151;margin-bottom:10px;">El pedido puede recibirlo cualquier persona presente en la dirección; no es necesario que sea quien hizo la compra. <strong>Si al llegar el repartidor no hay nadie que reciba el pedido, este se devuelve a nuestro local</strong> y queda guardado para retiro en Av. Ramón Picarte 779, Valdivia, dentro del horario de atención. Te avisamos por WhatsApp cuando eso ocurra. Si prefieres que lo intentemos nuevamente en tu domicilio, escríbenos y lo coordinamos.</p>
+      <p style="font-size:13px;color:#374151;margin-bottom:16px;">Los tiempos de entrega son referenciales y pueden variar según la carga de pedidos del día. La Barata no se responsabiliza por retrasos causados por fuerza mayor. Estas condiciones definen cómo y dónde se realiza la entrega, y no afectan tus derechos como consumidor.</p>
 
       <h3 style="font-size:15px;font-weight:800;color:#1a202c;margin-bottom:8px;">5. Privacidad</h3>
       <p style="font-size:13px;color:#374151;margin-bottom:16px;">Los datos personales entregados por el cliente (nombre, dirección, teléfono) son utilizados exclusivamente para coordinar los pedidos y no serán compartidos con terceros.</p>
 
-      <p style="font-size:12px;color:#94a3b8;">Última actualización: abril 2025 · distribuidoralabaratavaldivia@gmail.com</p>`,
+      <p style="font-size:12px;color:#94a3b8;">Última actualización: julio de 2026 · distribuidoralabaratavaldivia@gmail.com</p>`,
   },
 
   'faq': {
@@ -2431,7 +2433,7 @@ const PAGINAS = {
           ? 'Mientras renovamos la tienda online, escríbenos directo por WhatsApp al +56 9 4435 0559 con lo que necesitas — te confirmamos precio, stock y coordinamos el despacho por ese mismo medio.'
           : 'Agrega los productos que quieras al carrito, haz clic en "Finalizar Pedido", completa tus datos y confirma por WhatsApp. Nuestro equipo te responderá para coordinar el despacho.'],
         ['¿Cuál es el horario de despacho?', 'Despachamos de lunes a viernes de 08:30 a 19:00 hrs y los sábados y feriados de 09:00 a 17:00 hrs. Los pedidos realizados antes de las 16:00 hrs se despachan el mismo día (lunes a viernes).'],
-        ['¿Qué medios de pago aceptan?', 'Aceptamos tarjetas de crédito y débito (pago seguro vía Webpay de Transbank), transferencia bancaria (envías el comprobante por WhatsApp) y efectivo al recibir tu pedido o al retirarlo en el local.'],
+        ['¿Qué medios de pago aceptan?', 'Aceptamos tarjetas de crédito y débito (pago seguro a través de nuestra pasarela) y transferencia bancaria (envías el comprobante por WhatsApp).'],
         ['¿Hacen despacho a toda Valdivia?', 'Sí, dentro del radio urbano de Valdivia. Escríbenos por WhatsApp para confirmar si tu dirección está dentro de la cobertura.'],
         ['¿Puedo hacer cambios en mi pedido una vez confirmado?', 'Puedes solicitar cambios contactándonos por WhatsApp antes de que el pedido sea despachado. Una vez en camino no es posible modificarlo.'],
         ['¿Qué hago si mi pedido llegó incompleto o con algún problema?', 'Contáctanos inmediatamente al +56 9 4435 0559 o a distribuidoralabaratavaldivia@gmail.com con una foto del problema. Lo resolveremos a la brevedad.'],
@@ -2551,12 +2553,11 @@ function actualizarCheckout(){
   // Cajas informativas por método de pago
   document.getElementById('caja-tarjeta').classList.toggle('hidden', !esTarjeta);
   document.getElementById('caja-banco').classList.toggle('hidden', pago !== 'Transferencia');
-  document.getElementById('caja-efectivo').classList.toggle('hidden', pago !== 'Efectivo');
   // Condiciones de entrega solo aplican a envíos
   document.getElementById('bloque-condiciones').classList.toggle('hidden', !esEnvio);
   // Botón y leyenda
   document.getElementById('chk-btn').textContent = esTarjeta ? '💳 PAGAR CON TARJETA' : '✅ CONFIRMAR Y ENVIAR POR WHATSAPP';
-  document.getElementById('chk-caption').textContent = esTarjeta ? 'Serás redirigido al pago seguro de Webpay' : 'Serás redirigido a WhatsApp para confirmar tu pedido';
+  document.getElementById('chk-caption').textContent = esTarjeta ? 'Serás redirigido al pago seguro con tarjeta' : 'Serás redirigido a WhatsApp para confirmar tu pedido';
 
   actualizarResumen();
 
@@ -2711,7 +2712,7 @@ function enviarPedido(){
     return;
   }
 
-  // ── Armar mensaje WhatsApp (Transferencia o Efectivo) ──
+  // ── Armar mensaje WhatsApp (transferencia) ──
   let msg=`*🛒 DISTRIBUIDORA LA BARATA — NUEVO PEDIDO*\n`;
   msg+=esEnvio ? `📍 _Valdivia · Envío a domicilio_\n` : `🏬 _Retiro en local (Av. Ramón Picarte 779)_\n`;
   msg+=`━━━━━━━━━━━━━━━━━━━━━━\n`;
@@ -2732,7 +2733,6 @@ function enviarPedido(){
   if(esEnvio) msg+=`📍 *Dirección:* ${d}\n🏠 *Referencia:* ${r}\n`;
   msg+=`📞 *Teléfono:* ${t}\n💵 *Pago:* ${m}`;
   if(m==='Transferencia') msg+=`\n\n📸 _Realizaré la transferencia y enviaré comprobante por este chat._`;
-  if(m==='Efectivo') msg+=esEnvio ? `\n\n💵 _Pagaré en efectivo al recibir el pedido._` : `\n\n💵 _Pagaré en efectivo al retirar en el local._`;
 
   // ── Registrar en el backend (en paralelo, no bloquea WhatsApp) ──
   if (BACKEND_URL !== 'LOCAL') {
@@ -2965,11 +2965,11 @@ const SLIDES = [
   // la planilla. Si no hay ninguno marcado, no se dibuja. El precio sale del
   // mismo catálogo que la ficha y el carrito, así que no puede quedar un
   // cartel prometiendo un valor distinto al que se cobra.
-  { ofertas:true, kicker:'Ofertas de la semana', titulo:'OFERTAS<br>SALVADORAS',
+  { ofertas:true, ilustra:'ofertas', kicker:'Ofertas de la semana', titulo:'OFERTAS<br>SALVADORAS',
     grad:'linear-gradient(135deg,#b91c1c,#ef4444)',
     btn:'background:#facc15;color:#1f2937', cta:'Ver ofertas →', destino:['ofertas','Ofertas'] },
 
-  { cat:'lacteos', kicker:'Lo mejor del campo', titulo:'LÁCTEOS<br>FRESCOS',
+  { cat:'lacteos', ilustra:'lacteos', kicker:'Lo mejor del campo', titulo:'LÁCTEOS<br>FRESCOS',
     img:'./banner-lacteos.webp', grad:'linear-gradient(135deg,#065f46,#10b981)',
     btn:'background:#fff;color:#047857', cta:'Ver lácteos →', destino:['lacteos','Lácteos'] },
 
@@ -2977,15 +2977,15 @@ const SLIDES = [
     grad:'linear-gradient(135deg,#15803d,#166534)',
     btn:'background:#facc15;color:#1f2937', cta:'Ver productos →', destino:['todos','Todos los productos'] },
 
-  { cat:'despensa', kicker:'Para la semana', titulo:'DESPENSA<br>COMPLETA',
+  { cat:'despensa', ilustra:'despensa', kicker:'Para la semana', titulo:'DESPENSA<br>COMPLETA',
     img:'./banner-despensa.webp', grad:'linear-gradient(135deg,#16a34a,#22c55e)',
     btn:'background:#facc15;color:#1f2937', cta:'Ver despensa →', destino:['despensa','Despensa'] },
 
-  { cat:'aseo', kicker:'Rinde más', titulo:'LIMPIEZA<br>Y ASEO',
+  { cat:'aseo', ilustra:'aseo', kicker:'Rinde más', titulo:'LIMPIEZA<br>Y ASEO',
     img:'./banner-aseo.webp', grad:'linear-gradient(135deg,#0e7490,#06b6d4)',
     btn:'background:#fff;color:#0e7490', cta:'Ver limpieza →', destino:['aseo','Limpieza y Aseo'] },
 
-  { cat:'panaderia', kicker:'Para pasteleras y panaderías', titulo:'INSUMOS DE<br>PASTELERÍA',
+  { cat:'panaderia', ilustra:'pasteleria', kicker:'Para pasteleras y panaderías', titulo:'INSUMOS DE<br>PASTELERÍA',
     img:'./banner-pasteleria.webp', grad:'linear-gradient(135deg,#92400e,#d97706)',
     btn:'background:#fff;color:#92400e', cta:'Ver insumos →', destino:['panaderia','Panadería'] },
 ];
@@ -3007,6 +3007,104 @@ const SVG_DESPACHO = `
   <path d="M92 52h44v30H92z" fill="#15803d" opacity=".22"/>
   <path d="M104 66h20M114 56v20" stroke="#15803d" stroke-width="5" stroke-linecap="round" opacity=".5"/>
 </svg>`;
+
+// ── ILUSTRACIONES DE AMBIENTE DEL CARRUSEL ──────────────────────────────
+// Van detrás del texto, en el bloque de color, para dar contexto: quién usa
+// esos productos y para qué. Son dibujo propio y no fotos de banco: la
+// licencia de un banco cubre la foto, pero no los derechos de imagen de la
+// persona retratada, y poner la cara de un desconocido como si fuera el
+// pastelero del negocio es un problema esperando. Cuando haya fotos reales
+// del equipo trabajando, reemplazan a estas y quedan mejor.
+//
+// Todas dibujan en blanco con distintas opacidades sobre el color del bloque,
+// más el amarillo de la marca como acento. Así una misma ilustración funciona
+// sobre el verde, el rojo o el café sin retocar nada.
+const B = 'rgba(255,255,255,';                 // blanco con opacidad variable
+const AM = '#facc15';
+
+const ILUSTRACIONES = {
+  // Pastelera decorando una torta
+  pasteleria: `
+    <circle cx="150" cy="120" r="86" fill="${B}.07)"/>
+    <path d="M74 52c0-13 11-23 24-23 5-9 15-15 26-15s21 6 26 15c13 0 24 10 24 23 0 10-6 18-15 22v10H89V74c-9-4-15-12-15-22z" fill="${B}.9)"/>
+    <rect x="89" y="84" width="70" height="9" rx="4" fill="${B}.55)"/>
+    <circle cx="124" cy="112" r="18" fill="${B}.9)"/>
+    <path d="M96 168c0-19 13-34 28-34s28 15 28 34v22H96z" fill="${B}.9)"/>
+    <path d="M110 140h28v50h-28z" fill="${B}.4)"/>
+    <path d="M152 150l34-16 6 13-34 16z" fill="${B}.75)"/>
+    <path d="M186 128l22-10 10 20-22 10z" fill="${AM}" opacity=".85"/>
+    <rect x="196" y="164" width="60" height="30" rx="5" fill="${B}.85)"/>
+    <rect x="200" y="152" width="52" height="14" rx="7" fill="${AM}" opacity=".9"/>
+    <circle cx="212" cy="146" r="5" fill="${B}.9)"/><circle cx="226" cy="143" r="5" fill="${B}.9)"/>
+    <circle cx="240" cy="146" r="5" fill="${B}.9)"/>
+    <rect x="188" y="194" width="76" height="8" rx="4" fill="${B}.5)"/>`,
+
+  // Vaca, botella y campo
+  lacteos: `
+    <circle cx="150" cy="120" r="88" fill="${B}.07)"/>
+    <path d="M40 176c26-30 60-30 86 0z" fill="${B}.18)"/>
+    <path d="M150 176c30-38 72-38 102 0z" fill="${B}.18)"/>
+    <rect x="72" y="96" width="96" height="56" rx="22" fill="${B}.9)"/>
+    <circle cx="96" cy="118" r="11" fill="${B}.45)"/><circle cx="132" cy="134" r="8" fill="${B}.45)"/>
+    <path d="M64 100h30v24H64z" fill="${B}.9)"/>
+    <path d="M56 96c-8-6-6-16 3-16 4 0 7 2 9 6z" fill="${B}.7)"/>
+    <rect x="66" y="112" width="8" height="6" rx="3" fill="${AM}" opacity=".9"/>
+    <g fill="${B}.9)"><rect x="82" y="150" width="10" height="26" rx="5"/><rect x="104" y="150" width="10" height="26" rx="5"/>
+      <rect x="128" y="150" width="10" height="26" rx="5"/><rect x="150" y="150" width="10" height="26" rx="5"/></g>
+    <path d="M168 108c8 2 14 10 12 20" stroke="${B}.7)" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M204 74h34v14l8 14v74a8 8 0 0 1-8 8h-34a8 8 0 0 1-8-8v-74l8-14z" fill="${B}.9)"/>
+    <rect x="196" y="120" width="50" height="40" fill="${AM}" opacity=".85"/>
+    <rect x="206" y="66" width="30" height="10" rx="4" fill="${B}.6)"/>`,
+
+  // Repisa de despensa
+  despensa: `
+    <circle cx="150" cy="118" r="88" fill="${B}.07)"/>
+    <rect x="52" y="104" width="200" height="9" rx="4" fill="${B}.45)"/>
+    <rect x="52" y="186" width="200" height="9" rx="4" fill="${B}.45)"/>
+    <rect x="70" y="52" width="42" height="52" rx="7" fill="${B}.9)"/>
+    <rect x="70" y="52" width="42" height="15" rx="7" fill="${AM}" opacity=".9"/>
+    <rect x="122" y="38" width="36" height="66" rx="16" fill="${B}.8)"/>
+    <rect x="122" y="60" width="36" height="24" fill="${B}.45)"/>
+    <rect x="168" y="60" width="46" height="44" rx="7" fill="${B}.9)"/>
+    <circle cx="191" cy="82" r="11" fill="${B}.4)"/>
+    <rect x="222" y="46" width="30" height="58" rx="8" fill="${B}.75)"/>
+    <rect x="76" y="134" width="52" height="52" rx="8" fill="${B}.85)"/>
+    <path d="M76 152h52" stroke="${AM}" stroke-width="9" opacity=".9"/>
+    <rect x="140" y="122" width="40" height="64" rx="9" fill="${B}.9)"/>
+    <rect x="146" y="140" width="28" height="28" rx="4" fill="${B}.4)"/>
+    <path d="M196 186v-34a26 26 0 0 1 52 0v34z" fill="${B}.8)"/>
+    <path d="M196 160h52" stroke="${B}.45)" stroke-width="7"/>`,
+
+  // Persona limpiando
+  aseo: `
+    <circle cx="146" cy="118" r="88" fill="${B}.07)"/>
+    <circle cx="118" cy="60" r="20" fill="${B}.9)"/>
+    <path d="M88 186c0-30 14-52 30-52s30 22 30 52z" fill="${B}.9)"/>
+    <path d="M146 148l38-26 9 14-38 26z" fill="${B}.75)"/>
+    <rect x="182" y="96" width="34" height="46" rx="7" fill="${B}.9)"/>
+    <rect x="188" y="82" width="14" height="16" rx="4" fill="${B}.7)"/>
+    <path d="M202 84h20v10h-20z" fill="${AM}" opacity=".9"/>
+    <rect x="186" y="110" width="26" height="16" rx="3" fill="${AM}" opacity=".8"/>
+    <g fill="${B}.65)"><circle cx="238" cy="76" r="5"/><circle cx="252" cy="92" r="4"/><circle cx="240" cy="104" r="3"/></g>
+    <path d="M60 96l5 13 13 5-13 5-5 13-5-13-13-5 13-5z" fill="${AM}" opacity=".85"/>
+    <path d="M232 140l4 9 9 4-9 4-4 9-4-9-9-4 9-4z" fill="${B}.7)"/>
+    <rect x="76" y="186" width="150" height="8" rx="4" fill="${B}.45)"/>`,
+
+  // Canasta de ofertas con etiqueta de descuento
+  ofertas: `
+    <circle cx="148" cy="118" r="88" fill="${B}.07)"/>
+    <path d="M92 112h116l-12 76a10 10 0 0 1-10 8h-72a10 10 0 0 1-10-8z" fill="${B}.9)"/>
+    <path d="M112 112c0-24 16-42 38-42s38 18 38 42" stroke="${B}.75)" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M104 136h92M110 164h80" stroke="${B}.35)" stroke-width="7" stroke-linecap="round"/>
+    <rect x="118" y="72" width="26" height="36" rx="6" fill="${B}.55)"/>
+    <circle cx="170" cy="92" r="16" fill="${B}.55)"/>
+    <path d="M206 40h44a8 8 0 0 1 8 8v44l-52-52z" fill="${AM}" opacity=".9"/>
+    <path d="M198 48l60 60-26 26-60-60z" fill="${AM}" opacity=".9"/>
+    <circle cx="238" cy="60" r="7" fill="${B}.85)"/>
+    <path d="M196 92l30 30" stroke="${B}.85)" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="196" cy="92" r="7" fill="none" stroke="${B}.85)" stroke-width="6"/>
+    <circle cx="226" cy="122" r="7" fill="none" stroke="${B}.85)" stroke-width="6"/>`,
+};
 
 function pintarBanners(){
   const track = document.getElementById('banner-track');
@@ -3036,6 +3134,7 @@ function pintarBanners(){
   track.innerHTML = vivos.map((s, i) => `
     <div class="slide-inner" style="width:${ancho}%;float:left;height:260px">
       <div class="slide-txt text-white" style="background:${s.grad}">
+        ${s.ilustra ? `<svg class="slide-ilustra" viewBox="0 0 300 210" aria-hidden="true">${ILUSTRACIONES[s.ilustra]}</svg>` : ''}
         <p class="slide-kicker">${s.ofertas && dest.vigenciaHasta
             ? `Ofertas hasta el ${fechaCorta(dest.vigenciaHasta)}` : s.kicker}</p>
         <h2 class="slide-h2">${s.titulo}</h2>
