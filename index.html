@@ -225,6 +225,15 @@ html{scroll-behavior:smooth;}
 .slide-foto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
   object-position:center 46%;}
 .slide-foto-fade{position:absolute;inset:0;pointer-events:none;}
+/* Velo claro que sube desde el borde inferior: sin él los productos
+   recortados se pierden contra el mesón de la foto, que ya está lleno de
+   cosas. Con él quedan apoyados sobre una base limpia. */
+.slide-foto-piso{position:absolute;left:0;right:0;bottom:0;height:64%;
+  pointer-events:none;background:linear-gradient(to top,rgba(255,255,255,.95),
+  rgba(255,255,255,.74) 38%,transparent);}
+.slide-foto-prod{position:absolute;right:12px;bottom:4px;max-height:170px;width:auto;
+  z-index:2;filter:drop-shadow(0 10px 18px rgba(0,0,0,.22));}
+@media(max-width:640px){.slide-foto-prod{max-height:96px;right:4px;bottom:2px;}}
 .slide-esc img:not(.slide-foto){max-height:250px;max-width:100%;width:auto;object-fit:contain;object-position:bottom;}
 .slide-esc .svg-furgon{max-height:196px;width:auto;margin-bottom:14px;}
 @media(max-width:640px){.slide-esc .svg-furgon{max-height:112px;margin-bottom:8px}}
@@ -2984,7 +2993,8 @@ const SLIDES = [
     btn:'background:#facc15;color:#1f2937', cta:'Ver productos →', destino:['todos','Todos los productos'] },
 
   { cat:'despensa', ilustra:'despensa', kicker:'Para la semana', titulo:'DESPENSA<br>COMPLETA',
-    foto:'./banner-despensa-cocina.webp', solido:'#1fae51', grad:'linear-gradient(135deg,#16a34a,#22c55e)',
+    foto:'./banner-despensa-cocina.webp', solido:'#1fae51', img:'./banner-despensa.webp',
+    grad:'linear-gradient(135deg,#16a34a,#22c55e)',
     btn:'background:#facc15;color:#1f2937', cta:'Ver despensa →', destino:['despensa','Despensa'] },
 
   { cat:'aseo', ilustra:'aseo', kicker:'Rinde más', titulo:'LIMPIEZA<br>Y ASEO',
@@ -3158,7 +3168,9 @@ function pintarBanners(){
       </div>
       <div class="slide-esc">
         ${s.foto     ? `<img src="${s.foto}" alt="" class="slide-foto" decoding="async">
-                        <span class="slide-foto-fade" style="background:linear-gradient(to right,${s.solido},${s.solido} 2%,transparent 17%)"></span>`
+                        <span class="slide-foto-fade" style="background:linear-gradient(to right,${s.solido},${s.solido} 2%,transparent 17%)"></span>
+                        ${s.img ? `<span class="slide-foto-piso"></span>
+                                   <img src="${s.img}" alt="" class="slide-foto-prod" decoding="async">` : ''}`
          : s.ofertas  ? `<div class="slide-oferta"><img src="${dest.img}" alt=""></div>
                         <div class="slide-precio">
                           <span>${dest.descuento >= 1 ? `${dest.descuento}% dcto.` : 'Oferta'}</span>
