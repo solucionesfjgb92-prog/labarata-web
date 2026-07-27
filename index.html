@@ -228,12 +228,15 @@ html{scroll-behavior:smooth;}
 /* Velo claro que sube desde el borde inferior: sin él los productos
    recortados se pierden contra el mesón de la foto, que ya está lleno de
    cosas. Con él quedan apoyados sobre una base limpia. */
-.slide-foto-piso{position:absolute;left:0;right:0;bottom:0;height:64%;
-  pointer-events:none;background:linear-gradient(to top,rgba(255,255,255,.95),
-  rgba(255,255,255,.74) 38%,transparent);}
-.slide-foto-prod{position:absolute;right:12px;bottom:4px;max-height:170px;width:auto;
-  z-index:2;filter:drop-shadow(0 10px 18px rgba(0,0,0,.22));}
-@media(max-width:640px){.slide-foto-prod{max-height:96px;right:4px;bottom:2px;}}
+.slide-foto-piso{position:absolute;left:38%;right:0;bottom:0;height:46%;
+  pointer-events:none;background:linear-gradient(to top,rgba(255,255,255,.88),
+  rgba(255,255,255,.45) 45%,transparent);}
+/* Chicos y abajo a la derecha: a 170px tapaban la foto entera y no se veia
+   ni la cocina ni las personas, que es justo lo que la foto aporta. */
+.slide-foto-prod{position:absolute;right:10px;bottom:2px;max-height:104px;width:auto;
+  z-index:2;filter:drop-shadow(0 8px 14px rgba(0,0,0,.28));}
+@media(max-width:640px){.slide-foto-prod{max-height:58px;right:3px;}
+  .slide-foto-piso{left:30%;height:40%;}}
 .slide-esc img:not(.slide-foto){max-height:250px;max-width:100%;width:auto;object-fit:contain;object-position:bottom;}
 .slide-esc .svg-furgon{max-height:196px;width:auto;margin-bottom:14px;}
 @media(max-width:640px){.slide-esc .svg-furgon{max-height:112px;margin-bottom:8px}}
