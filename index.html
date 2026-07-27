@@ -196,8 +196,48 @@ html{scroll-behavior:smooth;}
 
 /* ── BANNER ── */
 #banner-track{display:flex;transition:transform .5s ease;}
-.banner-img{max-height:232px;width:auto;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(0,0,0,.28));}
-@media(max-width:640px){.banner-img{max-height:124px;}}
+/* ── Slides del carrusel ──────────────────────────────────────────────
+   Composición en dos bloques, como los banners de supermercado: a la
+   izquierda un bloque de color con el mensaje, a la derecha un panel claro
+   donde los productos se apoyan sobre una superficie con sombra y reflejo.
+   Antes era un degradado con un emoji gigante al costado. */
+.slide-inner{display:flex;background:#f2f4f3;position:relative;overflow:hidden;}
+.slide-txt{flex:0 0 46%;display:flex;flex-direction:column;justify-content:center;
+  padding:26px 20px 26px 34px;position:relative;z-index:2;
+  box-shadow:14px 0 26px rgba(0,0,0,.16);}
+.slide-kicker{font-size:10px;font-weight:700;letter-spacing:.18em;
+  text-transform:uppercase;opacity:.82;margin-bottom:7px;}
+.slide-h2{font-size:41px;font-weight:900;line-height:.9;letter-spacing:-.025em;}
+.slide-rule{display:block;width:46px;height:4px;border-radius:2px;
+  background:#facc15;margin:11px 0 15px;}
+.slide-esc{flex:1 1 0;min-width:0;display:flex;align-items:flex-end;
+  justify-content:center;overflow:hidden;padding:0 4px 10px 8px;position:relative;}
+.slide-esc img{max-height:250px;max-width:100%;width:auto;object-fit:contain;object-position:bottom;}
+.slide-esc .svg-furgon{max-height:196px;width:auto;margin-bottom:14px;}
+@media(max-width:640px){.slide-esc .svg-furgon{max-height:112px;margin-bottom:8px}}
+/* Bloque de precio de la lámina de ofertas */
+/* La foto del producto en oferta es cuadrada con fondo blanco: sobre el panel
+   gris se veia un recuadro suelto, asi que se la trata como tarjeta a proposito. */
+.slide-oferta{background:#fff;border-radius:20px;padding:10px;margin-bottom:12px;
+  box-shadow:0 12px 28px rgba(0,0,0,.16);}
+.slide-oferta img{max-height:190px;display:block;}
+@media(max-width:640px){.slide-oferta{border-radius:12px;padding:6px;margin-bottom:8px}
+  .slide-oferta img{max-height:112px}}
+.slide-precio{position:absolute;right:16px;top:50%;transform:translateY(-50%);
+  background:#facc15;color:#1f2937;border-radius:16px;padding:10px 16px;
+  text-align:center;box-shadow:0 10px 24px rgba(0,0,0,.3);z-index:3;}
+.slide-precio b{display:block;font-size:30px;font-weight:900;line-height:1;letter-spacing:-.03em;}
+.slide-precio span{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;}
+@media(max-width:900px){.slide-h2{font-size:30px}.slide-precio b{font-size:23px}}
+@media(max-width:640px){
+  .slide-txt{flex:0 0 57%;padding:16px 8px 16px 18px;}
+  .slide-h2{font-size:21px}
+  .slide-rule{width:30px;height:3px;margin:7px 0 10px}
+  .slide-esc img{max-height:148px}
+  .slide-precio{right:6px;padding:6px 9px;border-radius:11px}
+  .slide-precio b{font-size:16px}
+  .slide-precio span{font-size:7px}
+}
 
 /* ── SKELETON LOADING ── */
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
@@ -2893,34 +2933,34 @@ const SLIDES = [
   // cartel prometiendo un valor distinto al que se cobra.
   { ofertas:true, kicker:'Ofertas de la semana', titulo:'OFERTAS<br>SALVADORAS',
     grad:'linear-gradient(135deg,#b91c1c,#ef4444)',
-    btn:'bg-amarillo text-gray-900', cta:'Ver ofertas →', destino:['ofertas','Ofertas'] },
+    btn:'background:#facc15;color:#1f2937', cta:'Ver ofertas →', destino:['ofertas','Ofertas'] },
 
   { cat:'lacteos', kicker:'Lo mejor del campo', titulo:'LÁCTEOS<br>FRESCOS',
     img:'./banner-lacteos.webp', grad:'linear-gradient(135deg,#065f46,#10b981)',
-    btn:'bg-white text-emerald-700', cta:'Ver lácteos →', destino:['lacteos','Lácteos'] },
+    btn:'background:#fff;color:#047857', cta:'Ver lácteos →', destino:['lacteos','Lácteos'] },
 
   { despacho:true, kicker:'Toda Valdivia', titulo:'DESPACHO<br>A DOMICILIO',
     grad:'linear-gradient(135deg,#15803d,#166534)',
-    btn:'bg-amarillo text-gray-900', cta:'Ver productos →', destino:['todos','Todos los productos'] },
+    btn:'background:#facc15;color:#1f2937', cta:'Ver productos →', destino:['todos','Todos los productos'] },
 
   { cat:'despensa', kicker:'Para la semana', titulo:'DESPENSA<br>COMPLETA',
     img:'./banner-despensa.webp', grad:'linear-gradient(135deg,#16a34a,#22c55e)',
-    btn:'bg-amarillo text-gray-900', cta:'Ver despensa →', destino:['despensa','Despensa'] },
+    btn:'background:#facc15;color:#1f2937', cta:'Ver despensa →', destino:['despensa','Despensa'] },
 
   { cat:'aseo', kicker:'Rinde más', titulo:'LIMPIEZA<br>Y ASEO',
     img:'./banner-aseo.webp', grad:'linear-gradient(135deg,#0e7490,#06b6d4)',
-    btn:'bg-white text-cyan-700', cta:'Ver limpieza →', destino:['aseo','Limpieza y Aseo'] },
+    btn:'background:#fff;color:#0e7490', cta:'Ver limpieza →', destino:['aseo','Limpieza y Aseo'] },
 
   { cat:'panaderia', kicker:'Para pasteleras y panaderías', titulo:'INSUMOS DE<br>PASTELERÍA',
     img:'./banner-pasteleria.webp', grad:'linear-gradient(135deg,#92400e,#d97706)',
-    btn:'bg-white text-amber-800', cta:'Ver insumos →', destino:['panaderia','Panadería'] },
+    btn:'background:#fff;color:#92400e', cta:'Ver insumos →', destino:['panaderia','Panadería'] },
 ];
 
 // Furgón dibujado, no fotografiado: no hay ninguna foto de despacho en la
 // carpeta del comercio y no corresponde poner una de archivo haciéndola pasar
 // por el reparto propio. Cuando haya una foto real del furgón, reemplaza esto.
 const SVG_DESPACHO = `
-<svg viewBox="0 0 260 150" class="banner-img" role="img" aria-label="Despacho a domicilio">
+<svg viewBox="0 0 260 150" class="svg-furgon" role="img" aria-label="Despacho a domicilio">
   <g fill="none" stroke="rgba(255,255,255,.35)" stroke-width="7" stroke-linecap="round">
     <path d="M8 44h34M8 68h20M8 92h30"/>
   </g>
@@ -2949,29 +2989,30 @@ function pintarBanners(){
     !completo  || DB.some(p => p.c === s.cat));
   if (!vivos.length) return;
 
-  // Hasta tres productos en oferta, con su precio real del catálogo.
-  const tarjetasOferta = ofertas.slice(0, 3).map(p => `
-    <div style="background:#fff;border-radius:20px;padding:10px 10px 6px;box-shadow:0 10px 22px rgba(0,0,0,.28);text-align:center;width:112px">
-      <img src="${p.img}" alt="" style="width:100%;height:78px;object-fit:contain" loading="lazy">
-      <p style="font-size:9px;line-height:1.15;color:#374151;font-weight:600;margin:4px 0 2px;height:22px;overflow:hidden">${p.n}</p>
-      <p style="font-size:13px;font-weight:900;color:#b91c1c">$${p.p.toLocaleString('es-CL')}</p>
-    </div>`).join('');
 
   TOT = vivos.length;
   const ancho = 100 / TOT;
   track.style.width = (100 * TOT) + '%';
 
+  // La lámina de ofertas muestra el primer producto marcado con su precio real
+  // del catálogo, en grande. Sin columna de precio anterior no hay tachado ni
+  // "ahorro": se anuncia el precio que efectivamente cobra el carrito.
+  const dest = ofertas[0];
+
   track.innerHTML = vivos.map((s, i) => `
-    <div class="slide-inner" style="width:${ancho}%;float:left;height:260px;background:${s.grad};display:flex;align-items:center;padding:30px 40px;gap:12px">
-      <div class="text-white flex-1 min-w-0">
-        <p class="text-[10px] sm:text-sm font-semibold uppercase tracking-widest opacity-80 mb-1">${s.kicker}</p>
-        <h2 class="text-2xl sm:text-5xl font-black leading-none mb-2 sm:mb-4">${s.titulo}</h2>
-        <button onclick="verCat('${s.destino[0]}','${s.destino[1]}')" class="${s.btn} font-bold px-4 py-2 sm:px-6 sm:py-2.5 rounded-full text-xs sm:text-sm hover:brightness-95 transition-all">${s.cta}</button>
+    <div class="slide-inner" style="width:${ancho}%;float:left;height:260px">
+      <div class="slide-txt text-white" style="background:${s.grad}">
+        <p class="slide-kicker">${s.kicker}</p>
+        <h2 class="slide-h2">${s.titulo}</h2>
+        <span class="slide-rule"></span>
+        <button onclick="verCat('${s.destino[0]}','${s.destino[1]}')" style="${s.btn}"
+                class="font-bold px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-[11px] sm:text-sm w-fit hover:brightness-95 transition-all">${s.cta}</button>
       </div>
-      <div class="ml-auto flex-shrink-0 flex items-center justify-end" style="max-width:52%">
-        ${s.ofertas  ? `<div style="display:flex;gap:8px;align-items:center">${tarjetasOferta}</div>`
+      <div class="slide-esc">
+        ${s.ofertas  ? `<div class="slide-oferta"><img src="${dest.img}" alt=""></div>
+                        <div class="slide-precio"><span>Oferta</span><b>$${dest.p.toLocaleString('es-CL')}</b></div>`
          : s.despacho ? SVG_DESPACHO
-                      : `<img src="${s.img}" alt="" class="banner-img"
+                      : `<img src="${s.img}" alt=""
                              ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>`}
       </div>
     </div>`).join('');
