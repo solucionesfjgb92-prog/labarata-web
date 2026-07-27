@@ -502,6 +502,10 @@ let cache = { data: null, ts: 0 };
 // Productos retenidos por precio fuera de rango. Se guardan para poder
 // consultarlos desde /api/diagnostico/catalogo sin entrar a los logs.
 let ultimosSospechosos = [];
+// Mismo criterio que los sospechosos: lo que se descarta se puede consultar
+// desde /api/diagnostico/catalogo sin entrar a los logs de Render.
+let ultimosNormalesInvalidos = [];
+let ultimasOfertasVencidas = [];
 const CACHE_MS = 5 * 60 * 1000; // 5 minutos
 
 // ── Parser CSV simple ─────────────────────────────
@@ -581,6 +585,46 @@ const PRECIO_MAXIMO = parseInt(process.env.PRECIO_MAXIMO) || 150000;
 // STOCK_OBLIGATORIO=false en Render.
 const STOCK_OBLIGATORIO = process.env.STOCK_OBLIGATORIO !== 'false';
 
+// La planilla se llena a mano y Google exporta la fecha con el formato de la
+// hoja, así que se aceptan las tres formas que van a aparecer en la práctica:
+// 2026-08-03, 03-08-2026 y 03/08/2026 (con o sin cero adelante, año de 2 o 4
+// dígitos). Cualquier otra cosa devuelve null y la oferta simplemente queda sin
+// fecha de término, que es el lado seguro: mejor una oferta sin vencimiento que
+// una apagada por no entender lo que el comercio escribió.
+// Devuelve 'YYYY-MM-DD' o null.
+function parsearFecha(valor) {
+  const t = (valor || '').trim();
+  if (!t) return null;
+
+  let a, m, d;
+  let mt = t.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+  if (mt) { [, a, m, d] = mt; }
+  else {
+    mt = t.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2}|\d{4})$/);
+    if (!mt) return null;
+    [, d, m, a] = mt;
+    if (a.length === 2) a = '20' + a;   // 03/08/26 → 2026
+  }
+
+  a = +a; m = +m; d = +d;
+  if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+  // Rechaza fechas que no existen (31/02) sin depender de que Date las corrija
+  const prueba = new Date(Date.UTC(a, m - 1, d));
+  if (prueba.getUTCMonth() !== m - 1 || prueba.getUTCDate() !== d) return null;
+
+  return `${a}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+// La oferta vale hasta el final del día indicado, hora de Chile. Render corre
+// en UTC y Chile está en UTC-4 (UTC-3 en horario de verano), así que se suman
+// 27 horas al 00:00 UTC de ese día: en verano corta justo a medianoche local y
+// en invierno una hora antes. Se eligió cortar un poco antes en vez de un poco
+// después: seguir anunciando un descuento ya vencido es el error que no
+// conviene cometer.
+function finDelDiaChile(fechaISO) {
+  return Date.parse(fechaISO + 'T00:00:00Z') + 27 * 3600 * 1000;
+}
+
 function parsearCSV(texto) {
   const lineas = texto.split('\n').filter(l => l.trim());
   if (lineas.length < 2) return [];
@@ -619,6 +663,8 @@ async function cargarProductos() {
   let excluidos = 0;
   let sinStock   = 0;
   const sospechosos = [];
+  const normalesInvalidos = [];   // precio_normal que no es mayor que el de venta
+  const vencidas = [];            // ofertas apagadas por vigencia_hasta
   const productos = [];
 
   for (const f of filas) {
@@ -669,8 +715,44 @@ async function cargarProductos() {
     // Se acepta SI, SÍ, S, X, TRUE y 1 porque la planilla se llena a mano y ya
     // pasó con "activo" que aparecieran variantes. Si la columna no existe
     // todavía, esto queda en false y el sitio funciona igual que antes.
-    const oferta = ['SI', 'SÍ', 'S', 'X', 'TRUE', '1']
+    let oferta = ['SI', 'SÍ', 'S', 'X', 'TRUE', '1']
       .includes((f.oferta || '').toUpperCase().trim());
+
+    // Columnas "precio_normal" (L) y "vigencia_hasta" (M).
+    //
+    // precio_normal es el precio de antes, el que se muestra tachado junto al
+    // ahorro. Sólo se acepta si es MAYOR que el precio de venta: si viene igual
+    // o menor no hay descuento que mostrar y un tachado ahí sería un cartel
+    // falso. Los rechazados se nombran en /api/diagnostico/catalogo en vez de
+    // descartarse en silencio, igual que los precios fuera de rango.
+    //
+    // vigencia_hasta apaga la oferta sola cuando pasa la fecha. Es lo que evita
+    // el problema clásico de dejar publicada una oferta de la semana pasada.
+    // OJO: al vencer se cae SOLO la oferta (el badge, el tachado y la sección
+    // de ofertas). El precio NO cambia: el que manda sigue siendo la columna
+    // "precio" de la planilla, así que si la promoción terminó hay que subir
+    // el precio a mano.
+    let precioNormal = 0;
+    let vigenciaHasta = null;
+    let ofertaVencida = false;
+
+    if (oferta) {
+      const pnRaw = (f.precio_normal || '').replace(/[.$\s]/g, '').replace(',', '.');
+      const pn = parseFloat(pnRaw) || 0;
+      if (pn > 0 && pn <= precio) {
+        normalesInvalidos.push(`${nombre} (normal $${Math.round(pn).toLocaleString('es-CL')} vs venta $${Math.round(precio).toLocaleString('es-CL')})`);
+      } else if (pn > precio) {
+        precioNormal = Math.round(pn);
+      }
+
+      vigenciaHasta = parsearFecha(f.vigencia_hasta);
+      if (vigenciaHasta && Date.now() > finDelDiaChile(vigenciaHasta)) {
+        oferta = false;
+        ofertaVencida = true;
+        precioNormal = 0;          // sin oferta no corresponde mostrar tachado
+        vencidas.push(`${nombre} (venció el ${vigenciaHasta})`);
+      }
+    }
 
     // Antes se filtraba por tipo_bsale = AUTOMOVIL o SIN TIPO. Se sacó: esos
     // valores estaban mal puestos en la planilla y escondían 51 productos
@@ -698,6 +780,11 @@ async function cargarProductos() {
       barCode:   barcode,
       code:      sku,
       oferta,
+      // Sólo viajan si la oferta está vigente. Así el front no tiene que volver
+      // a decidir nada: si viene precioNormal, se muestra tachado.
+      precioNormal: oferta ? precioNormal : 0,
+      descuento:    oferta && precioNormal ? Math.round((1 - precio / precioNormal) * 100) : 0,
+      vigenciaHasta: oferta ? vigenciaHasta : null,
     });
   }
 
@@ -709,6 +796,16 @@ async function cargarProductos() {
   if (sospechosos.length) {
     console.warn(`⚠️ ${sospechosos.length} producto(s) NO publicados por superar $${PRECIO_MAXIMO.toLocaleString('es-CL')} — corregir el precio en la planilla:`);
     sospechosos.forEach(s => console.warn(`     · ${s}`));
+  }
+  ultimosNormalesInvalidos = normalesInvalidos;
+  if (normalesInvalidos.length) {
+    console.warn(`⚠️ ${normalesInvalidos.length} precio_normal ignorado(s) por no ser mayor que el precio de venta — sin tachado:`);
+    normalesInvalidos.forEach(x => console.warn(`     · ${x}`));
+  }
+  ultimasOfertasVencidas = vencidas;
+  if (vencidas.length) {
+    console.log(`   ${vencidas.length} oferta(s) apagada(s) por vigencia_hasta:`);
+    vencidas.forEach(x => console.log(`     · ${x}`));
   }
   return productos;
 }
@@ -1695,7 +1792,13 @@ app.get('/api/diagnostico/catalogo', async (req, res) => {
       // Si sale 0, o no hay ninguna fila marcada o la columna no se llama
       // exactamente "oferta" en la primera fila de la planilla.
       enOferta: productos.filter(p => p.oferta).length,
-      productosEnOferta: productos.filter(p => p.oferta).map(p => `${p.n} ($${p.p.toLocaleString('es-CL')})`),
+      productosEnOferta: productos.filter(p => p.oferta).map(p =>
+        `${p.n} ($${p.p.toLocaleString('es-CL')}` +
+        (p.precioNormal ? ` antes $${p.precioNormal.toLocaleString('es-CL')}, -${p.descuento}%` : '') +
+        (p.vigenciaHasta ? `, hasta ${p.vigenciaHasta}` : '') + ')'),
+      ofertasVencidas: ultimasOfertasVencidas,
+      precioNormalIgnorado: ultimosNormalesInvalidos,
+      notaOfertas: 'Al vencer vigencia_hasta se apaga la oferta (badge, tachado y sección), pero el PRECIO no cambia: sigue mandando la columna "precio".',
       precioMaximo: PRECIO_MAXIMO,
       retenidosPorPrecio: ultimosSospechosos,
       excluidosDeLaWeb: 'línea automotriz, alimento de mascotas y pañales Huggies (se venden solo en el local)',

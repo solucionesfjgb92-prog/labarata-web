@@ -228,6 +228,11 @@ html{scroll-behavior:smooth;}
   text-align:center;box-shadow:0 10px 24px rgba(0,0,0,.3);z-index:3;}
 .slide-precio b{display:block;font-size:30px;font-weight:900;line-height:1;letter-spacing:-.03em;}
 .slide-precio span{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;}
+.slide-precio s{display:block;font-size:11px;font-weight:700;opacity:.62;margin-top:1px;}
+.slide-precio i{display:block;font-size:9px;font-weight:900;font-style:normal;
+  text-transform:uppercase;letter-spacing:.04em;background:#1f2937;color:#facc15;
+  border-radius:6px;padding:2px 5px;margin-top:5px;}
+@media(max-width:640px){.slide-precio s{font-size:8px}.slide-precio i{font-size:7px;padding:1px 3px;margin-top:3px}}
 @media(max-width:900px){.slide-h2{font-size:30px}.slide-precio b{font-size:23px}}
 @media(max-width:640px){
   .slide-txt{flex:0 0 57%;padding:16px 8px 16px 18px;}
@@ -1602,6 +1607,11 @@ async function cargarProductos(forzar = false) {
       tipo:      p.tipo || '',
       sub:       p.sub  || '',
       oferta:    p.oferta || false,
+      // Vienen ya resueltos por el backend: si la oferta venció, llegan en 0 y
+      // null, así que acá no hay que volver a comparar fechas.
+      precioNormal:  p.precioNormal  || 0,
+      descuento:     p.descuento     || 0,
+      vigenciaHasta: p.vigenciaHasta || null,
       code:      p.code || '',
     }));
 
@@ -1642,6 +1652,11 @@ async function cargarMasProductos(offset) {
       tipo:      p.tipo || '',
       sub:       p.sub  || '',
       oferta:    p.oferta || false,
+      // Vienen ya resueltos por el backend: si la oferta venció, llegan en 0 y
+      // null, así que acá no hay que volver a comparar fechas.
+      precioNormal:  p.precioNormal  || 0,
+      descuento:     p.descuento     || 0,
+      vigenciaHasta: p.vigenciaHasta || null,
       code:      p.code || '',
     }));
 
@@ -1750,6 +1765,16 @@ function verCat(cat,titulo){cerrarMega();irCatalogo(cat,titulo);}
 // "Leche en Polvo" en el menú). Comparando exacto el link quedaba sin
 // resultados, así que se compara sin tildes ni mayúsculas.
 const normSub = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+// '2026-08-03' \u2192 '3 de agosto'. Se arma a mano en vez de con new Date(iso),
+// porque eso interpreta la fecha en UTC y en Chile mostrar\u00eda el d\u00eda anterior.
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio',
+               'agosto','septiembre','octubre','noviembre','diciembre'];
+function fechaCorta(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  if (!m) return '';
+  return `${+m[3]} de ${MESES[+m[2] - 1]}`;
+}
 
 // ── VISTAS ──
 function irInicio(){
@@ -1995,9 +2020,14 @@ function crearCard(p, mini) {
     </div>
     <div class="p-2 sm:p-3 flex flex-col flex-1">
       <h3 class="text-xs sm:text-sm font-semibold text-gray-700 leading-snug flex-1 mb-1.5 sm:mb-2" style="min-height:2.2rem">${esc(p.n)}</h3>
-      <div class="flex items-center justify-between mb-1.5 sm:mb-2">
+      <div class="flex items-baseline gap-1.5 flex-wrap mb-1.5 sm:mb-2">
         <p class="text-gray-900 font-black text-base sm:text-lg" style="font-variant-numeric:tabular-nums">$${p.p.toLocaleString('es-CL')}</p>
+        ${p.precioNormal && !sinStock ? `
+          <s class="text-[11px] sm:text-xs text-gray-400 font-semibold" style="font-variant-numeric:tabular-nums">$${p.precioNormal.toLocaleString('es-CL')}</s>
+          ${p.descuento >= 1 ? `<span class="text-[9px] sm:text-[10px] font-black text-white bg-red-600 rounded px-1 py-0.5">-${p.descuento}%</span>` : ''}` : ''}
       </div>
+      ${p.precioNormal && p.vigenciaHasta && !sinStock
+        ? `<p class="text-[9px] sm:text-[10px] text-gray-400 font-semibold -mt-1 mb-1.5">Oferta válida hasta el ${fechaCorta(p.vigenciaHasta)}</p>` : ''}
       ${avisoRetracto}
       ${COMPRAS_DESACTIVADAS
         ? `<a href="${waProductoHref}" target="_blank" onclick="event.stopPropagation()" class="flex items-center justify-center gap-1 bg-verde hover:bg-green-700 text-white font-bold py-2 rounded-full text-xs sm:text-sm w-full transition-colors">💬 Pedir por WhatsApp</a>`
@@ -3006,7 +3036,8 @@ function pintarBanners(){
   track.innerHTML = vivos.map((s, i) => `
     <div class="slide-inner" style="width:${ancho}%;float:left;height:260px">
       <div class="slide-txt text-white" style="background:${s.grad}">
-        <p class="slide-kicker">${s.kicker}</p>
+        <p class="slide-kicker">${s.ofertas && dest.vigenciaHasta
+            ? `Ofertas hasta el ${fechaCorta(dest.vigenciaHasta)}` : s.kicker}</p>
         <h2 class="slide-h2">${s.titulo}</h2>
         <span class="slide-rule"></span>
         <button onclick="verCat('${s.destino[0]}','${s.destino[1]}')" style="${s.btn}"
@@ -3014,7 +3045,12 @@ function pintarBanners(){
       </div>
       <div class="slide-esc">
         ${s.ofertas  ? `<div class="slide-oferta"><img src="${dest.img}" alt=""></div>
-                        <div class="slide-precio"><span>Oferta</span><b>$${dest.p.toLocaleString('es-CL')}</b></div>`
+                        <div class="slide-precio">
+                          <span>${dest.descuento >= 1 ? `${dest.descuento}% dcto.` : 'Oferta'}</span>
+                          <b>$${dest.p.toLocaleString('es-CL')}</b>
+                          ${dest.precioNormal ? `<s>$${dest.precioNormal.toLocaleString('es-CL')}</s>
+                            <i>Ahorras $${(dest.precioNormal - dest.p).toLocaleString('es-CL')}</i>` : ''}
+                        </div>`
          : s.despacho ? SVG_DESPACHO
                       : `<img src="${s.img}" alt="" decoding="async"
                              ${i === 0 ? 'fetchpriority="high"' : ''}>`}
