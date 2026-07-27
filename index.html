@@ -219,7 +219,13 @@ html{scroll-behavior:smooth;}
   background:#facc15;margin:11px 0 15px;}
 .slide-esc{flex:1 1 0;min-width:0;display:flex;align-items:flex-end;
   justify-content:center;overflow:hidden;padding:0 4px 10px 8px;position:relative;}
-.slide-esc img{max-height:250px;max-width:100%;width:auto;object-fit:contain;object-position:bottom;}
+/* Slides con foto de ambiente: la foto llena el panel completo y un
+   degradado la funde con el bloque de color, para que no se vea un corte
+   duro entre el color plano y la fotografía. */
+.slide-foto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  object-position:center 46%;}
+.slide-foto-fade{position:absolute;inset:0;pointer-events:none;}
+.slide-esc img:not(.slide-foto){max-height:250px;max-width:100%;width:auto;object-fit:contain;object-position:bottom;}
 .slide-esc .svg-furgon{max-height:196px;width:auto;margin-bottom:14px;}
 @media(max-width:640px){.slide-esc .svg-furgon{max-height:112px;margin-bottom:8px}}
 /* Bloque de precio de la lámina de ofertas */
@@ -2978,7 +2984,7 @@ const SLIDES = [
     btn:'background:#facc15;color:#1f2937', cta:'Ver productos →', destino:['todos','Todos los productos'] },
 
   { cat:'despensa', ilustra:'despensa', kicker:'Para la semana', titulo:'DESPENSA<br>COMPLETA',
-    img:'./banner-despensa.webp', grad:'linear-gradient(135deg,#16a34a,#22c55e)',
+    foto:'./banner-despensa-cocina.webp', solido:'#1fae51', grad:'linear-gradient(135deg,#16a34a,#22c55e)',
     btn:'background:#facc15;color:#1f2937', cta:'Ver despensa →', destino:['despensa','Despensa'] },
 
   { cat:'aseo', ilustra:'aseo', kicker:'Rinde más', titulo:'LIMPIEZA<br>Y ASEO',
@@ -3151,7 +3157,9 @@ function pintarBanners(){
                 class="font-bold px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-[11px] sm:text-sm w-fit hover:brightness-95 transition-all">${s.cta}</button>
       </div>
       <div class="slide-esc">
-        ${s.ofertas  ? `<div class="slide-oferta"><img src="${dest.img}" alt=""></div>
+        ${s.foto     ? `<img src="${s.foto}" alt="" class="slide-foto" decoding="async">
+                        <span class="slide-foto-fade" style="background:linear-gradient(to right,${s.solido},transparent 46%)"></span>`
+         : s.ofertas  ? `<div class="slide-oferta"><img src="${dest.img}" alt=""></div>
                         <div class="slide-precio">
                           <span>${dest.descuento >= 1 ? `${dest.descuento}% dcto.` : 'Oferta'}</span>
                           <b>$${dest.p.toLocaleString('es-CL')}</b>
