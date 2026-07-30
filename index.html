@@ -493,231 +493,14 @@ img.slide-ilustra{opacity:1;}
 
       <div id="mega-dropdown" onmouseleave="cerrarMega()">
         <div id="mega-cats-list" class="w-52 bg-gray-50 border-r border-gray-200 flex-shrink-0 py-1 overflow-y-auto" style="max-height:480px">
-          <button onmouseenter="activarSub('sub-despensa',this)"   onclick="verCat('despensa','Despensa')"               class="active"><span class="flex items-center gap-2">🥫 Despensa</span><span class="text-gray-400">›</span></button>
-          <button onmouseenter="activarSub('sub-aseo',this)"       onclick="verCat('aseo','Limpieza y Aseo')"            ><span class="flex items-center gap-2">🧼 Limpieza y Aseo</span><span class="text-gray-400">›</span></button>
-          <button onmouseenter="activarSub('sub-desayuno',this)"   onclick="verCat('desayuno','Desayuno y Dulces')"      ><span class="flex items-center gap-2">☕ Desayuno y Dulces</span><span class="text-gray-400">›</span></button>
-          <button onmouseenter="activarSub('sub-lacteos',this)"    onclick="verCat('lacteos','Lácteos')"                 ><span class="flex items-center gap-2">🥛 Lácteos</span><span class="text-gray-400">›</span></button>
-          <button onmouseenter="activarSub('sub-panaderia',this)"  onclick="verCat('panaderia','Panadería')"             ><span class="flex items-center gap-2">🍞 Panadería</span><span class="text-gray-400">›</span></button>
-          <button onmouseenter="activarSub('sub-bebidas',this)"    onclick="verCat('bebidas','Bebidas y Jugos')"         ><span class="flex items-center gap-2">🧃 Bebidas y Jugos</span><span class="text-gray-400">›</span></button>
-          <button onmouseenter="activarSub('sub-congelados',this)" onclick="verCat('congelados','Congelados')"           ><span class="flex items-center gap-2">🧊 Congelados</span><span class="text-gray-400">›</span></button>
-          <button onmouseenter="activarSub('sub-mascotas',this)"   onclick="verCat('mascotas','Mascotas')"               ><span class="flex items-center gap-2">🐕 Mascotas</span><span class="text-gray-400">›</span></button>
-          <button onmouseenter="activarSub('sub-bebe',this)"       onclick="verCat('bebe','Mi Bebé')"                   ><span class="flex items-center gap-2">🍼 Mi Bebé</span><span class="text-gray-400">›</span></button>
-          <button onmouseenter="activarSub('sub-farmacia',this)"   onclick="verCat('farmacia','Farmacia y Cuidado')"     ><span class="flex items-center gap-2">💊 Farmacia y Cuidado</span><span class="text-gray-400">›</span></button>
-          <button onmouseenter="activarSub('sub-carnes',this)"     onclick="verCat('carnes','Carnes y Embutidos')"       ><span class="flex items-center gap-2">🥩 Carnes y Embutidos</span><span class="text-gray-400">›</span></button>
         </div>
-        <div class="flex-1 p-5 overflow-y-auto" style="max-height:480px">
-
-          <!-- DESPENSA -->
-          <div id="sub-despensa" class="sub-panel active grid-cols-3 gap-x-8 gap-y-4">
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Básicos</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Arroz y Legumbres','Arroz y Legumbres')">Arroz y Legumbres</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Fideos y Pastas','Fideos y Pastas')">Fideos y Pastas</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Harinas y Cereales','Harinas y Cereales')">Harinas y Cereales</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Azúcar y Endulzantes','Azúcar y Endulzantes')">Azúcar y Endulzantes</li>
-              </ul>
-            </div>
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Aderezos y Salsas</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Aceites y Aderezos','Aceites y Aderezos')">Aceites y Aderezos</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Salsas y Condimentos','Salsas y Condimentos')">Salsas y Condimentos</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Conservas','Conservas')">Conservas</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Conservas Mar','Conservas del Mar')">Conservas del Mar</li>
-              </ul>
-            </div>
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Bebidas y Más</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Café','Café')">Café</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Té e Infusiones','Té e Infusiones')">Té e Infusiones</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Yerba Mate','Yerba Mate')">Yerba Mate</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Embutidos y Fiambres','Embutidos y Fiambres')">Embutidos y Fiambres</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','Pan Industrial','Pan Industrial')">Pan Industrial</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('despensa','A Granel','A Granel')">A Granel</li>
-                <li class="font-bold text-verde cursor-pointer" onclick="verCat('despensa','Despensa')">Ver todo →</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- ASEO -->
-          <div id="sub-aseo" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Lavado</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Detergentes','Detergentes')">Detergentes</li>
-                <li class="font-bold text-verde cursor-pointer" onclick="verCat('aseo','Limpieza y Aseo')">Ver todo →</li>
-              </ul>
-            </div>
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Limpieza Hogar</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Limpieza Hogar','Limpieza Hogar')">Limpieza Hogar</li>
-                <!-- La planilla escribe esta subcategoría de dos formas:
-                     "Limpiadores" (73 filas) y "Limpiadores y Gel" (20, entre
-                     ellas casi todo el aseo publicado hoy). El link pedía solo
-                     la primera y las otras 20 quedaban inalcanzables. -->
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo',['Limpiadores','Limpiadores y Gel'],'Limpiadores y Gel')">Limpiadores y Gel</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Insecticidas','Insecticidas')">Insecticidas</li>
-                <li class="font-bold text-verde cursor-pointer" onclick="verCat('aseo','Limpieza y Aseo')">Ver todo →</li>
-              </ul>
-            </div>
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Higiene Personal</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Aseo Personal','Aseo Personal')">Aseo Personal</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Jabones','Jabones')">Jabones</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Shampoo','Shampoo')">Shampoo</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Toallas de Papel','Toallas de Papel')">Toallas de Papel</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Papeles y Resmas','Papeles y Resmas')">Papeles y Resmas</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Papel Industrial','Papel Industrial')">Papel Industrial</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('aseo','Papelería y Útiles','Papelería y Útiles')">Papelería y Útiles</li>
-                <li class="font-bold text-verde cursor-pointer" onclick="verCat('aseo','Limpieza y Aseo')">Ver todo →</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- DESAYUNO -->
-          <div id="sub-desayuno" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Café y Dulces</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('desayuno','Café','Café')">Café</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('desayuno','Chocolates','Chocolates')">Chocolates</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('desayuno','Caramelos y Golosinas','Caramelos y Golosinas')">Caramelos y Golosinas</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('desayuno','Galletas','Galletas')">Galletas</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('desayuno','Confites y Dulces','Confites y Dulces')">Confites y Dulces</li>
-                <li class="font-bold text-verde cursor-pointer" onclick="verCat('desayuno','Desayuno y Dulces')">Ver todo →</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- LÁCTEOS -->
-          <div id="sub-lacteos" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Leche y Yoghurt</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('lacteos','Leche Líquida','Leche Líquida')">Leche Líquida</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('lacteos','Leche en Polvo','Leche en Polvo')">Leche en Polvo</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('lacteos','Yoghurt','Yoghurt')">Yoghurt</li>
-              </ul>
-            </div>
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Quesos y Untables</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('lacteos','Quesos','Quesos')">Quesos</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('lacteos','Mantequilla y Margarina','Mantequilla y Margarina')">Mantequilla y Margarina</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('lacteos','Manjar y Postres','Manjar y Postres')">Manjar y Postres</li>
-              </ul>
-            </div>
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Cremas</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('lacteos','Cremas','Cremas')">Cremas</li>
-                <li class="font-bold text-verde cursor-pointer" onclick="verCat('lacteos','Lácteos')">Ver todo →</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- PANADERÍA -->
-          <div id="sub-panaderia" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Panadería</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('panaderia','Panadería','Panadería')">Pan y Levaduras</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('panaderia','Levaduras e Insumos','Levaduras e Insumos')">Levaduras e Insumos</li>
-                <li class="font-bold text-verde cursor-pointer" onclick="verCat('panaderia','Panadería')">Ver todo →</li>
-              </ul>
-            </div>
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Pastelería</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('panaderia','Pastelería','Pastelería')">Pastelería</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('panaderia','Insumos Pastelería','Insumos Pastelería')">Insumos Pastelería</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('panaderia','Mermeladas','Mermeladas')">Mermeladas</li>
-                <li class="font-bold text-verde cursor-pointer" onclick="verCat('panaderia','Panadería')">Ver todo →</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- BEBIDAS -->
-          <div id="sub-bebidas" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Bebidas</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('bebidas','Gaseosas y Refrescos','Gaseosas y Refrescos')">Gaseosas y Refrescos</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('bebidas','Jugos y Néctares','Jugos y Néctares')">Jugos y Néctares</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('bebidas','Energizantes','Energizantes')">Energizantes</li>
-                <li class="font-bold text-verde cursor-pointer" onclick="verCat('bebidas','Bebidas y Jugos')">Ver todo →</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- CONGELADOS -->
-          <div id="sub-congelados" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Congelados</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('congelados','Carnes Congeladas','Carnes Congeladas')">Carnes Congeladas</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('congelados','Papas Prefritas','Papas Prefritas')">Papas Prefritas</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('congelados','Congelados','Congelados')">Otros Congelados</li>
-                <li class="font-bold text-verde cursor-pointer" onclick="verCat('congelados','Congelados')">Ver todo →</li>
-              </ul>
-            </div>
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Helados</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('congelados','Helados','Helados')">Helados</li>
-                <li class="font-bold text-verde cursor-pointer" onclick="verCat('congelados','Congelados')">Ver todo →</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- MASCOTAS -->
-          <div id="sub-mascotas" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Mascotas</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('mascotas','Alimento Perro','Alimento Perro')">Alimento Perro</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('mascotas','Alimento Gato','Alimento Gato')">Alimento Gato</li>
-                <li class="font-bold text-verde cursor-pointer" onclick="verCat('mascotas','Mascotas')">Ver todo →</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- BEBÉ -->
-          <div id="sub-bebe" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Mi Bebé</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('bebe','Pañales','Pañales')">Pañales</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('bebe','Accesorios Bebé','Accesorios Bebé')">Accesorios Bebé</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('bebe','Cuidado Bebé','Cuidado Bebé')">Cuidado Bebé</li>
-                <li class="font-bold text-verde cursor-pointer" onclick="verCat('bebe','Mi Bebé')">Ver todo →</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- FARMACIA -->
-          <div id="sub-farmacia" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Farmacia y Cuidado</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('farmacia','Pañales Adulto','Pañales Adulto')">Pañales Adulto</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('farmacia','Apósitos','Apósitos')">Apósitos</li>
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('farmacia','Cuidado Adulto Mayor','Cuidado Adulto Mayor')">Cuidado General</li>
-                <li class="font-bold text-verde cursor-pointer" onclick="verCat('farmacia','Farmacia y Cuidado')">Ver todo →</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- CARNES -->
-          <div id="sub-carnes" class="sub-panel grid-cols-3 gap-x-8 gap-y-4">
-            <div><h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Carnes y Embutidos</h4>
-              <ul class="space-y-1.5 text-xs text-gray-600">
-                <li class="hover:text-naranja cursor-pointer" onclick="verSubCat('carnes','Embutidos','Embutidos y Salchichas')">Embutidos y Salchichas</li>
-                <li class="font-bold text-verde cursor-pointer" onclick="verCat('carnes','Carnes y Embutidos')">Ver todo →</li>
-              </ul>
-            </div>
-          </div>
-
+        <div id="mega-subs" class="flex-1 p-5 overflow-y-auto" style="max-height:480px">
         </div>
       </div>
 
     </div>
 
     <nav id="nav-links-desktop" class="flex items-center h-full overflow-x-auto no-scroll">
-      <button onclick="irInicio()"                              class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Inicio</button>
-      <button onclick="verCat('ofertas','Ofertas')"             class="nav-link px-4 h-full text-amarillo font-bold text-sm transition-colors whitespace-nowrap">🔥 Ofertas</button>
-      <button onclick="verCat('despensa','Despensa')"           class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Despensa</button>
-      <button onclick="verCat('aseo','Limpieza y Aseo')"        class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Limpieza</button>
-      <button onclick="verCat('lacteos','Lácteos')"             class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Lácteos</button>
-      <button onclick="verCat('panaderia','Panadería')"         class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Panadería</button>
-      <button onclick="verCat('bebidas','Bebidas y Jugos')"     class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Bebidas</button>
-      <button onclick="verSubCat('panaderia','Pastelería','Pastelería')" class="nav-link px-4 h-full text-white font-semibold text-sm transition-colors whitespace-nowrap">Pastelería</button>
     </nav>
   </div>
 </div>
@@ -747,85 +530,8 @@ img.slide-ilustra{opacity:1;}
   <!-- Categorías accordion -->
   <div class="flex-1 overflow-y-auto">
     <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4 py-2 bg-gray-50">Todas las categorías</p>
-
-    <div class="drawer-cat-btn" onclick="toggleDrawerSub('dsub-despensa')">
-      <span>🥫 Despensa</span><span class="text-gray-400 text-lg" id="arr-despensa">›</span>
-    </div>
-    <div id="dsub-despensa" class="drawer-subcat">
-      <a onclick="cerrarDrawer();verSubCat('despensa','Arroz y Legumbres','Arroz y Legumbres')">Arroz y Legumbres</a>
-      <a onclick="cerrarDrawer();verSubCat('despensa','Fideos y Pastas','Fideos y Pastas')">Fideos y Pastas</a>
-      <a onclick="cerrarDrawer();verSubCat('despensa','Aceites y Aderezos','Aceites y Aderezos')">Aceites y Aderezos</a>
-      <a onclick="cerrarDrawer();verSubCat('despensa','Harinas y Cereales','Harinas y Cereales')">Harinas y Cereales</a>
-      <a onclick="cerrarDrawer();verSubCat('despensa','Conservas','Conservas')">Conservas</a>
-      <a onclick="cerrarDrawer();verSubCat('despensa','Café','Café')">Café</a>
-      <a onclick="cerrarDrawer();verSubCat('despensa','Té e Infusiones','Té e Infusiones')">Té e Infusiones</a>
-      <a onclick="cerrarDrawer();verCat('despensa','Despensa')">Ver todo Despensa →</a>
-    </div>
-
-    <div class="drawer-cat-btn" onclick="toggleDrawerSub('dsub-aseo')">
-      <span>🧼 Limpieza y Aseo</span><span class="text-gray-400 text-lg" id="arr-aseo">›</span>
-    </div>
-    <div id="dsub-aseo" class="drawer-subcat">
-      <a onclick="cerrarDrawer();verSubCat('aseo','Detergentes','Detergentes')">Detergentes</a>
-      <a onclick="cerrarDrawer();verSubCat('aseo','Limpieza Hogar','Limpieza Hogar')">Limpieza Hogar</a>
-      <a onclick="cerrarDrawer();verSubCat('aseo','Aseo Personal','Aseo Personal')">Aseo Personal</a>
-      <a onclick="cerrarDrawer();verSubCat('aseo','Jabones','Jabones')">Jabones</a>
-      <a onclick="cerrarDrawer();verSubCat('aseo','Toallas de Papel','Toallas de Papel')">Toallas y Papeles</a>
-      <a onclick="cerrarDrawer();verCat('aseo','Limpieza y Aseo')">Ver todo →</a>
-    </div>
-
-    <div class="drawer-cat-btn" onclick="toggleDrawerSub('dsub-desayuno')">
-      <span>☕ Desayuno y Dulces</span><span class="text-gray-400 text-lg" id="arr-desayuno">›</span>
-    </div>
-    <div id="dsub-desayuno" class="drawer-subcat">
-      <a onclick="cerrarDrawer();verSubCat('desayuno','Café','Café')">Café</a>
-      <a onclick="cerrarDrawer();verSubCat('desayuno','Chocolates','Chocolates')">Chocolates</a>
-      <a onclick="cerrarDrawer();verSubCat('desayuno','Caramelos y Golosinas','Caramelos y Golosinas')">Caramelos y Golosinas</a>
-      <a onclick="cerrarDrawer();verSubCat('desayuno','Galletas','Galletas')">Galletas</a>
-      <a onclick="cerrarDrawer();verCat('desayuno','Desayuno y Dulces')">Ver todo →</a>
-    </div>
-
-    <div class="drawer-cat-btn" onclick="cerrarDrawer();verCat('lacteos','Lácteos')">
-      <span>🥛 Lácteos</span><span class="text-gray-400">›</span>
-    </div>
-
-    <div class="drawer-cat-btn" onclick="toggleDrawerSub('dsub-panaderia')">
-      <span>🍞 Panadería</span><span class="text-gray-400 text-lg" id="arr-panaderia">›</span>
-    </div>
-    <div id="dsub-panaderia" class="drawer-subcat">
-      <a onclick="cerrarDrawer();verSubCat('panaderia','Panadería','Panadería')">Pan y Levaduras</a>
-      <a onclick="cerrarDrawer();verSubCat('panaderia','Pastelería','Pastelería')">Pastelería</a>
-      <a onclick="cerrarDrawer();verSubCat('panaderia','Mermeladas','Mermeladas')">Mermeladas</a>
-      <a onclick="cerrarDrawer();verSubCat('panaderia','Insumos Pastelería','Insumos Pastelería')">Insumos Pastelería</a>
-      <a onclick="cerrarDrawer();verCat('panaderia','Panadería')">Ver todo →</a>
-    </div>
-
-    <div class="drawer-cat-btn" onclick="toggleDrawerSub('dsub-bebidas')">
-      <span>🧃 Bebidas y Jugos</span><span class="text-gray-400 text-lg" id="arr-bebidas">›</span>
-    </div>
-    <div id="dsub-bebidas" class="drawer-subcat">
-      <a onclick="cerrarDrawer();verSubCat('bebidas','Gaseosas y Refrescos','Gaseosas y Refrescos')">Gaseosas y Refrescos</a>
-      <a onclick="cerrarDrawer();verSubCat('bebidas','Jugos y Néctares','Jugos y Néctares')">Jugos y Néctares</a>
-      <a onclick="cerrarDrawer();verSubCat('bebidas','Energizantes','Energizantes')">Energizantes</a>
-      <a onclick="cerrarDrawer();verCat('bebidas','Bebidas y Jugos')">Ver todo →</a>
-    </div>
-
-    <div class="drawer-cat-btn" onclick="cerrarDrawer();verCat('mascotas','Mascotas')">
-      <span>🐕 Mascotas</span><span class="text-gray-400">›</span>
-    </div>
-    <div class="drawer-cat-btn" onclick="cerrarDrawer();verCat('bebe','Mi Bebé')">
-      <span>🍼 Mi Bebé</span><span class="text-gray-400">›</span>
-    </div>
-    <div class="drawer-cat-btn" onclick="cerrarDrawer();verCat('farmacia','Farmacia y Cuidado')">
-      <span>💊 Farmacia y Cuidado</span><span class="text-gray-400">›</span>
-    </div>
-    <div class="drawer-cat-btn" onclick="cerrarDrawer();verCat('congelados','Congelados')">
-      <span>🧊 Congelados</span><span class="text-gray-400">›</span>
-    </div>
-    <div class="drawer-cat-btn" onclick="cerrarDrawer();verCat('carnes','Carnes y Embutidos')">
-      <span>🥩 Carnes y Embutidos</span><span class="text-gray-400">›</span>
-    </div>
-  </div>
+    <div id="drawer-cats"></div>
+        </div>
   <!-- Footer drawer -->
   <div class="p-4 border-t border-gray-200 flex-shrink-0 bg-gray-50">
     <a href="https://wa.me/56944350559" target="_blank"
@@ -1604,6 +1310,7 @@ async function cargarProductos(forzar = false) {
     pintarHomeOfertas();
     pintarHomeTop();
     pintarMarcas();
+    pintarMenus();
     depurarMenus();
     pintarBanners();
     return;
@@ -1660,6 +1367,7 @@ async function cargarProductos(forzar = false) {
     pintarHomeOfertas();
     pintarHomeTop();
     pintarMarcas();
+    pintarMenus();
     depurarMenus();
     pintarBanners();
   }
@@ -1702,7 +1410,8 @@ async function cargarMasProductos(offset) {
       pintarHomeOfertas();
       pintarHomeTop();
       pintarMarcas();
-      depurarMenus();
+      pintarMenus();
+    depurarMenus();
     pintarBanners();
     }
   } catch (e) { /* silencioso */ }
@@ -1981,6 +1690,118 @@ function reordenar(){
   else if(v==='desc') l.sort((a,b)=>b.p-a.p);
   else if(v==='az') l.sort((a,b)=>a.n.localeCompare(b.n));
   pintarCatalogo(l);
+}
+
+// ── MENÚS ARMADOS DESDE LA PLANILLA ─────────────────────────────────────
+// Antes la barra de arriba, el mega menú y el drawer estaban escritos a mano:
+// 85 links de subcategoría en el HTML. Eso permitía esconder lo vacío, pero
+// NO mostrar una subcategoría que no estuviera ya escrita, y había 280
+// productos publicados en subcategorías sin link, imposibles de encontrar
+// navegando. Al cargar una línea nueva de productos el problema crecía.
+//
+// Ahora los tres menús salen de las columnas "categoria" y "subcategoria" del
+// catálogo. Cargar productos nuevos basta para que aparezcan en el menú.
+
+// Nombre bonito y orden de las categorías que ya conocemos. Una categoría que
+// NO esté en esta tabla igual se muestra, con el slug capitalizado y al final:
+// eso es lo que permite sumar una línea nueva sin tocar el código.
+const CATS_CONOCIDAS = {
+  despensa:   { emoji: '🥫', nombre: 'Despensa',           orden: 1 },
+  aseo:       { emoji: '🧼', nombre: 'Limpieza y Aseo',    orden: 2 },
+  desayuno:   { emoji: '☕', nombre: 'Desayuno y Dulces',  orden: 3 },
+  lacteos:    { emoji: '🥛', nombre: 'Lácteos',            orden: 4 },
+  panaderia:  { emoji: '🍞', nombre: 'Panadería',          orden: 5 },
+  bebidas:    { emoji: '🧃', nombre: 'Bebidas y Jugos',    orden: 6 },
+  congelados: { emoji: '🧊', nombre: 'Congelados',         orden: 7 },
+  carnes:     { emoji: '🥩', nombre: 'Carnes y Embutidos', orden: 8 },
+  bebe:       { emoji: '🍼', nombre: 'Mi Bebé',            orden: 9 },
+  farmacia:   { emoji: '💊', nombre: 'Farmacia y Cuidado', orden: 10 },
+  mascotas:   { emoji: '🐕', nombre: 'Mascotas',           orden: 11 },
+};
+function infoCat(slug){
+  return CATS_CONOCIDAS[slug] ||
+    { emoji: '📦', nombre: slug.charAt(0).toUpperCase() + slug.slice(1), orden: 90 };
+}
+
+// Los nombres de subcategoría vienen de la planilla y pueden traer apóstrofos
+// ("Té e Infusiones" no, pero mañana cualquiera): hay que escaparlos porque
+// viajan dentro de un onclick entre comillas simples.
+const attr = s => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+function agruparCatalogo(){
+  const cats = new Map();
+  for (const p of DB) {
+    if (!p.c) continue;
+    if (!cats.has(p.c)) cats.set(p.c, { total: 0, subs: new Map() });
+    const c = cats.get(p.c);
+    c.total++;
+    if (p.sub) c.subs.set(p.sub, (c.subs.get(p.sub) || 0) + 1);
+  }
+  return [...cats.entries()]
+    .map(([slug, d]) => ({
+      slug, ...infoCat(slug), total: d.total,
+      subs: [...d.subs.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es')),
+    }))
+    .sort((a, b) => a.orden - b.orden || b.total - a.total);
+}
+
+function pintarMenus(){
+  const nav0 = document.getElementById('nav-links-desktop');
+  if (!DB.length) {
+    // Mientras carga el catálogo la barra no puede quedar en blanco.
+    if (nav0 && !nav0.children.length)
+      nav0.innerHTML = '<button onclick="irInicio()" class="nav-link px-4 h-full text-white font-semibold text-sm whitespace-nowrap">Inicio</button>';
+    return;
+  }
+  const cats = agruparCatalogo();
+  if (!cats.length) return;
+  const hayOfertas = DB.some(p => p.oferta);
+
+  // 1. Barra de arriba: Inicio, Ofertas y las categorías con más productos.
+  //    Se limita a 6 porque la barra no hace scroll en pantallas medianas.
+  const nav = document.getElementById('nav-links-desktop');
+  if (nav) {
+    const destacadas = [...cats].sort((a, b) => b.total - a.total).slice(0, 6)
+      .sort((a, b) => a.orden - b.orden);
+    nav.innerHTML =
+      `<button onclick="irInicio()" class="nav-link px-4 h-full text-white font-semibold text-sm whitespace-nowrap">Inicio</button>` +
+      (hayOfertas ? `<button onclick="verCat('ofertas','Ofertas')" class="nav-link px-4 h-full text-amarillo font-bold text-sm whitespace-nowrap">🔥 Ofertas</button>` : '') +
+      destacadas.map(c =>
+        `<button onclick="verCat('${attr(c.slug)}','${attr(c.nombre)}')" class="nav-link px-4 h-full text-white font-semibold text-sm whitespace-nowrap">${c.nombre}</button>`).join('');
+  }
+
+  // 2. Mega menú: columna de categorías + un panel de subcategorías por cada una
+  const lista = document.getElementById('mega-cats-list');
+  const subs  = document.getElementById('mega-subs');
+  if (lista && subs) {
+    lista.innerHTML = cats.map((c, i) =>
+      `<button onmouseenter="activarSub('sub-${attr(c.slug)}',this)" onclick="verCat('${attr(c.slug)}','${attr(c.nombre)}')"${i === 0 ? ' class="active"' : ''}><span class="flex items-center gap-2">${c.emoji} ${c.nombre}</span><span class="text-gray-400">›</span></button>`).join('');
+
+    subs.innerHTML = cats.map((c, i) => {
+      const items = c.subs.map(([s, n]) =>
+        `<li class="hover:text-naranja cursor-pointer" onclick="verSubCat('${attr(c.slug)}','${attr(s)}','${attr(s)}')">${s} <span class="text-gray-300">(${n})</span></li>`).join('');
+      return `<div id="sub-${attr(c.slug)}" class="sub-panel${i === 0 ? ' active' : ''} grid-cols-3 gap-x-8 gap-y-4">
+        <div style="grid-column:1/-1">
+          <h4 class="text-xs font-black text-verde uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">${c.emoji} ${c.nombre} · ${c.total} productos</h4>
+          <ul class="space-y-1.5 text-xs text-gray-600" style="columns:3;column-gap:2rem">${items}</ul>
+          <p class="mt-3"><span class="font-bold text-verde cursor-pointer" onclick="verCat('${attr(c.slug)}','${attr(c.nombre)}')">Ver todo ${c.nombre} →</span></p>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // 3. Drawer móvil: un acordeón por categoría
+  const drw = document.getElementById('drawer-cats');
+  if (drw) {
+    drw.innerHTML = cats.map(c => `
+      <div class="drawer-cat-btn" onclick="toggleDrawerSub('dsub-${attr(c.slug)}')">
+        <span>${c.emoji} ${c.nombre}</span><span class="text-gray-400 text-lg">›</span>
+      </div>
+      <div id="dsub-${attr(c.slug)}" class="drawer-subcat">
+        ${c.subs.map(([s, n]) => `<a onclick="cerrarDrawer();verSubCat('${attr(c.slug)}','${attr(s)}','${attr(s)}')">${s} (${n})</a>`).join('')}
+        <a onclick="cerrarDrawer();verCat('${attr(c.slug)}','${attr(c.nombre)}')">Ver todo ${c.nombre} →</a>
+      </div>`).join('');
+  }
 }
 
 // ── RENDER ──
