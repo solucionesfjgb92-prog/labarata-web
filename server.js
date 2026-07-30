@@ -803,6 +803,14 @@ async function cargarProductos() {
     const tipo     = (f.tipo_bsale || '').toUpperCase().trim();
     const sub      = (f.subcategoria || '').trim();
 
+    // Columna "descripcion" (N). Texto libre que se muestra en la ficha del
+    // producto. Se recorta a 800 caracteres: una celda con un texto enorme
+    // pegado desde otra parte no puede reventar el diseño de la ficha, y 800
+    // alcanza de sobra para describir un producto de almacén.
+    // Si la columna no existe todavía, queda vacía y la ficha simplemente no
+    // muestra el bloque de descripción.
+    const descripcion = (f.descripcion || '').trim().slice(0, 800);
+
     // Columna "oferta" (K en la planilla). Marca qué productos salen
     // destacados en el home, en la lámina de ofertas del carrusel y en la
     // categoría "Ofertas" del menú. Antes esto viajaba fijo en false, así que
@@ -883,6 +891,7 @@ async function cargarProductos() {
       oferta,
       // Sólo viajan si la oferta está vigente. Así el front no tiene que volver
       // a decidir nada: si viene precioNormal, se muestra tachado.
+      descripcion,
       precioNormal: oferta ? precioNormal : 0,
       descuento:    oferta && precioNormal ? Math.round((1 - precio / precioNormal) * 100) : 0,
       vigenciaHasta: oferta ? vigenciaHasta : null,
@@ -1902,6 +1911,9 @@ app.get('/api/diagnostico/catalogo', async (req, res) => {
       // Si sale 0, o no hay ninguna fila marcada o la columna no se llama
       // exactamente "oferta" en la primera fila de la planilla.
       enOferta: productos.filter(p => p.oferta).length,
+      // Si sale 0, o no hay ninguna fila escrita o la columna no se llama
+      // exactamente "descripcion" en la primera fila de la planilla.
+      conDescripcion: productos.filter(p => p.descripcion).length,
       productosEnOferta: productos.filter(p => p.oferta).map(p =>
         `${p.n} ($${p.p.toLocaleString('es-CL')}` +
         (p.precioNormal ? ` antes $${p.precioNormal.toLocaleString('es-CL')}, -${p.descuento}%` : '') +

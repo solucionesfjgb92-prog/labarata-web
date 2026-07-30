@@ -1433,6 +1433,14 @@ img.slide-ilustra{opacity:1;}
   </div>
 </div>
 
+<!-- ════════ MODAL: FICHA DE PRODUCTO ════════ -->
+<div id="modal-producto" class="hidden fixed inset-0 z-[750] flex items-center justify-center p-3 sm:p-4" style="background:rgba(0,0,0,.6)">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
+    <button onclick="cerrarFicha()" class="absolute top-3 right-3 z-10 bg-white/90 hover:bg-white text-gray-400 hover:text-red-500 w-9 h-9 rounded-full text-2xl leading-none flex items-center justify-center shadow">×</button>
+    <div id="ficha-cuerpo" class="grid grid-cols-1 sm:grid-cols-2 gap-0"></div>
+  </div>
+</div>
+
 <!-- ════════ MODAL FLOTANTE: CONDICIONES DE ENTREGA ════════ -->
 <div id="modal-condiciones" class="hidden fixed inset-0 z-[700] flex items-center justify-center p-4" style="background:rgba(0,0,0,.6)">
   <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-6 max-h-[85vh] overflow-y-auto">
@@ -1630,6 +1638,7 @@ async function cargarProductos(forzar = false) {
       oferta:    p.oferta || false,
       // Vienen ya resueltos por el backend: si la oferta venció, llegan en 0 y
       // null, así que acá no hay que volver a comparar fechas.
+      descripcion:   p.descripcion   || '',
       precioNormal:  p.precioNormal  || 0,
       descuento:     p.descuento     || 0,
       vigenciaHasta: p.vigenciaHasta || null,
@@ -1675,6 +1684,7 @@ async function cargarMasProductos(offset) {
       oferta:    p.oferta || false,
       // Vienen ya resueltos por el backend: si la oferta venció, llegan en 0 y
       // null, así que acá no hay que volver a comparar fechas.
+      descripcion:   p.descripcion   || '',
       precioNormal:  p.precioNormal  || 0,
       descuento:     p.descuento     || 0,
       vigenciaHasta: p.vigenciaHasta || null,
@@ -2016,7 +2026,10 @@ function crearCard(p, mini) {
   const sinStock  = p.stock !== null && p.stock !== undefined && p.stock <= 0;
   const pocoStock = typeof p.stock === 'number' && p.stock > 0 && p.stock <= 5;
   const d = document.createElement('div');
-  d.className = 'prod-card bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden relative flex flex-col';
+  d.className = 'prod-card bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden relative flex flex-col cursor-pointer';
+  // Clic en la tarjeta abre la ficha. Los botones de dentro (añadir, +, −,
+  // WhatsApp) ya cortan la propagación con event.stopPropagation().
+  d.addEventListener('click', () => abrirFicha(p.id));
   if (sinStock) d.className += ' opacity-70';
 
   // Badge de stock (la urgencia de stock no aplica si las compras están desactivadas)
@@ -2147,6 +2160,66 @@ function subirCantidad(id){
   if(e) e.cantidad++; else carrito.push({...p,cantidad:1});
   return true;
 }
+// ── FICHA DE PRODUCTO ───────────────────────────────────────────────────
+// Hasta ahora la tarjeta no llevaba a ninguna parte: el clic no hacía nada y
+// no había dónde poner la descripción. Esta ficha es ese lugar, y de paso
+// muestra el código, el formato y la disponibilidad, que antes tampoco se
+// veían por ningún lado.
+function abrirFicha(id){
+  const p = DB.find(x => x.id === id);
+  if (!p) return;
+  const sinStock  = p.stock !== null && p.stock !== undefined && p.stock <= 0;
+  const pocoStock = typeof p.stock === 'number' && p.stock > 0 && p.stock <= 5;
+  const wa = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hola, me interesa este producto: ${p.n} ($${p.p.toLocaleString('es-CL')})`)}`;
+
+  document.getElementById('ficha-cuerpo').innerHTML = `
+    <div class="bg-gray-50 flex items-center justify-center p-6 sm:p-8">
+      <img src="${esc(p.img)}" alt="${esc(p.n)}" class="max-h-56 sm:max-h-80 w-auto object-contain ${sinStock ? 'grayscale' : ''}"
+        onerror="this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=300&fit=crop'">
+    </div>
+    <div class="p-5 sm:p-7 flex flex-col">
+      ${p.oferta && !sinStock ? '<span class="self-start bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded mb-2">OFERTA</span>' : ''}
+      <h2 class="text-lg sm:text-2xl font-black text-gray-800 leading-tight mb-1">${esc(p.n)}</h2>
+      <p class="text-xs text-gray-400 mb-3">${p.sub ? esc(p.sub) + ' · ' : ''}Código ${esc(p.barCode || p.code || '—')}</p>
+
+      <div class="flex items-baseline gap-2 flex-wrap mb-1">
+        <p class="text-2xl sm:text-3xl font-black text-gray-900" style="font-variant-numeric:tabular-nums">$${p.p.toLocaleString('es-CL')}</p>
+        ${p.precioNormal && !sinStock ? `<s class="text-sm text-gray-400 font-semibold">$${p.precioNormal.toLocaleString('es-CL')}</s>
+          ${p.descuento >= 1 ? `<span class="text-[11px] font-black text-white bg-red-600 rounded px-1.5 py-0.5">-${p.descuento}%</span>` : ''}` : ''}
+      </div>
+      ${p.precioNormal && p.vigenciaHasta && !sinStock
+        ? `<p class="text-[11px] text-gray-400 font-semibold mb-2">Oferta válida hasta el ${fechaCorta(p.vigenciaHasta)}</p>` : ''}
+
+      <p class="text-xs font-bold mb-3 ${sinStock ? 'text-gray-500' : (pocoStock ? 'text-orange-600' : 'text-verde')}">
+        ${sinStock ? '● Sin stock' : (pocoStock ? `● ¡Últimas ${p.stock} unidades!` : '● Disponible')}
+      </p>
+
+      ${p.descripcion
+        ? `<p class="text-sm text-gray-600 leading-relaxed mb-4">${esc(p.descripcion)}</p>`
+        : ''}
+
+      ${esPerecible(p) ? '<p class="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 leading-tight mb-3">⚠️ Producto excluido del derecho a retracto (Decreto 52/2024). Tu garantía legal se mantiene intacta.</p>' : ''}
+
+      <div class="mt-auto">
+        ${COMPRAS_DESACTIVADAS
+          ? `<a href="${wa}" target="_blank" class="flex items-center justify-center gap-1 bg-verde hover:bg-green-700 text-white font-bold py-3 rounded-full text-sm w-full transition-colors">💬 Pedir por WhatsApp</a>`
+          : sinStock
+          ? `<button disabled class="bg-gray-200 text-gray-400 font-bold py-3 rounded-full text-sm w-full cursor-not-allowed">Sin stock</button>`
+          : `<button onclick="agregar(${p.id});cerrarFicha()" class="bg-amarillo hover:brightness-95 text-gray-900 font-black py-3 rounded-full text-sm w-full transition-all">+ Añadir al pedido</button>`}
+      </div>
+    </div>`;
+
+  document.getElementById('modal-producto').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function cerrarFicha(){
+  document.getElementById('modal-producto').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+document.getElementById('modal-producto').addEventListener('click', function(e){
+  if (e.target === this) cerrarFicha();
+});
+
 function agregar(id){
   if(COMPRAS_DESACTIVADAS){alert('El sitio está en mantención. Las compras están temporalmente desactivadas — escríbenos por WhatsApp para hacer tu pedido.');return;}
   if(!subirCantidad(id)) return;
