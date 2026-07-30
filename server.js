@@ -811,6 +811,14 @@ async function cargarProductos() {
     // muestra el bloque de descripción.
     const descripcion = (f.descripcion || '').trim().slice(0, 800);
 
+    // Columna "marca" (O). Hoy la marca va pegada en el nombre del producto
+    // ("MAKAO CHOCLO GRANO 425G"), asi que no se puede filtrar por ella. Con
+    // esta columna el sitio puede mostrar el chip de la marca en la ficha y
+    // ofrecer el filtro por marca en la vista de categoria. Si esta vacia, no
+    // se muestra nada: no se intenta adivinarla del nombre, porque la primera
+    // palabra no siempre es la marca ("PACK OMO MATIC", "CLORO GEL ACTIVE").
+    const marca = (f.marca || '').trim().slice(0, 40);
+
     // Columna "oferta" (K en la planilla). Marca qué productos salen
     // destacados en el home, en la lámina de ofertas del carrusel y en la
     // categoría "Ofertas" del menú. Antes esto viajaba fijo en false, así que
@@ -892,6 +900,7 @@ async function cargarProductos() {
       // Sólo viajan si la oferta está vigente. Así el front no tiene que volver
       // a decidir nada: si viene precioNormal, se muestra tachado.
       descripcion,
+      marca,
       precioNormal: oferta ? precioNormal : 0,
       descuento:    oferta && precioNormal ? Math.round((1 - precio / precioNormal) * 100) : 0,
       vigenciaHasta: oferta ? vigenciaHasta : null,
@@ -1914,6 +1923,8 @@ app.get('/api/diagnostico/catalogo', async (req, res) => {
       // Si sale 0, o no hay ninguna fila escrita o la columna no se llama
       // exactamente "descripcion" en la primera fila de la planilla.
       conDescripcion: productos.filter(p => p.descripcion).length,
+      conMarca: productos.filter(p => p.marca).length,
+      marcas: [...new Set(productos.map(p => p.marca).filter(Boolean))].sort(),
       productosEnOferta: productos.filter(p => p.oferta).map(p =>
         `${p.n} ($${p.p.toLocaleString('es-CL')}` +
         (p.precioNormal ? ` antes $${p.precioNormal.toLocaleString('es-CL')}, -${p.descuento}%` : '') +

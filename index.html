@@ -781,6 +781,7 @@ img.slide-ilustra{opacity:1;}
           </select>
         </div>
       </div>
+      <div id="cat-filtros" class="hidden flex-wrap items-center gap-2 mb-3 sm:mb-4"></div>
       <div id="cat-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4"></div>
     </main>
   </div>
@@ -1292,6 +1293,11 @@ const DB_RESPALDO = [
 let DB        = [];          // se llena desde Bsale o respaldo
 let carrito   = [];
 let listaCat  = [];
+// listaCat es lo que se ve; listaBase es la categoria completa sin filtrar.
+// Hacen falta las dos: los filtros se recalculan sobre la base, no sobre lo
+// ya filtrado, o al soltar un filtro no habria de donde recuperar los productos.
+let listaBase = [];
+let filtros   = { marca: "", precioMax: 0, soloOferta: false };
 let cargando  = false;
 let totalBsale = 0;          // total de productos en Bsale (para paginación)
 
@@ -1346,6 +1352,7 @@ async function cargarProductos(forzar = false) {
       // Vienen ya resueltos por el backend: si la oferta venció, llegan en 0 y
       // null, así que acá no hay que volver a comparar fechas.
       descripcion:   p.descripcion   || '',
+      marca:         p.marca         || '',
       precioNormal:  p.precioNormal  || 0,
       descuento:     p.descuento     || 0,
       vigenciaHasta: p.vigenciaHasta || null,
@@ -1393,6 +1400,7 @@ async function cargarMasProductos(offset) {
       // Vienen ya resueltos por el backend: si la oferta venció, llegan en 0 y
       // null, así que acá no hay que volver a comparar fechas.
       descripcion:   p.descripcion   || '',
+      marca:         p.marca         || '',
       precioNormal:  p.precioNormal  || 0,
       descuento:     p.descuento     || 0,
       vigenciaHasta: p.vigenciaHasta || null,
@@ -1550,11 +1558,72 @@ function irCatalogo(cat, titulo, tipo='', sub=''){
     lista = lista.filter(p => tipos.includes(p.tipo));
   }
 
-  listaCat = [...lista];
-  document.getElementById('cat-count').textContent = lista.length + ' productos';
-  pintarCatalogo(lista);
+  listaBase = [...lista];
+  filtros = { marca: '', precioMax: 0, soloOferta: false };   // se entra limpio
+  aplicarFiltros();
   window.scrollTo({top:0,behavior:'smooth'});
 }
+
+// ── FILTROS DE LA VISTA DE CATEGORÍA ────────────────────────────────────
+// Con 115 productos se puede mirar todo; con el catálogo completo (1.400
+// filas) y una línea nueva de distribución, no. Los filtros se calculan de lo
+// que hay en la categoría abierta, así que nunca ofrecen una marca o un rango
+// de precio que no devuelva nada.
+function aplicarFiltros(){
+  let l = [...listaBase];
+  if (filtros.marca)      l = l.filter(p => p.marca === filtros.marca);
+  if (filtros.precioMax)  l = l.filter(p => p.p <= filtros.precioMax);
+  if (filtros.soloOferta) l = l.filter(p => p.oferta);
+
+  listaCat = l;
+  const cuenta = document.getElementById('cat-count');
+  cuenta.textContent = l.length + (l.length === 1 ? ' producto' : ' productos') +
+    (l.length !== listaBase.length ? ` de ${listaBase.length}` : '');
+  pintarFiltros();
+  reordenar();     // respeta el orden elegido y pinta
+}
+
+function pintarFiltros(){
+  const cont = document.getElementById('cat-filtros');
+  if (!cont) return;
+
+  const marcas = [...new Set(listaBase.map(p => p.marca).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+  const hayOferta = listaBase.some(p => p.oferta);
+  // Tramos de precio sacados del propio rango de la categoría: un tramo fijo de
+  // "$5.000" no sirve igual en lácteos que en sacos de harina.
+  const precios = listaBase.map(p => p.p).sort((a,b)=>a-b);
+  const tramos = [];
+  if (precios.length > 6) {
+    [0.33, 0.66].forEach(q => {
+      const v = Math.round(precios[Math.floor(precios.length * q)] / 100) * 100;
+      if (v > 0 && !tramos.includes(v)) tramos.push(v);
+    });
+  }
+
+  if (!marcas.length && !hayOferta && !tramos.length) { cont.classList.add('hidden'); return; }
+  cont.classList.remove('hidden');
+  cont.classList.add('flex');
+
+  const chip = (activo, txt, accion) =>
+    `<button onclick="${accion}" class="text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${
+      activo ? 'bg-verde text-white border-verde' : 'bg-white text-gray-600 border-gray-200 hover:border-verde'}">${txt}</button>`;
+
+  const hayFiltro = filtros.marca || filtros.precioMax || filtros.soloOferta;
+  cont.innerHTML =
+    (hayOferta ? chip(filtros.soloOferta, '🔥 Solo ofertas', 'filtrarOferta()') : '') +
+    tramos.map(v => chip(filtros.precioMax === v, `Hasta $${v.toLocaleString('es-CL')}`, `filtrarPrecio(${v})`)).join('') +
+    (marcas.length > 1
+      ? `<select onchange="filtrarMarca(this.value)" class="text-xs font-bold border rounded-full px-3 py-1.5 bg-white text-gray-600 border-gray-200 focus:outline-none focus:border-verde">
+           <option value="">Todas las marcas</option>
+           ${marcas.map(m => `<option value="${esc(m)}"${filtros.marca === m ? ' selected' : ''}>${esc(m)}</option>`).join('')}
+         </select>` : '') +
+    (hayFiltro ? chip(false, '✕ Limpiar', 'limpiarFiltros()') : '');
+}
+
+function filtrarMarca(m){ filtros.marca = m; aplicarFiltros(); }
+function filtrarPrecio(v){ filtros.precioMax = (filtros.precioMax === v ? 0 : v); aplicarFiltros(); }
+function filtrarOferta(){ filtros.soloOferta = !filtros.soloOferta; aplicarFiltros(); }
+function limpiarFiltros(){ filtros = { marca:'', precioMax:0, soloOferta:false }; aplicarFiltros(); }
 
 // verSubCat — filtra por subcategoria (campo sub) de la planilla
 function verSubCat(cat, sub, titulo) {
@@ -1679,9 +1748,9 @@ function buscarProducto(q){
   document.getElementById('vista-catalogo').classList.remove('hidden');
   document.getElementById('bread').textContent=`"${q}"`;
   document.getElementById('cat-titulo').textContent=`Resultados para "${q}"`;
-  document.getElementById('cat-count').textContent=r.length+' productos';
-  listaCat=[...r];
-  pintarCatalogo(r);
+  listaBase=[...r];
+  filtros={marca:'',precioMax:0,soloOferta:false};
+  aplicarFiltros();
 }
 function reordenar(){
   const v=document.getElementById('orden').value;
@@ -1874,6 +1943,7 @@ function crearCard(p, mini) {
         onerror="this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=300&fit=crop'" loading="lazy">
     </div>
     <div class="p-2 sm:p-3 flex flex-col flex-1">
+      ${p.marca ? `<span class="self-start bg-gray-100 text-gray-500 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded mb-1">${esc(p.marca)}</span>` : ''}
       <h3 class="text-xs sm:text-sm font-semibold text-gray-700 leading-snug flex-1 mb-1.5 sm:mb-2" style="min-height:2.2rem">${esc(p.n)}</h3>
       <div class="flex items-baseline gap-1.5 flex-wrap mb-1.5 sm:mb-2">
         <p class="text-gray-900 font-black text-base sm:text-lg" style="font-variant-numeric:tabular-nums">$${p.p.toLocaleString('es-CL')}</p>
@@ -2001,7 +2071,7 @@ function abrirFicha(id){
     <div class="p-5 sm:p-7 flex flex-col">
       ${p.oferta && !sinStock ? '<span class="self-start bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded mb-2">OFERTA</span>' : ''}
       <h2 class="text-lg sm:text-2xl font-black text-gray-800 leading-tight mb-1">${esc(p.n)}</h2>
-      <p class="text-xs text-gray-400 mb-3">${p.sub ? esc(p.sub) + ' · ' : ''}Código ${esc(p.barCode || p.code || '—')}</p>
+      <p class="text-xs text-gray-400 mb-3">${p.marca ? '<strong class="text-gray-500">' + esc(p.marca) + '</strong> · ' : ''}${p.sub ? esc(p.sub) + ' · ' : ''}Código ${esc(p.barCode || p.code || '—')}</p>
 
       <div class="flex items-baseline gap-2 flex-wrap mb-1">
         <p class="text-2xl sm:text-3xl font-black text-gray-900" style="font-variant-numeric:tabular-nums">$${p.p.toLocaleString('es-CL')}</p>
