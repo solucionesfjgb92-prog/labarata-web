@@ -753,6 +753,14 @@ img.slide-ilustra{opacity:1;}
     <p class="text-center text-[11px] sm:text-xs text-gray-400 mt-3">Toca una marca para ver todos sus productos disponibles.</p>
   </div>
 
+  <!-- CLIMA DE VALDIVIA -->
+  <div id="clima" class="wrap reveal w-full px-3 sm:px-4 pb-8 hidden">
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-4 sm:p-5">
+      <div id="clima-cuerpo" class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6"></div>
+      <p class="text-[10px] text-gray-300 mt-3 text-right">Datos de Open-Meteo</p>
+    </div>
+  </div>
+
 </div><!-- /vista-inicio -->
 
 
@@ -2051,6 +2059,75 @@ function subirCantidad(id){
   if(e) e.cantidad++; else carrito.push({...p,cantidad:1});
   return true;
 }
+// ── CLIMA DE VALDIVIA ───────────────────────────────────────────────────
+// Se pide a Open-Meteo, que es gratis y no necesita clave, directo desde el
+// navegador del cliente: no pasa por nuestro servidor ni gasta cupo de nada.
+//
+// Si falla —sin internet, servicio caído, respuesta rara— el bloque queda
+// escondido y no se muestra nada. Un widget de clima no puede ensuciar la
+// tienda: es un adorno, no parte de la compra.
+const CLIMA_URL = 'https://api.open-meteo.com/v1/forecast?latitude=-39.8142&longitude=-73.2459'
+  + '&current=temperature_2m,apparent_temperature,weather_code'
+  + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'
+  + '&timezone=America%2FSantiago&forecast_days=6';
+
+// Códigos WMO agrupados: no vale la pena distinguir 20 tipos de lluvia.
+function climaIcono(c){
+  if (c === 0)                return ['☀️', 'Despejado'];
+  if (c <= 2)                 return ['🌤️', 'Parcial'];
+  if (c === 3)                return ['☁️', 'Nublado'];
+  if (c === 45 || c === 48)   return ['🌫️', 'Niebla'];
+  if (c >= 51 && c <= 57)     return ['🌦️', 'Llovizna'];
+  if (c >= 61 && c <= 67)     return ['🌧️', 'Lluvia'];
+  if (c >= 71 && c <= 77)     return ['🌨️', 'Nieve'];
+  if (c >= 80 && c <= 82)     return ['🌧️', 'Chubascos'];
+  if (c >= 95)                return ['⛈️', 'Tormenta'];
+  return ['🌡️', ''];
+}
+const DIAS = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
+
+async function pintarClima(){
+  const cont = document.getElementById('clima');
+  const cuerpo = document.getElementById('clima-cuerpo');
+  if (!cont || !cuerpo) return;
+  try {
+    const r = await fetch(CLIMA_URL, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) throw new Error('respuesta ' + r.status);
+    const d = await r.json();
+    if (!d.current || !d.daily) throw new Error('sin datos');
+
+    const [ico, txt] = climaIcono(d.current.weather_code);
+    const ahora = Math.round(d.current.temperature_2m);
+    const sensacion = Math.round(d.current.apparent_temperature);
+
+    const dias = d.daily.time.map((iso, i) => {
+      // La fecha viene como AAAA-MM-DD; se parte a mano porque new Date(iso)
+      // la interpreta en UTC y en Chile mostraría el día anterior.
+      const [a, m, dd] = iso.split('-').map(Number);
+      const nombre = i === 0 ? 'HOY' : DIAS[new Date(a, m - 1, dd).getDay()];
+      const [ic] = climaIcono(d.daily.weather_code[i]);
+      return `<div class="text-center flex-1 min-w-[52px]">
+        <p class="text-[10px] font-black text-gray-400 tracking-wide mb-1">${nombre} ${i ? dd : ''}</p>
+        <p class="text-xl sm:text-2xl leading-none mb-1">${ic}</p>
+        <p class="text-xs"><span class="font-black text-gray-700">${Math.round(d.daily.temperature_2m_max[i])}°</span>
+           <span class="text-gray-400">${Math.round(d.daily.temperature_2m_min[i])}°</span></p>
+        <p class="text-[10px] font-bold text-verde">${d.daily.precipitation_probability_max[i] ?? 0}%</p>
+      </div>`;
+    }).join('');
+
+    cuerpo.innerHTML = `
+      <div class="flex items-center gap-3 sm:flex-col sm:items-start sm:gap-0 sm:pr-6 sm:border-r border-gray-100 flex-shrink-0">
+        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Valdivia</p>
+        <p class="text-4xl sm:text-5xl font-black text-gray-800 leading-none">${ahora}<span class="text-2xl align-top">°</span></p>
+        <p class="text-xs text-gray-500 font-semibold">${ico} ${txt}${sensacion !== ahora ? ` · se sienten ${sensacion}°` : ''}</p>
+      </div>
+      <div class="flex gap-1 sm:gap-2 overflow-x-auto no-scroll flex-1">${dias}</div>`;
+    cont.classList.remove('hidden');
+  } catch (e) {
+    console.warn('Clima no disponible:', e.message);   // el bloque queda oculto
+  }
+}
+
 // ── FICHA DE PRODUCTO ───────────────────────────────────────────────────
 // Hasta ahora la tarjeta no llevaba a ninguna parte: el clic no hacía nada y
 // no había dónde poner la descripción. Esta ficha es ese lugar, y de paso
@@ -3193,7 +3270,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     },{passive:true});
   }
   irInicio();
-  pintarBanners();       // dibuja el carrusel al tiro; se repinta al terminar
+  pintarBanners();
+  pintarClima();   // adorno: si falla, el bloque queda oculto       // dibuja el carrusel al tiro; se repinta al terminar
                          // de cargar el catálogo, cuando ya se sabe qué
                          // categorías tienen productos
   procesarRetornoPago(); // ¿venimos de vuelta de la pasarela de pago?
