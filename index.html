@@ -3142,7 +3142,7 @@ const SLIDES = [
     btn:'background:#fff;color:#0e7490', cta:'Ver limpieza →', destino:['aseo','Limpieza y Aseo'] },
 
   { cat:'panaderia', kicker:'Para pasteleras y panaderías', titulo:'INSUMOS DE<br>PASTELERÍA',
-    fotoMitad:'./banner-pasteleria-chef.webp',
+    fotoFondo:'./banner-pasteleria-chef.webp',
     img:'./banner-pasteleria.webp', grad:'linear-gradient(135deg,#92400e,#d97706)',
     btn:'background:#fff;color:#92400e', cta:'Ver insumos →', destino:['panaderia','Panadería'] },
 ];
@@ -3298,7 +3298,7 @@ function pintarBanners(){
 
   track.innerHTML = vivos.map((s, i) => `
     <div class="slide-inner" style="width:${ancho}%;float:left;height:260px">
-      <div class="slide-txt text-white" style="background:${s.grad}">
+      <div class="slide-txt text-white" style="${s.fotoFondo ? `background-image:linear-gradient(100deg,rgba(88,40,8,.94) 28%,rgba(88,40,8,.62) 70%,rgba(88,40,8,.42)),url('${s.fotoFondo}');background-size:cover;background-position:center 28%` : `background:${s.grad}`}">
         ${s.ilustraImg
           ? `<img class="slide-ilustra" src="${s.ilustraImg}" alt="" aria-hidden="true" loading="lazy">`
           : s.ilustra ? `<svg class="slide-ilustra" viewBox="0 0 300 210" aria-hidden="true">${ILUSTRACIONES[s.ilustra]}</svg>` : ''}
