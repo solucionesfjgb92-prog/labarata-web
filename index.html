@@ -249,6 +249,7 @@ img.slide-ilustra{opacity:1;}
   .slide-foto-piso{left:30%;height:40%;}}
 .slide-esc img:not(.slide-foto):not(.slide-foto-prod){max-height:250px;max-width:100%;width:auto;object-fit:contain;object-position:bottom;}
 .slide-esc .svg-furgon{max-height:196px;width:auto;margin-bottom:14px;}
+.slide-esc img.slide-reparto{max-height:100%;width:auto;object-fit:contain;object-position:center;align-self:center;}
 @media(max-width:640px){.slide-esc .svg-furgon{max-height:112px;margin-bottom:8px}}
 /* Bloque de precio de la lámina de ofertas */
 /* La foto del producto en oferta es cuadrada con fondo blanco: sobre el panel
@@ -3126,7 +3127,7 @@ const SLIDES = [
     fotoFondo:'./banner-lacteos-foto.webp', velo:'6,78,59', img:'./banner-lacteos.webp', grad:'linear-gradient(135deg,#065f46,#10b981)',
     btn:'background:#fff;color:#047857', cta:'Ver lácteos →', destino:['lacteos','Lácteos'] },
 
-  { despacho:true, kicker:'Toda Valdivia', titulo:'DESPACHO<br>A DOMICILIO',
+  { imgDespacho:'./banner-despacho-reparto.webp', kicker:'Toda Valdivia', titulo:'DESPACHO<br>A DOMICILIO',
     grad:'linear-gradient(135deg,#15803d,#166534)',
     btn:'background:#facc15;color:#1f2937', cta:'Ver productos →', destino:['todos','Todos los productos'] },
 
@@ -3282,7 +3283,7 @@ function pintarBanners(){
   const ofertas  = DB.filter(p => p.oferta);
   const vivos = SLIDES.filter(s =>
     s.ofertas  ? ofertas.length > 0 :          // sin nada marcado en la planilla, no va
-    s.despacho ? true :
+    s.imgDespacho ? true :
     !completo  || DB.some(p => p.c === s.cat));
   if (!vivos.length) return;
 
@@ -3325,7 +3326,7 @@ function pintarBanners(){
                           ${dest.precioNormal ? `<s>$${dest.precioNormal.toLocaleString('es-CL')}</s>
                             <i>Ahorras $${(dest.precioNormal - dest.p).toLocaleString('es-CL')}</i>` : ''}
                         </div>`
-         : s.despacho ? SVG_DESPACHO
+         : s.imgDespacho ? `<img src="${s.imgDespacho}" alt="" class="slide-reparto" decoding="async">`
                       : `<img src="${s.img}" alt="" decoding="async"
                              ${i === 0 ? 'fetchpriority="high"' : ''}>`}
       </div>
