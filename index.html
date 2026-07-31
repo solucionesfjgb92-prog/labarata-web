@@ -2100,9 +2100,13 @@ function actualizarSeo(titulo, descripcion, url){
 }
 
 let navegando = false;   // evita empujar al historial cuando venimos de él
+// irInicio() corre al arrancar, ANTES de que cargue el catálogo. Sin esta
+// bandera pisaba el ?p= o ?c= del enlace con el que entró el visitante, y
+// abrirDesdeUrl() despues no encontraba nada que abrir.
+let arrancando = true;
 function irA(vista, titulo, descripcion){
   const url = urlDe(vista);
-  if (!navegando) history.pushState(vista, '', url);
+  if (!navegando && !arrancando) history.pushState(vista, '', url);
   actualizarSeo(titulo, descripcion, url);
 }
 
@@ -2122,7 +2126,7 @@ function abrirDesdeUrl(){
       const info = infoCat(c);
       if (s) verSubCat(c, s, s); else verCat(c, info.nombre);
     }
-  } finally { navegando = false; }
+  } finally { navegando = false; arrancando = false; }
 }
 
 window.addEventListener('popstate', () => {
