@@ -3327,7 +3327,8 @@ function pintarBanners(){
                           ${dest.precioNormal ? `<s>$${dest.precioNormal.toLocaleString('es-CL')}</s>
                             <i>Ahorras $${(dest.precioNormal - dest.p).toLocaleString('es-CL')}</i>` : ''}
                         </div>`
-         : s.imgDespacho ? `<img src="${s.imgDespacho}" alt="" class="slide-reparto" decoding="async">`
+         : s.imgDespacho ? `<img src="${s.imgDespacho}" alt="" class="slide-foto" decoding="async" style="object-position:center 42%">
+                        <span class="slide-foto-fade" style="background:linear-gradient(to right,#f2f4f3,rgba(242,244,243,0) 22%)"></span>`
                       : `<img src="${s.img}" alt="" decoding="async"
                              ${i === 0 ? 'fetchpriority="high"' : ''}>`}
       </div>
