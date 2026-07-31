@@ -225,6 +225,13 @@ img.slide-ilustra{opacity:1;}
 /* Slides con foto de ambiente: la foto llena el panel completo y un
    degradado la funde con el bloque de color, para que no se vea un corte
    duro entre el color plano y la fotografía. */
+/* Panel partido en dos: los productos a la izquierda y la foto de ambiente a
+   la derecha, ocupando cada una la mitad del alto completo del slide. */
+.slide-mitades{position:absolute;inset:0;display:flex;align-items:stretch;}
+.slide-mitad-prod{flex:1 1 50%;min-width:0;object-fit:contain;object-position:bottom center;
+  align-self:flex-end;max-height:88%;padding:0 6px 6px;}
+.slide-mitad-foto{flex:1 1 50%;min-width:0;height:100%;object-fit:cover;object-position:center;}
+@media(max-width:640px){.slide-mitad-prod{max-height:80%;}}
 .slide-foto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
   object-position:center 46%;}
 .slide-foto-fade{position:absolute;inset:0;pointer-events:none;}
@@ -3049,7 +3056,7 @@ const SLIDES = [
     btn:'background:#facc15;color:#1f2937', cta:'Ver despensa →', destino:['despensa','Despensa'] },
 
   { cat:'aseo', ilustra:'aseo', kicker:'Rinde más', titulo:'LIMPIEZA<br>Y ASEO',
-    img:'./banner-aseo.webp', grad:'linear-gradient(135deg,#0e7490,#06b6d4)',
+    img:'./banner-aseo.webp', fotoMitad:'./banner-aseo-equipo.webp', grad:'linear-gradient(135deg,#0e7490,#06b6d4)',
     btn:'background:#fff;color:#0e7490', cta:'Ver limpieza →', destino:['aseo','Limpieza y Aseo'] },
 
   { cat:'panaderia', ilustra:'pasteleria', kicker:'Para pasteleras y panaderías', titulo:'INSUMOS DE<br>PASTELERÍA',
@@ -3220,7 +3227,11 @@ function pintarBanners(){
                 class="font-bold px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-[11px] sm:text-sm w-fit hover:brightness-95 transition-all">${s.cta}</button>
       </div>
       <div class="slide-esc">
-        ${s.foto     ? `<img src="${s.foto}" alt="" class="slide-foto" decoding="async">
+        ${s.fotoMitad ? `<div class="slide-mitades">
+                          <img src="${s.img}" alt="" class="slide-mitad-prod" decoding="async">
+                          <img src="${s.fotoMitad}" alt="" class="slide-mitad-foto" decoding="async">
+                        </div>`
+         : s.foto     ? `<img src="${s.foto}" alt="" class="slide-foto" decoding="async">
                         <span class="slide-foto-fade" style="background:linear-gradient(to right,${s.solido},${s.solido} 2%,transparent 17%)"></span>
                         ${s.img ? `<span class="slide-foto-piso"></span>
                                    <img src="${s.img}" alt="" class="slide-foto-prod" decoding="async">` : ''}`
