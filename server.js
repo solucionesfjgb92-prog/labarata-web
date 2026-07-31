@@ -348,6 +348,21 @@ let ultimoRegistroPlanilla = null;
 
 // Nunca revienta hacia afuera: si la planilla falla, el cliente ya compró y el
 // correo ya salió. Se deja constancia en el log y en /api/diagnostico/pedidos.
+// La fecha del registro va en hora de Chile y en formato dd-mm-aaaa hh:mm, que
+// es como se lee acá. Antes iba en ISO (terminaba en Z), o sea hora de
+// Greenwich: en invierno son 4 horas más, así que un pedido de las 21:00 se
+// anotaba como del día siguiente. Intl resuelve solo el cambio de horario de
+// verano; hacerlo restando horas a mano se rompe dos veces al año.
+const FMT_FECHA_CHILE = new Intl.DateTimeFormat('es-CL', {
+  timeZone: 'America/Santiago', day: '2-digit', month: '2-digit', year: 'numeric',
+  hour: '2-digit', minute: '2-digit', hour12: false,
+});
+function fechaChile(d = new Date()) {
+  const p = {};
+  for (const x of FMT_FECHA_CHILE.formatToParts(d)) p[x.type] = x.value;
+  return `${p.day}-${p.month}-${p.year} ${p.hour}:${p.minute}`;
+}
+
 async function anotarEnPlanilla(ped, pago) {
   const orden = ped.buyOrder || ped.orden || '';
   if (!PEDIDOS_SHEET_URL) {
@@ -357,7 +372,7 @@ async function anotarEnPlanilla(ped, pago) {
   const lineas = Array.isArray(ped.lineas) ? ped.lineas : [];
   const fila = {
     token:      PEDIDOS_SHEET_TOKEN,
-    fecha:      new Date().toISOString(),
+    fecha:      fechaChile(),
     orden,
     medio:      pago?.medio || '',
     entrega:    ped.entrega === 'retiro' ? 'Retiro en local' : 'Despacho a domicilio',
