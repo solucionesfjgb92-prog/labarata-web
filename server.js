@@ -832,8 +832,22 @@ async function cargarProductos() {
     // Se acepta SI, SÍ, S, X, TRUE y 1 porque la planilla se llena a mano y ya
     // pasó con "activo" que aparecieran variantes. Si la columna no existe
     // todavía, esto queda en false y el sitio funciona igual que antes.
-    let oferta = ['SI', 'SÍ', 'S', 'X', 'TRUE', '1']
-      .includes((f.oferta || '').toUpperCase().trim());
+    const celdaOferta = (f.oferta || '').toUpperCase().trim();
+    let oferta = ['SI', 'SÍ', 'S', 'X', 'TRUE', '1'].includes(celdaOferta);
+
+    // La misma celda K sirve para FIJAR el orden: si en vez de "SI" se escribe
+    // un número del 1 al 9, ese número es el puesto que ocupa el producto en la
+    // lámina de ofertas del carrusel y en la franja de ofertas del home. Así se
+    // elige qué se luce sin tener que mover filas en la planilla.
+    //
+    // Escribir "1" ya marcaba oferta antes de esto, y sigue marcándola: sólo
+    // gana además el primer puesto. Los que van con "SI" quedan detrás de los
+    // numerados, en el orden en que estén en la planilla.
+    let destacado = 0;
+    if (/^[1-9]$/.test(celdaOferta)) {
+      oferta = true;
+      destacado = Number(celdaOferta);
+    }
 
     // Columnas "precio_normal" (L) y "vigencia_hasta" (M).
     //
@@ -897,6 +911,9 @@ async function cargarProductos() {
       barCode:   barcode,
       code:      sku,
       oferta,
+      // Cero = sin puesto fijo. Si la oferta venció no tiene sentido reservarle
+      // un lugar destacado, así que se cae junto con el resto.
+      destacado: oferta ? destacado : 0,
       // Sólo viajan si la oferta está vigente. Así el front no tiene que volver
       // a decidir nada: si viene precioNormal, se muestra tachado.
       descripcion,
@@ -1929,6 +1946,10 @@ app.get('/api/diagnostico/catalogo', async (req, res) => {
         `${p.n} ($${p.p.toLocaleString('es-CL')}` +
         (p.precioNormal ? ` antes $${p.precioNormal.toLocaleString('es-CL')}, -${p.descuento}%` : '') +
         (p.vigenciaHasta ? `, hasta ${p.vigenciaHasta}` : '') + ')'),
+      // Qué productos tienen puesto fijo en el carrusel (celda K con un número).
+      ofertasFijadas: productos.filter(p => p.destacado)
+        .sort((a, b) => a.destacado - b.destacado)
+        .map(p => `${p.destacado}. ${p.n}`),
       ofertasVencidas: ultimasOfertasVencidas,
       // Precios que no cuadran entre formatos del mismo producto. Incluye filas
       // sin publicar: la idea es corregirlas antes de cargarles stock.

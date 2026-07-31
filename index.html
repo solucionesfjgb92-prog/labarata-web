@@ -1388,6 +1388,7 @@ async function cargarProductos(forzar = false) {
       tipo:      p.tipo || '',
       sub:       p.sub  || '',
       oferta:    p.oferta || false,
+      destacado: p.destacado || 0,
       // Vienen ya resueltos por el backend: si la oferta venció, llegan en 0 y
       // null, así que acá no hay que volver a comparar fechas.
       descripcion:   p.descripcion   || '',
@@ -1436,6 +1437,7 @@ async function cargarMasProductos(offset) {
       tipo:      p.tipo || '',
       sub:       p.sub  || '',
       oferta:    p.oferta || false,
+      destacado: p.destacado || 0,
       // Vienen ya resueltos por el backend: si la oferta venció, llegan en 0 y
       // null, así que acá no hay que volver a comparar fechas.
       descripcion:   p.descripcion   || '',
@@ -2014,11 +2016,14 @@ function crearCard(p, mini) {
     </div>`;
   return d;
 }
+// Los que llevan un numero en la celda "oferta" mandan, en ese orden. El resto
+// queda detras, tal como esta en la planilla.
+function ordenOfertas(a, b){ return (a.destacado || 99) - (b.destacado || 99); }
 function pintarHomeOfertas(){
   const g=document.getElementById('home-ofertas');
   if(!g)return;
   g.innerHTML='';
-  DB.filter(p=>p.oferta).slice(0,10).forEach(p=>g.appendChild(crearCard(p,true)));
+  DB.filter(p=>p.oferta).sort(ordenOfertas).slice(0,10).forEach(p=>g.appendChild(crearCard(p,true)));
 }
 function pintarHomeTop(){
   const g=document.getElementById('home-top');
@@ -3301,7 +3306,7 @@ function pintarBanners(){
   // Un slide de categoría solo entra si esa categoría tiene productos. Con el
   // catálogo a medio cargar no se descarta nada, igual que en el menú.
   const completo = DB.length && DB.length >= totalBsale;
-  const ofertas  = DB.filter(p => p.oferta);
+  const ofertas  = DB.filter(p => p.oferta).sort(ordenOfertas);
   const vivos = SLIDES.filter(s =>
     s.ofertas  ? ofertas.length > 0 :          // sin nada marcado en la planilla, no va
     s.imgDespacho ? true :
