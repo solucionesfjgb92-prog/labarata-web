@@ -1436,6 +1436,7 @@ async function cargarMasProductos(offset) {
       pintarMenus();
     depurarMenus();
     pintarBanners();
+    abrirDesdeUrl();   // catálogo completo: recién ahora se puede abrir una ficha por enlace directo
     }
   } catch (e) { /* silencioso */ }
 }
@@ -1541,6 +1542,7 @@ function fechaCorta(iso) {
 
 // ── VISTAS ──
 function irInicio(){
+  irA({}, '', 'Distribuidora La Barata, tu vecino online en Valdivia. Abarrotes, limpieza, lácteos y más con despacho a domicilio el mismo día.');
   document.getElementById('vista-inicio').classList.remove('hidden');
   document.getElementById('vista-catalogo').classList.add('hidden');
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1572,6 +1574,9 @@ function irCatalogo(cat, titulo, tipo='', sub=''){
     const tipos = Array.isArray(tipo) ? tipo : [tipo];
     lista = lista.filter(p => tipos.includes(p.tipo));
   }
+
+  irA(sub ? { c: cat, s: Array.isArray(sub) ? sub[0] : sub } : { c: cat }, titulo,
+      `${titulo} en Valdivia — ${lista.length} productos con despacho a domicilio el mismo día en Distribuidora La Barata.`);
 
   listaBase = [...lista];
   filtros = { marca: '', precioMax: 0, soloOferta: false };   // se entra limpio
@@ -2066,6 +2071,69 @@ function subirCantidad(id){
   if(e) e.cantidad++; else carrito.push({...p,cantidad:1});
   return true;
 }
+// ── DIRECCIONES PROPIAS POR CATEGORÍA Y PRODUCTO ────────────────────────
+// Hasta ahora todo el sitio vivía en una sola URL: las categorías y las fichas
+// cambiaban por JavaScript sin tocar la barra de direcciones. Para Google eso
+// es UNA página, así que no había nada que rankear salvo la portada, y tampoco
+// se podía compartir el enlace de un producto por WhatsApp.
+//
+// Se usan parámetros (?c=aseo, ?p=7804665440163) y no rutas tipo /producto/...
+// porque el sitio es estático: una ruta inventada daría 404 al recargar, salvo
+// configurando reescrituras en el hosting. El parámetro funciona tal cual y
+// Google lo indexa igual.
+function urlDe(vista){
+  if (vista.p)   return `?p=${encodeURIComponent(vista.p)}`;
+  if (vista.s)   return `?c=${encodeURIComponent(vista.c)}&s=${encodeURIComponent(vista.s)}`;
+  if (vista.c)   return `?c=${encodeURIComponent(vista.c)}`;
+  return location.pathname;
+}
+
+// El título es lo que Google muestra como enlace azul, así que cambia con la
+// vista. El canonical evita que ?c=aseo y ?c=aseo&s=X compitan entre sí.
+function actualizarSeo(titulo, descripcion, url){
+  document.title = titulo ? `${titulo} — Distribuidora La Barata · Valdivia`
+                          : 'Distribuidora La Barata — Supermercado online · Valdivia';
+  const d = document.querySelector('meta[name="description"]');
+  if (d && descripcion) d.setAttribute('content', descripcion);
+  const c = document.querySelector('link[rel="canonical"]');
+  if (c) c.setAttribute('href', location.origin + (url === location.pathname ? '/' : '/' + url));
+}
+
+let navegando = false;   // evita empujar al historial cuando venimos de él
+function irA(vista, titulo, descripcion){
+  const url = urlDe(vista);
+  if (!navegando) history.pushState(vista, '', url);
+  actualizarSeo(titulo, descripcion, url);
+}
+
+// Al entrar por un enlace directo hay que esperar el catálogo: sin DB no se
+// puede abrir una ficha ni saber si la categoría tiene productos.
+function abrirDesdeUrl(){
+  const q = new URLSearchParams(location.search);
+  const p = q.get('p'), c = q.get('c'), s = q.get('s');
+  navegando = true;
+  try {
+    if (p) {
+      const prod = DB.find(x => String(x.barCode) === p || String(x.code) === p);
+      if (prod) abrirFicha(prod.id);
+    } else if (c === 'ofertas') {
+      verCat('ofertas', 'Ofertas');
+    } else if (c) {
+      const info = infoCat(c);
+      if (s) verSubCat(c, s, s); else verCat(c, info.nombre);
+    }
+  } finally { navegando = false; }
+}
+
+window.addEventListener('popstate', () => {
+  navegando = true;
+  try {
+    cerrarFicha();
+    const q = new URLSearchParams(location.search);
+    if (!q.get('p') && !q.get('c')) irInicio(); else abrirDesdeUrl();
+  } finally { navegando = false; }
+});
+
 // ── CLIMA DE VALDIVIA ───────────────────────────────────────────────────
 // Se pide a Open-Meteo, que es gratis y no necesita clave, directo desde el
 // navegador del cliente: no pasa por nuestro servidor ni gasta cupo de nada.
@@ -2186,10 +2254,16 @@ function abrirFicha(id){
 
   document.getElementById('modal-producto').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
+  irA({ p: p.barCode || p.code }, p.n,
+      `${p.n} — $${p.p.toLocaleString('es-CL')}. ${p.descripcion || 'Disponible con despacho a domicilio en Valdivia.'}`.slice(0, 155));
 }
 function cerrarFicha(){
+  const abierta = !document.getElementById('modal-producto').classList.contains('hidden');
   document.getElementById('modal-producto').classList.add('hidden');
   document.body.style.overflow = '';
+  // Volver atrás en vez de empujar: así el botón del navegador no acumula un
+  // paso por cada ficha abierta y cerrada.
+  if (abierta && !navegando && new URLSearchParams(location.search).get('p')) history.back();
 }
 document.getElementById('modal-producto').addEventListener('click', function(e){
   if (e.target === this) cerrarFicha();
