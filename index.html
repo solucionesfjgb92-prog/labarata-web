@@ -3133,7 +3133,7 @@ const SLIDES = [
   // Repisa con FOTOS REALES de producto en vez del dibujo: la ilustración vectorial
   // quedó en ILUSTRACIONES.despensa por si hay que volver atrás.
   { cat:'despensa', ilustraImg:'./ilustra-despensa.webp', kicker:'Para la semana', titulo:'DESPENSA<br>COMPLETA',
-    foto:'./banner-despensa-cocina.webp', solido:'#1fae51', img:'./banner-despensa.webp',
+    fotoFondo:'./banner-despensa-cocina.webp', velo:'12,88,42', img:'./banner-despensa.webp',
     grad:'linear-gradient(135deg,#16a34a,#22c55e)',
     btn:'background:#facc15;color:#1f2937', cta:'Ver despensa →', destino:['despensa','Despensa'] },
 
@@ -3142,7 +3142,7 @@ const SLIDES = [
     btn:'background:#fff;color:#0e7490', cta:'Ver limpieza →', destino:['aseo','Limpieza y Aseo'] },
 
   { cat:'panaderia', kicker:'Para pasteleras y panaderías', titulo:'INSUMOS DE<br>PASTELERÍA',
-    fotoFondo:'./banner-pasteleria-chef.webp',
+    fotoFondo:'./banner-pasteleria-chef.webp', velo:'88,40,8',
     img:'./banner-pasteleria.webp', grad:'linear-gradient(135deg,#92400e,#d97706)',
     btn:'background:#fff;color:#92400e', cta:'Ver insumos →', destino:['panaderia','Panadería'] },
 ];
@@ -3298,7 +3298,7 @@ function pintarBanners(){
 
   track.innerHTML = vivos.map((s, i) => `
     <div class="slide-inner" style="width:${ancho}%;float:left;height:260px">
-      <div class="slide-txt text-white" style="${s.fotoFondo ? `background-image:linear-gradient(100deg,rgba(88,40,8,.94) 28%,rgba(88,40,8,.62) 70%,rgba(88,40,8,.42)),url('${s.fotoFondo}');background-size:cover;background-position:center 28%` : `background:${s.grad}`}">
+      <div class="slide-txt text-white" style="${s.fotoFondo ? `background-image:linear-gradient(100deg,rgba(${s.velo},.94) 28%,rgba(${s.velo},.62) 70%,rgba(${s.velo},.42)),url('${s.fotoFondo}');background-size:cover;background-position:center 28%` : `background:${s.grad}`}">
         ${s.ilustraImg
           ? `<img class="slide-ilustra" src="${s.ilustraImg}" alt="" aria-hidden="true" loading="lazy">`
           : s.ilustra ? `<svg class="slide-ilustra" viewBox="0 0 300 210" aria-hidden="true">${ILUSTRACIONES[s.ilustra]}</svg>` : ''}
