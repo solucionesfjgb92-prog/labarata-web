@@ -254,6 +254,20 @@ img.slide-ilustra{opacity:1;}
 /* Bloque de precio de la lámina de ofertas */
 /* La foto del producto en oferta es cuadrada con fondo blanco: sobre el panel
    gris se veia un recuadro suelto, asi que se la trata como tarjeta a proposito. */
+.slide-ofertas-fila{display:flex;gap:8px;align-items:stretch;justify-content:center;
+  width:100%;padding:0 8px 10px;}
+.slide-oferta-card{position:relative;background:#fff;border-radius:14px;padding:8px 6px 6px;
+  box-shadow:0 8px 18px rgba(0,0,0,.16);flex:1 1 0;min-width:0;max-width:150px;
+  display:flex;flex-direction:column;align-items:center;text-align:center;}
+.slide-oferta-card img{width:100%;height:86px;object-fit:contain;}
+.slide-oferta-card .nom{font-size:9px;line-height:1.15;color:#374151;font-weight:600;
+  margin:4px 0 2px;height:22px;overflow:hidden;}
+.slide-oferta-card .pre{font-size:13px;font-weight:900;color:#b91c1c;}
+.slide-oferta-card .pre s{font-size:9px;color:#9ca3af;font-weight:700;}
+.slide-oferta-card .dcto{position:absolute;top:-6px;right:-4px;background:#b91c1c;color:#fff;
+  font-size:9px;font-weight:900;border-radius:6px;padding:2px 4px;}
+@media(max-width:640px){.slide-oferta-card img{height:48px}.slide-oferta-card .nom{font-size:7px;height:16px}
+  .slide-oferta-card .pre{font-size:10px}}
 .slide-oferta{background:#fff;border-radius:20px;padding:10px;margin-bottom:12px;
   box-shadow:0 12px 28px rgba(0,0,0,.16);}
 .slide-oferta img{max-height:190px;display:block;}
@@ -3321,13 +3335,13 @@ function pintarBanners(){
                         <span class="slide-foto-fade" style="background:linear-gradient(to right,${s.solido},${s.solido} 2%,transparent 17%)"></span>
                         ${s.img ? `<span class="slide-foto-piso"></span>
                                    <img src="${s.img}" alt="" class="slide-foto-prod" decoding="async">` : ''}`
-         : s.ofertas  ? `<div class="slide-oferta"><img src="${dest.img}" alt=""></div>
-                        <div class="slide-precio">
-                          <span>${dest.descuento >= 1 ? `${dest.descuento}% dcto.` : 'Oferta'}</span>
-                          <b>$${dest.p.toLocaleString('es-CL')}</b>
-                          ${dest.precioNormal ? `<s>$${dest.precioNormal.toLocaleString('es-CL')}</s>
-                            <i>Ahorras $${(dest.precioNormal - dest.p).toLocaleString('es-CL')}</i>` : ''}
-                        </div>`
+         : s.ofertas  ? `<div class="slide-ofertas-fila">${ofertas.slice(0, 3).map(o => `
+                          <div class="slide-oferta-card">
+                            <img src="${o.img}" alt="">
+                            <p class="nom">${esc(o.n)}</p>
+                            <p class="pre">$${o.p.toLocaleString('es-CL')}${o.precioNormal ? ` <s>$${o.precioNormal.toLocaleString('es-CL')}</s>` : ''}</p>
+                            ${o.descuento >= 1 ? `<span class="dcto">-${o.descuento}%</span>` : ''}
+                          </div>`).join('')}</div>`
          : s.imgDespacho ? `<img src="${s.imgDespacho}" alt="" class="slide-foto" decoding="async" style="object-position:center 42%">
                         <span class="slide-foto-fade" style="background:linear-gradient(to right,#f2f4f3,rgba(242,244,243,0) 22%)"></span>`
                       : `<img src="${s.img}" alt="" decoding="async"
