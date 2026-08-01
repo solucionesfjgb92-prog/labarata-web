@@ -30,6 +30,7 @@
 {
   "@context": "https://schema.org",
   "@type": "GroceryStore",
+  "@id": "https://www.distribuidoralabarata.cl/#negocio",
   "name": "Distribuidora La Barata Valdivia",
   "alternateName": "La Barata Valdivia",
   "url": "https://www.distribuidoralabarata.cl",
@@ -66,16 +67,39 @@
     }
   ],
   "priceRange": "$$",
-  "servesCuisine": "Abarrotes y productos del hogar",
+  "currenciesAccepted": "CLP",
+  "paymentAccepted": "Transferencia bancaria, Tarjeta de crédito, Tarjeta de débito",
+  "areaServed": {
+    "@type": "City",
+    "name": "Valdivia",
+    "containedInPlace": { "@type": "AdministrativeArea", "name": "Región de Los Ríos" }
+  },
+  "contactPoint": [
+    {
+      "@type": "ContactPoint",
+      "telephone": "+56944350559",
+      "contactType": "ventas online",
+      "areaServed": "CL",
+      "availableLanguage": "es"
+    },
+    {
+      "@type": "ContactPoint",
+      "telephone": "+56945195595",
+      "contactType": "mesón del local",
+      "areaServed": "CL",
+      "availableLanguage": "es"
+    }
+  ],
   "hasOfferCatalog": {
     "@type": "OfferCatalog",
     "name": "Catálogo La Barata",
     "itemListElement": [
-      {"@type": "Offer", "itemOffered": {"@type": "Product", "name": "Abarrotes"}},
-      {"@type": "Offer", "itemOffered": {"@type": "Product", "name": "Limpieza y Aseo"}},
+      {"@type": "Offer", "itemOffered": {"@type": "Product", "name": "Despensa y abarrotes"}},
+      {"@type": "Offer", "itemOffered": {"@type": "Product", "name": "Limpieza y aseo"}},
       {"@type": "Offer", "itemOffered": {"@type": "Product", "name": "Lácteos"}},
-      {"@type": "Offer", "itemOffered": {"@type": "Product", "name": "Bebidas"}},
-      {"@type": "Offer", "itemOffered": {"@type": "Product", "name": "Panadería"}}
+      {"@type": "Offer", "itemOffered": {"@type": "Product", "name": "Insumos de pastelería"}},
+      {"@type": "Offer", "itemOffered": {"@type": "Product", "name": "Desayuno"}},
+      {"@type": "Offer", "itemOffered": {"@type": "Product", "name": "Farmacia y cuidado personal"}}
     ]
   },
   "sameAs": [
@@ -2128,6 +2152,118 @@ function actualizarSeo(titulo, descripcion, url){
   if (c) c.setAttribute('href', location.origin + (url === location.pathname ? '/' : '/' + url));
 }
 
+// ── DATOS ESTRUCTURADOS POR VISTA ───────────────────────────────────────
+// El bloque fijo del <head> describe el negocio. Esto describe lo que el
+// visitante está viendo AHORA: la ficha de un producto o la ruta de una
+// categoría. Es lo que permite que Google muestre el precio y si hay stock
+// debajo del resultado, en vez de sólo el título.
+//
+// Se inyecta y se saca junto con la vista. Dejar el producto anterior
+// declarado mientras se ve otro sería peor que no declarar nada: Google
+// penaliza los datos que no coinciden con lo que ve el usuario en pantalla.
+const SITIO_URL = 'https://www.distribuidoralabarata.cl';
+
+// JSON dentro de <script>: un "</script>" en el nombre de un producto cerraría
+// la etiqueta antes de tiempo y rompería la página entera. Escapar el "<" lo
+// evita sin cambiar el valor del dato.
+function jsonSeguro(obj){
+  return JSON.stringify(obj, null, 0).replace(/</g, '\u003c');
+}
+
+function ponerLd(id, obj){
+  let e = document.getElementById(id);
+  if (!obj) { if (e) e.remove(); return; }
+  if (!e) {
+    e = document.createElement('script');
+    e.type = 'application/ld+json';
+    e.id = id;
+    document.head.appendChild(e);
+  }
+  e.textContent = jsonSeguro(obj);
+}
+
+// Absoluta y sin "./": Google descarta las imágenes relativas.
+function urlAbs(u){
+  try { return new URL(u, SITIO_URL + '/').href; } catch (e) { return ''; }
+}
+
+function ldProducto(p){
+  const hayStock = !(p.stock !== null && p.stock !== undefined && p.stock <= 0);
+  const bar = String(p.barCode || '');
+  const info = infoCat(p.c);
+
+  const oferta = {
+    '@type': 'Offer',
+    url: `${SITIO_URL}/?p=${encodeURIComponent(p.barCode || p.code)}`,
+    priceCurrency: 'CLP',
+    // Sin separadores de miles ni signo: el precio va como número, que es lo
+    // que exige el formato. "$6.390" se lee como 6 y descuadra todo.
+    price: p.p,
+    itemCondition: 'https://schema.org/NewCondition',
+    availability: hayStock ? 'https://schema.org/InStock'
+                           : 'https://schema.org/OutOfStock',
+    seller: { '@id': SITIO_URL + '/#negocio' },
+  };
+  // Sólo si la oferta tiene fecha de término de verdad. Inventar un
+  // priceValidUntil hace que Google deje de mostrar el precio cuando pasa.
+  if (p.oferta && p.vigenciaHasta) oferta.priceValidUntil = p.vigenciaHasta;
+
+  const prod = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: p.n,
+    image: [urlAbs(p.img)],
+    offers: oferta,
+  };
+  // Cada campo va sólo si existe. Un "brand": "" o un gtin falso son peores
+  // que la ausencia: invalidan la ficha completa.
+  if (p.descripcion) prod.description = p.descripcion;
+  else prod.description = `${p.n}. Disponible en Distribuidora La Barata, Valdivia, con despacho a domicilio.`;
+  if (p.marca)        prod.brand = { '@type': 'Brand', name: p.marca };
+  if (p.code)         prod.sku = String(p.code);
+  // gtin13 es el código de barras y tiene largo fijo. Los códigos internos que
+  // no son de 13 dígitos viajan como sku, no como gtin.
+  if (/^\d{13}$/.test(bar)) prod.gtin13 = bar;
+  else if (bar)             prod.mpn = bar;
+  if (info && info.nombre)  prod.category = info.nombre;
+  return prod;
+}
+
+function ldMiga(vista){
+  const items = [{ '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO_URL + '/' }];
+  const agregar = (nombre, url) =>
+    items.push({ '@type': 'ListItem', position: items.length + 1, name: nombre, item: SITIO_URL + url });
+
+  if (vista.p) {
+    const prod = DB.find(x => String(x.barCode) === String(vista.p) || String(x.code) === String(vista.p));
+    if (!prod) return null;
+    const info = infoCat(prod.c);
+    if (info && info.nombre) agregar(info.nombre, `/?c=${encodeURIComponent(prod.c)}`);
+    if (prod.sub) agregar(prod.sub, `/?c=${encodeURIComponent(prod.c)}&s=${encodeURIComponent(prod.sub)}`);
+    agregar(prod.n, `/?p=${encodeURIComponent(prod.barCode || prod.code)}`);
+  } else if (vista.c) {
+    const info = infoCat(vista.c);
+    agregar(vista.c === 'ofertas' ? 'Ofertas' : (info && info.nombre) || vista.c,
+            `/?c=${encodeURIComponent(vista.c)}`);
+    if (vista.s) agregar(vista.s, `/?c=${encodeURIComponent(vista.c)}&s=${encodeURIComponent(vista.s)}`);
+  } else {
+    return null;   // en la portada la miga sobra: sería un solo escalón
+  }
+  return { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items };
+}
+
+function pintarDatosEstructurados(vista){
+  try {
+    let prod = null;
+    if (vista.p) {
+      const encontrado = DB.find(x => String(x.barCode) === String(vista.p) || String(x.code) === String(vista.p));
+      if (encontrado) prod = ldProducto(encontrado);
+    }
+    ponerLd('ld-producto', prod);
+    ponerLd('ld-miga', ldMiga(vista));
+  } catch (e) { /* nunca puede voltear la página por un dato de más */ }
+}
+
 let navegando = false;   // evita empujar al historial cuando venimos de él
 // irInicio() corre al arrancar, ANTES de que cargue el catálogo. Sin esta
 // bandera pisaba el ?p= o ?c= del enlace con el que entró el visitante, y
@@ -2137,6 +2273,7 @@ function irA(vista, titulo, descripcion){
   const url = urlDe(vista);
   if (!navegando && !arrancando) history.pushState(vista, '', url);
   actualizarSeo(titulo, descripcion, url);
+  pintarDatosEstructurados(vista);
 }
 
 // Al entrar por un enlace directo hay que esperar el catálogo: sin DB no se
@@ -2293,6 +2430,10 @@ function abrirFicha(id){
 function cerrarFicha(){
   const abierta = !document.getElementById('modal-producto').classList.contains('hidden');
   document.getElementById('modal-producto').classList.add('hidden');
+  // Se saca acá y no sólo al navegar: si la ficha se abrió por un enlace
+  // directo no hay historial al que volver, y el producto quedaba declarado
+  // mientras en pantalla ya se veía la portada.
+  ponerLd('ld-producto', null);
   document.body.style.overflow = '';
   // Volver atrás en vez de empujar: así el botón del navegador no acumula un
   // paso por cada ficha abierta y cerrada.
