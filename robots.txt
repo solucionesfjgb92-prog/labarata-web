@@ -1,0 +1,12 @@
+# Distribuidora La Barata — Valdivia
+# Se puede indexar todo: es una tienda, mientras más se vea mejor.
+
+User-agent: *
+Allow: /
+
+# Direcciones que no aportan nada en el buscador y sólo repiten contenido:
+# el carro y el retorno del pago no son páginas para llegar desde Google.
+Disallow: /?pago=
+Disallow: /?orden=
+
+Sitemap: https://www.distribuidoralabarata.cl/sitemap.xml
