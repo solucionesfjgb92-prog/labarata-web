@@ -2222,10 +2222,13 @@ function ldProducto(p){
   else prod.description = `${p.n}. Disponible en Distribuidora La Barata, Valdivia, con despacho a domicilio.`;
   if (p.marca)        prod.brand = { '@type': 'Brand', name: p.marca };
   if (p.code)         prod.sku = String(p.code);
-  // gtin13 es el código de barras y tiene largo fijo. Los códigos internos que
-  // no son de 13 dígitos viajan como sku, no como gtin.
-  if (/^\d{13}$/.test(bar)) prod.gtin13 = bar;
-  else if (bar)             prod.mpn = bar;
+  // gtin13 es el código de barras y tiene largo fijo de 13 dígitos. Hay que
+  // mirar los dos campos: en el catálogo del sitio el código de barras suele
+  // llegar en "code", no en "barCode", y buscando sólo en uno se perdía el
+  // gtin de todo el catálogo. Lo que no mide 13 dígitos es un código interno
+  // y viaja únicamente como sku: inventarle un gtin invalida la ficha entera.
+  const gtin = [bar, String(p.code || '')].find(v => /^\d{13}$/.test(v));
+  if (gtin) prod.gtin13 = gtin;
   if (info && info.nombre)  prod.category = info.nombre;
   return prod;
 }
