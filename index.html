@@ -2163,9 +2163,10 @@ function actualizarSeo(titulo, descripcion, url){
 // penaliza los datos que no coinciden con lo que ve el usuario en pantalla.
 const SITIO_URL = 'https://www.distribuidoralabarata.cl';
 
-// JSON dentro de <script>: un "</script>" en el nombre de un producto cerraría
-// la etiqueta antes de tiempo y rompería la página entera. Escapar el "<" lo
-// evita sin cambiar el valor del dato.
+// Un nombre de producto que trajera una etiqueta HTML de cierre cerraría el
+// bloque antes de tiempo y rompería la página entera. Escapar el "<" lo evita
+// sin cambiar el valor del dato. (Este comentario no puede escribir esa
+// etiqueta ni de ejemplo: pasó, y dejó el sitio en blanco.)
 function jsonSeguro(obj){
   return JSON.stringify(obj, null, 0).replace(/</g, '\u003c');
 }
